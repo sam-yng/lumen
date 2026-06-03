@@ -1,7 +1,7 @@
 # Search & transcripts
 
-Full-text search across notes and transcripts, plus a read-only transcript
-viewer. Built in M5; reads the M1 schema (no migration).
+Full-text search across notes and transcripts. Built in M5; reads the M1 schema
+(no migration). Transcript viewing reuses the M4 `TranscriptViewer`.
 
 ## v1 behaviour
 
@@ -10,17 +10,16 @@ viewer. Built in M5; reads the M1 schema (no migration).
   (`content_tsv`) and transcript bodies (`full_text_tsv`); ILIKE matches document
   titles and file names as a fallback. Results are one unified list: body (FTS)
   hits rank above name-only hits, recency breaks ties.
-- **Result actions:** document → opens the editor; transcript → opens the viewer;
-  file → selects its folder.
-- **Transcript viewer:** read-only. Shows recording status
-  (pending/processing/done/failed), duration, and any error, then ordered
-  segments with `[mm:ss]` timestamps and speaker labels. Search terms are
-  highlighted when opened from a transcript hit.
+- **Result actions (reuse existing workspace panels):** a document hit opens the
+  `DocumentEditor`; a transcript hit opens the M4 `TranscriptViewer` (the result
+  carries `recordingId`, looked up against the snapshot's `recordings`); a file
+  hit selects its folder.
+- **Transcript viewing** is the M4 viewer: recording status, `<audio>` playback,
+  and click-to-seek segments. M5 adds the search entry point into it.
 
 ## Out of scope (M5)
 
-Audio playback, in-transcript find, semantic/vector search, search⇄tag
-intersection, recordings in the unified library snapshot. The `TranscriptViewer`
-is exported so M4 can later add a "View transcript" button on recording rows.
+In-transcript find, semantic/vector search, search⇄tag intersection. (Audio
+playback and the transcript viewer itself ship in M4.)
 
-Status: M5 implemented.
+Status: M5 implemented (search), integrated with the M4 transcript viewer.

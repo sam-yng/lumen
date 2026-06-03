@@ -1794,3 +1794,34 @@ a "View transcript" button on recording rows.
 
 **Outstanding before milestone close:** the manual browser happy path
 (AGENTS.md rule 3) and human review at the milestone boundary.
+
+### Post-M4 merge reconciliation
+
+M5 was developed in parallel with M4 and merged after M4 landed on `main`
+(merge `8d8a234`). M4 already shipped the transcript domain (a `transcripts`
+service, a richer `TranscriptViewer` with `<audio>` playback + click-to-seek, a
+`/api/library/transcripts/:recordingId` route, recordings in the library
+snapshot, and recording rows in the workspace). To avoid duplication, M5's
+parallel transcript pieces were **dropped in favor of M4's**:
+
+- Deleted: my `src/server/services/transcripts.ts` (`getTranscriptById`), my
+  `src/app/api/transcripts/[id]/route.ts`, my
+  `src/components/transcript/transcript-viewer.tsx`, and the corresponding
+  `transcripts.test.ts` + `search-api` transcript fetcher/key.
+- **Kept (the unique M5 value):** the search stack — `search.ts`
+  (`searchLibrary` + ranking), `/api/search`, `SearchPanel`, `highlight.tsx`,
+  `search-api.fetchSearch`.
+- **Rewired:** a transcript search hit now carries `recordingId` and opens the
+  **M4** `TranscriptViewer` (looked up from the snapshot's `recordings`) instead
+  of a bespoke M5 viewer. The workspace uses M4's `selectedDocumentId` /
+  `selectedRecordingId` state (my `activePanel` discriminator was dropped).
+
+Merge conflicts resolved in `context.ts` (kept `ilike`/`textSearch` + M4's
+array-`insert`), `library-workspace.tsx`, `library.test.ts` (took M4's version;
+added `ilike`/`textSearch` passthroughs to its inline fake), and `FRONTEND.md`.
+
+**Tech debt:** two Supabase test fakes now coexist — M4's inline one in
+`library.test.ts` and the shared `__tests__/fake-supabase.ts` used by
+`search.test.ts`. Consolidating onto the shared fake was deferred to avoid
+behavioral risk to M4's suite (its inline fake sorts `order()` lexically; the
+shared one is numeric-aware).
