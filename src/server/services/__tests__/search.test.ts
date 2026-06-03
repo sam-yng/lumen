@@ -9,6 +9,7 @@ function doc(over: Record<string, unknown> = {}) {
     title: "Biology notes",
     content_json: null,
     content_text: "The mitochondria is the powerhouse of the cell.",
+    // TSVector generated column — opaque/Postgres-only, unused by the pure helpers
     content_tsv: null as unknown,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -82,6 +83,7 @@ describe("rankResults", () => {
           user_id: "user-1",
           recording_id: "r1",
           full_text: "today's lecture covers cells",
+          // TSVector generated column — opaque/Postgres-only, unused by the pure helpers
           full_text_tsv: null as unknown,
           language: "en",
           created_at: "2026-01-02T00:00:00Z",
@@ -96,5 +98,31 @@ describe("rankResults", () => {
       tier: 0,
     });
     expect((results[0] as { snippet: string }).snippet).toContain("lecture");
+  });
+
+  it("recency tiebreak: newer document sorts before older at same tier", () => {
+    const results = rankResults({
+      query: "cell",
+      documentBodyHits: [
+        doc({ id: "older", updated_at: "2026-01-01T00:00:00Z" }),
+        doc({ id: "newer", updated_at: "2026-02-01T00:00:00Z" }),
+      ],
+      transcriptHits: [],
+      documentTitleHits: [],
+      fileNameHits: [],
+    });
+    expect(results[0].id).toBe("newer");
+    expect(results[1].id).toBe("older");
+  });
+
+  it("returns empty array when all hit arrays are empty", () => {
+    const results = rankResults({
+      query: "x",
+      documentBodyHits: [],
+      transcriptHits: [],
+      documentTitleHits: [],
+      fileNameHits: [],
+    });
+    expect(results).toEqual([]);
   });
 });

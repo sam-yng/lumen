@@ -68,6 +68,7 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
     docById.set(row.id, { row, tier: 0 });
 
   const documents = [...docById.values()].map(({ row, tier }) => ({
+    // Documents use updated_at for recency (they are edited); transcripts/files use created_at (they are write-once).
     ts: row.updated_at,
     result: {
       kind: "document" as const,
