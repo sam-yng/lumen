@@ -1,4 +1,4 @@
-import type { Database, Tables } from "@/server/db/database.types";
+import type { Database, Json, Tables } from "@/server/db/database.types";
 import type { LibrarySnapshot } from "@/server/services/library";
 
 type FileKind = Database["public"]["Enums"]["file_kind"];
@@ -70,6 +70,7 @@ export function updateDocument(input: {
   id: string;
   title?: string;
   folderId?: string | null;
+  contentJson?: Json | null;
 }) {
   return requestJson<Tables<"documents">>(
     `/api/library/documents/${input.id}`,

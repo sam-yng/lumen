@@ -11,6 +11,7 @@ import { deleteDocument, updateDocument } from "@/server/services/documents";
 const updateDocumentSchema = z.object({
   title: z.string().min(1).optional(),
   folderId: nullableUuidSchema.optional(),
+  contentJson: z.json().nullable().optional(),
 });
 
 type IdRouteContext = { params: Promise<{ id: string }> };

@@ -1,5 +1,6 @@
-import type { Tables } from "@/server/db/database.types";
+import type { Json, Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
+import { extractTipTapText } from "@/server/services/editor-content";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
 
 type Document = Tables<"documents">;
@@ -49,13 +50,22 @@ export async function createDocument(
 
 export async function updateDocument(
   ctx: ServiceContext,
-  input: { id: string; title?: string; folderId?: string | null },
+  input: {
+    id: string;
+    title?: string;
+    folderId?: string | null;
+    contentJson?: Json | null;
+  },
 ) {
   if ("folderId" in input) await assertFolderOwned(ctx, input.folderId ?? null);
 
   const values: Partial<Document> = {};
   if (input.title !== undefined) values.title = cleanTitle(input.title);
   if ("folderId" in input) values.folder_id = input.folderId ?? null;
+  if ("contentJson" in input) {
+    values.content_json = input.contentJson ?? null;
+    values.content_text = extractTipTapText(input.contentJson ?? null);
+  }
 
   const { data, error } = await ctx.supabase
     .from<Document>("documents")
