@@ -27,4 +27,17 @@ tags. Built across M2 (library + tagging) and M3 (editor).
 - Deleting a folder follows the schema: child folders cascade; documents/files
   are detached to the root via `on delete set null`.
 
-Status: M2 implemented; M3 editor and M4 upload/transcription remain pending.
+Status: M2 implemented.
+
+## M3 shape
+
+- Selecting **Open** on a document opens an in-workspace TipTap editor panel.
+- The editor persists TipTap JSON to `documents.content_json`.
+- Autosave runs after content changes and writes through the authenticated
+  document service/route path.
+- `documents.content_text` is derived server-side from the submitted TipTap JSON
+  so M5 full-text search has deterministic plain text.
+- Existing seeded documents with only `content_text` initialize as a simple
+  TipTap paragraph.
+
+Status: M3 implemented; M4 upload/transcription and M5 search remain pending.

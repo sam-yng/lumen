@@ -1,9 +1,28 @@
-TipTap reference (stub)
+TipTap reference
 
 Canonical docs: https://tiptap.dev/docs
 
-Used in Lumen (M3) for: rich-text notes. StarterKit + tables, task list,
-placeholder, link. Store TipTap JSON; also persist a derived plain-text field
-for search.
+Installed for M3:
 
-TODO: fill in at the start of M3.
+- `@tiptap/react`
+- `@tiptap/pm`
+- `@tiptap/starter-kit`
+- `@tiptap/extension-placeholder`
+- `@tiptap/extension-link`
+- `@tiptap/extension-table`
+- `@tiptap/extension-table-row`
+- `@tiptap/extension-table-cell`
+- `@tiptap/extension-table-header`
+- `@tiptap/extension-task-list`
+- `@tiptap/extension-task-item`
+
+Lumen usage:
+
+- `DocumentEditor` is a client component mounted inside the library workspace.
+- Use `useEditor({ immediatelyRender: false })` for Next.js hydration safety.
+- Store editor JSON in `documents.content_json`.
+- Derive `documents.content_text` server-side from submitted JSON in
+  `src/server/services/editor-content.ts`; client code does not send the
+  search-facing plain-text field.
+- Autosave writes through `PATCH /api/library/documents/:id` with `contentJson`
+  and invalidates the `["library"]` TanStack Query key after success.

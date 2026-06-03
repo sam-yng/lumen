@@ -4,7 +4,8 @@ import type {
   ServiceContext,
   ServiceQuery,
 } from "@/server/services/context";
-import { createDocument } from "@/server/services/documents";
+import { createDocument, updateDocument } from "@/server/services/documents";
+import { extractTipTapText } from "@/server/services/editor-content";
 import { createFileMetadata } from "@/server/services/files";
 import {
   createFolder,
@@ -254,6 +255,78 @@ describe("library services", () => {
       folder_id: "owned-folder",
       content_json: null,
       content_text: null,
+    });
+  });
+
+  it("extracts plain text from nested TipTap JSON", () => {
+    const text = extractTipTapText({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Lecture 3" }],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Cells " },
+            { type: "text", text: "use ATP." },
+          ],
+        },
+        {
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Mitochondria" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(text).toBe("Lecture 3 Cells use ATP. Mitochondria");
+  });
+
+  it("persists document content JSON and derived plain text", async () => {
+    const ctx = createContext({
+      documents: [
+        {
+          id: "doc-a",
+          user_id: userId,
+          title: "Lecture",
+          folder_id: null,
+          content_json: null,
+          content_text: null,
+        },
+      ],
+    });
+
+    const contentJson = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Saved from TipTap" }],
+        },
+      ],
+    };
+
+    const document = await updateDocument(ctx, {
+      id: "doc-a",
+      contentJson,
+    });
+
+    expect(document).toMatchObject({
+      id: "doc-a",
+      content_json: contentJson,
+      content_text: "Saved from TipTap",
     });
   });
 

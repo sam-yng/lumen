@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { DocumentEditor } from "@/components/editor/document-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Database, Tables } from "@/server/db/database.types";
@@ -281,10 +282,12 @@ function ItemRow({
   snapshot,
   item,
   type,
+  onOpenDocument,
 }: {
   snapshot: LibrarySnapshot;
   item: FolderRow | DocumentRow | FileRow;
   type: "folder" | "document" | "file";
+  onOpenDocument?: (documentId: string) => void;
 }) {
   const renameFolder = useLibraryMutation(updateFolder);
   const renameDocument = useLibraryMutation(updateDocument);
@@ -349,6 +352,16 @@ function ItemRow({
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {type === "document" && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenDocument?.(item.id)}
+          >
+            Open
+          </Button>
+        )}
         {type !== "folder" && (
           <TagAttachForm
             snapshot={snapshot}
@@ -595,10 +608,12 @@ function LibraryContent({
   snapshot,
   selectedFolderId,
   selectedTagId,
+  onOpenDocument,
 }: {
   snapshot: LibrarySnapshot;
   selectedFolderId: string | null;
   selectedTagId: string | null;
+  onOpenDocument: (documentId: string) => void;
 }) {
   const childFolders =
     selectedTagId === null
@@ -639,6 +654,7 @@ function LibraryContent({
           snapshot={snapshot}
           item={document}
           type="document"
+          onOpenDocument={onOpenDocument}
         />
       ))}
       {files.map((file) => (
@@ -656,6 +672,9 @@ function LibraryContent({
 export function LibraryWorkspace() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
+    null,
+  );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -676,6 +695,10 @@ export function LibraryWorkspace() {
       </div>
     );
   }
+
+  const selectedDocument =
+    data.documents.find((document) => document.id === selectedDocumentId) ??
+    null;
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -711,12 +734,29 @@ export function LibraryWorkspace() {
             </p>
           </div>
         </div>
-        <CreateForms selectedFolderId={selectedFolderId} />
-        <LibraryContent
-          snapshot={data}
-          selectedFolderId={selectedFolderId}
-          selectedTagId={selectedTagId}
-        />
+        <div
+          className={
+            selectedDocument
+              ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
+              : ""
+          }
+        >
+          <div>
+            <CreateForms selectedFolderId={selectedFolderId} />
+            <LibraryContent
+              snapshot={data}
+              selectedFolderId={selectedFolderId}
+              selectedTagId={selectedTagId}
+              onOpenDocument={setSelectedDocumentId}
+            />
+          </div>
+          {selectedDocument && (
+            <DocumentEditor
+              key={selectedDocument.id}
+              document={selectedDocument}
+            />
+          )}
+        </div>
       </section>
     </div>
   );
