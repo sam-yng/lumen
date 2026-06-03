@@ -113,13 +113,18 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
     .map((entry) => entry.result);
 }
 
+function escapeLikePattern(value: string): string {
+  // Escape LIKE wildcards so user input is matched literally by ilike.
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 export async function searchLibrary(
   ctx: ServiceContext,
   rawQuery: string,
 ): Promise<SearchResult[]> {
   const query = rawQuery.trim();
   if (query.length === 0) return [];
-  const pattern = `%${query}%`;
+  const pattern = `%${escapeLikePattern(query)}%`;
 
   const [documentBody, transcripts, documentTitle, files] = await Promise.all([
     ctx.supabase
