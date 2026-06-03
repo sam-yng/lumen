@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildSnippet, rankResults } from "@/server/services/search";
+import {
+  createContext,
+  userId,
+} from "@/server/services/__tests__/fake-supabase";
+import {
+  buildSnippet,
+  rankResults,
+  searchLibrary,
+} from "@/server/services/search";
 
 function doc(over: Record<string, unknown> = {}) {
   return {
@@ -124,5 +132,53 @@ describe("rankResults", () => {
       fileNameHits: [],
     });
     expect(results).toEqual([]);
+  });
+});
+
+describe("searchLibrary", () => {
+  it("returns [] for an empty or whitespace query", async () => {
+    const ctx = createContext({ documents: [doc()] });
+    expect(await searchLibrary(ctx, "   ")).toEqual([]);
+  });
+
+  it("scopes results to the current user and includes each kind", async () => {
+    const ctx = createContext({
+      documents: [
+        doc({ id: "mine", user_id: userId }),
+        doc({ id: "theirs", user_id: "user-2" }),
+      ],
+      transcripts: [
+        {
+          id: "t1",
+          user_id: userId,
+          recording_id: "r1",
+          full_text: "lecture about cells",
+          // TSVector generated column — opaque/Postgres-only
+          full_text_tsv: null as unknown,
+          language: "en",
+          created_at: "2026-01-02T00:00:00Z",
+        },
+      ],
+      files: [
+        {
+          id: "f1",
+          user_id: userId,
+          folder_id: null,
+          name: "cell.png",
+          mime_type: "image/png",
+          size_bytes: 1,
+          storage_key: "k",
+          kind: "other",
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+    });
+
+    const results = await searchLibrary(ctx, "cell");
+    const ids = results.map((r) => r.id);
+    expect(ids).toContain("mine");
+    expect(ids).not.toContain("theirs");
+    expect(results.some((r) => r.kind === "transcript")).toBe(true);
+    expect(results.some((r) => r.kind === "file")).toBe(true);
   });
 });

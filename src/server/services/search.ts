@@ -1,4 +1,6 @@
 import type { Tables } from "@/server/db/database.types";
+import type { ServiceContext } from "@/server/services/context";
+import { assertNoDatabaseError } from "@/server/services/errors";
 
 export type DocumentSearchResult = {
   kind: "document";
@@ -109,4 +111,52 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
         : b.ts.localeCompare(a.ts),
     )
     .map((entry) => entry.result);
+}
+
+export async function searchLibrary(
+  ctx: ServiceContext,
+  rawQuery: string,
+): Promise<SearchResult[]> {
+  const query = rawQuery.trim();
+  if (query.length === 0) return [];
+  const pattern = `%${query}%`;
+
+  const [documentBody, transcripts, documentTitle, files] = await Promise.all([
+    ctx.supabase
+      .from<Tables<"documents">>("documents")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .textSearch("content_tsv", query, { type: "websearch" }),
+    ctx.supabase
+      .from<Tables<"transcripts">>("transcripts")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .textSearch("full_text_tsv", query, { type: "websearch" }),
+    ctx.supabase
+      .from<Tables<"documents">>("documents")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .ilike("title", pattern),
+    ctx.supabase
+      .from<Tables<"files">>("files")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .ilike("name", pattern),
+  ]);
+
+  assertNoDatabaseError(documentBody.error, "Could not search documents");
+  assertNoDatabaseError(transcripts.error, "Could not search transcripts");
+  assertNoDatabaseError(
+    documentTitle.error,
+    "Could not search document titles",
+  );
+  assertNoDatabaseError(files.error, "Could not search files");
+
+  return rankResults({
+    query,
+    documentBodyHits: documentBody.data,
+    transcriptHits: transcripts.data,
+    documentTitleHits: documentTitle.data,
+    fileNameHits: files.data,
+  });
 }
