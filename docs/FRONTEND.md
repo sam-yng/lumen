@@ -9,6 +9,10 @@ Conventions for the `app/` and `components/` layers.
   client.
 - UI: Tailwind v4 + shadcn/ui (`src/components/ui/`).
 - Forms: React 19 `useActionState` + server actions; validate with zod.
+- Visual language: see [DESIGN.md](DESIGN.md) for the full token system,
+  per-screen specs, and interaction states. **Not yet implemented** — the dark
+  theme restyle is a deferred pass after v1's functional milestones; current
+  components still use the default shadcn neutral palette.
 
 ## Library workspace (M2)
 
@@ -31,3 +35,5 @@ Conventions for the `app/` and `components/` layers.
 - Icon toolbar controls use accessible labels and keep the workspace dense.
 
 Status: M3 editor conventions captured; upload/transcription UI arrives in M4.
+The dark-theme visual restyle (all milestones) is specified in
+[DESIGN.md](DESIGN.md) and deferred to a post-v1 pass.
