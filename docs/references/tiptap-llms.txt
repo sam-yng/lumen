@@ -1,0 +1,9 @@
+TipTap reference (stub)
+
+Canonical docs: https://tiptap.dev/docs
+
+Used in Lumen (M3) for: rich-text notes. StarterKit + tables, task list,
+placeholder, link. Store TipTap JSON; also persist a derived plain-text field
+for search.
+
+TODO: fill in at the start of M3.

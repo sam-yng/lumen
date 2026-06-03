@@ -1,0 +1,13 @@
+Supabase reference (stub)
+
+Canonical docs: https://supabase.com/docs
+LLM-friendly index: https://supabase.com/llms.txt
+
+Used in Lumen for: Postgres, Auth (email/password), Storage, Row-Level Security,
+and the local CLI dev stack (Docker). Schema lives in supabase/migrations/;
+types are generated via `bun run db:types`.
+
+Local stack: `bunx supabase start` / `bunx supabase status`.
+
+TODO: drop a pinned snapshot of the relevant pages here if offline reference is
+needed.
