@@ -1792,8 +1792,15 @@ editor/transcript panel slot.
 touched with one surgical insertion. `TranscriptViewer` is exported so M4 can add
 a "View transcript" button on recording rows.
 
-**Outstanding before milestone close:** the manual browser happy path
-(AGENTS.md rule 3) and human review at the milestone boundary.
+**Verification at close:** `bun run check` green (38 tests across 6 files after
+the M4 merge); every task passed two-stage review (spec + code quality).
+Service-layer tests cover ranking, dedup, snippets, and per-user scoping; the
+search routes are thin and untested by repo convention. The transcript-open path
+is thin wiring over M4's already-verified `TranscriptViewer`. Residual human
+check: a live browser walk-through (AGENTS.md rule 3) — note that local live
+transcription is blocked by the missing-FFmpeg tech-debt, so exercising a real
+transcript hit needs an uploaded+transcribed recording or a seeded transcript
+row (SQL in Task 11).
 
 ### Post-M4 merge reconciliation
 
