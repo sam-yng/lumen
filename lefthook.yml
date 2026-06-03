@@ -1,0 +1,6 @@
+# Backpressure gate: no commit lands unless `bun run check` is green
+# (Biome lint+format check, tsc --noEmit, Vitest). See BACKPRESSURE.md.
+pre-commit:
+  commands:
+    check:
+      run: bun run check
