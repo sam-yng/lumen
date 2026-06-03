@@ -34,6 +34,129 @@ export type Database = {
   }
   public: {
     Tables: {
+      documents: {
+        Row: {
+          content_json: Json | null
+          content_text: string | null
+          content_tsv: unknown
+          created_at: string
+          folder_id: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_json?: Json | null
+          content_text?: string | null
+          content_tsv?: unknown
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_json?: Json | null
+          content_text?: string | null
+          content_tsv?: unknown
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      files: {
+        Row: {
+          created_at: string
+          folder_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["file_kind"]
+          mime_type: string
+          name: string
+          size_bytes: number
+          storage_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["file_kind"]
+          mime_type: string
+          name: string
+          size_bytes: number
+          storage_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["file_kind"]
+          mime_type?: string
+          name?: string
+          size_bytes?: number
+          storage_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -55,6 +178,167 @@ export type Database = {
         }
         Relationships: []
       }
+      recordings: {
+        Row: {
+          created_at: string
+          duration_sec: number | null
+          error: string | null
+          file_id: string
+          id: string
+          status: Database["public"]["Enums"]["recording_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_sec?: number | null
+          error?: string | null
+          file_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["recording_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_sec?: number | null
+          error?: string | null
+          file_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["recording_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recordings_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tag_links: {
+        Row: {
+          id: string
+          tag_id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["tag_target_type"]
+        }
+        Insert: {
+          id?: string
+          tag_id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["tag_target_type"]
+        }
+        Update: {
+          id?: string
+          tag_id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["tag_target_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tag_links_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          color: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transcript_segments: {
+        Row: {
+          end_ms: number
+          id: string
+          speaker: string | null
+          start_ms: number
+          text: string
+          transcript_id: string
+        }
+        Insert: {
+          end_ms: number
+          id?: string
+          speaker?: string | null
+          start_ms: number
+          text: string
+          transcript_id: string
+        }
+        Update: {
+          end_ms?: number
+          id?: string
+          speaker?: string | null
+          start_ms?: number
+          text?: string
+          transcript_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_segments_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transcripts: {
+        Row: {
+          created_at: string
+          full_text: string
+          full_text_tsv: unknown
+          id: string
+          language: string | null
+          recording_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_text?: string
+          full_text_tsv?: unknown
+          id?: string
+          language?: string | null
+          recording_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_text?: string
+          full_text_tsv?: unknown
+          id?: string
+          language?: string | null
+          recording_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcripts_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -63,7 +347,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      file_kind: "audio" | "other"
+      recording_status: "pending" | "processing" | "done" | "failed"
+      tag_target_type: "document" | "file" | "recording"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -193,7 +479,11 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      file_kind: ["audio", "other"],
+      recording_status: ["pending", "processing", "done", "failed"],
+      tag_target_type: ["document", "file", "recording"],
+    },
   },
 } as const
 
