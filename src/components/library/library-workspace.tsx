@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DocumentEditor } from "@/components/editor/document-editor";
+import { SearchPanel } from "@/components/search/search-panel";
+import { TranscriptViewer } from "@/components/transcript/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Database, Tables } from "@/server/db/database.types";
@@ -42,6 +44,11 @@ type FileRow = Tables<"files">;
 type TagRow = Tables<"tags">;
 type TagLinkRow = Tables<"tag_links">;
 type TargetType = Database["public"]["Enums"]["tag_target_type"];
+
+type ActivePanel =
+  | { kind: "none" }
+  | { kind: "document"; documentId: string }
+  | { kind: "transcript"; transcriptId: string; query?: string };
 
 function useLibraryMutation<Input, Output>(
   mutate: (input: Input) => Promise<Output>,
@@ -672,9 +679,7 @@ function LibraryContent({
 export function LibraryWorkspace() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
-    null,
-  );
+  const [activePanel, setActivePanel] = useState<ActivePanel>({ kind: "none" });
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -697,8 +702,9 @@ export function LibraryWorkspace() {
   }
 
   const selectedDocument =
-    data.documents.find((document) => document.id === selectedDocumentId) ??
-    null;
+    activePanel.kind === "document"
+      ? (data.documents.find((d) => d.id === activePanel.documentId) ?? null)
+      : null;
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -707,6 +713,19 @@ export function LibraryWorkspace() {
           <h1 className="text-lg font-semibold">Lumen</h1>
           <p className="text-sm text-muted-foreground">Study library</p>
         </div>
+        <SearchPanel
+          onOpenDocument={(documentId) =>
+            setActivePanel({ kind: "document", documentId })
+          }
+          onOpenTranscript={(transcriptId, query) =>
+            setActivePanel({ kind: "transcript", transcriptId, query })
+          }
+          onSelectFile={(_fileId, folderId) => {
+            setSelectedFolderId(folderId);
+            setSelectedTagId(null);
+            setActivePanel({ kind: "none" });
+          }}
+        />
         <FolderTree
           folders={data.folders}
           selectedFolderId={selectedFolderId}
@@ -736,7 +755,7 @@ export function LibraryWorkspace() {
         </div>
         <div
           className={
-            selectedDocument
+            activePanel.kind !== "none"
               ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
               : ""
           }
@@ -747,13 +766,23 @@ export function LibraryWorkspace() {
               snapshot={data}
               selectedFolderId={selectedFolderId}
               selectedTagId={selectedTagId}
-              onOpenDocument={setSelectedDocumentId}
+              onOpenDocument={(documentId) =>
+                setActivePanel({ kind: "document", documentId })
+              }
             />
           </div>
           {selectedDocument && (
             <DocumentEditor
               key={selectedDocument.id}
               document={selectedDocument}
+            />
+          )}
+          {activePanel.kind === "transcript" && (
+            <TranscriptViewer
+              key={activePanel.transcriptId}
+              transcriptId={activePanel.transcriptId}
+              highlightQuery={activePanel.query}
+              onClose={() => setActivePanel({ kind: "none" })}
             />
           )}
         </div>
