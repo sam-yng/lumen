@@ -10,4 +10,15 @@ Conventions for the `app/` and `components/` layers.
 - UI: Tailwind v4 + shadcn/ui (`src/components/ui/`).
 - Forms: React 19 `useActionState` + server actions; validate with zod.
 
-Status: stub — expand as the library and editor land (M2–M3).
+## Library workspace (M2)
+
+- The protected `/` page renders `LibraryWorkspace`, a focused client component
+  using TanStack Query against `/api/library`.
+- Query key: `["library"]`. Every mutation invalidates that key after success.
+- The workspace is a dense app surface: sidebar folder tree, current-folder
+  content list, metadata creation forms, tag filter, and inline item actions.
+- File rows are metadata-only in M2; do not add browser upload controls until the
+  M4 Storage boundary lands.
+
+Status: M2 library conventions captured; editor-specific conventions arrive in
+M3.
