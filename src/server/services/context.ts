@@ -22,6 +22,12 @@ export type ServiceQuery<Row extends Record<string, unknown>> = PromiseLike<
     column: string,
     options?: { ascending?: boolean; nullsFirst?: boolean },
   ): ServiceQuery<Row>;
+  ilike(column: string, pattern: string): ServiceQuery<Row>;
+  textSearch(
+    column: string,
+    query: string,
+    options?: { type?: "plain" | "phrase" | "websearch"; config?: string },
+  ): ServiceQuery<Row>;
   insert(values: Record<string, unknown>): ServiceQuery<Row>;
   update(values: Record<string, unknown>): ServiceQuery<Row>;
   delete(): ServiceQuery<Row>;
