@@ -19,6 +19,10 @@ const serverSchema = z.object({
   // Server-only secret (service role). Client code must never call
   // `getServerEnv()`. The worker (M4) uses this and bypasses RLS — see SECURITY.md.
   SUPABASE_SECRET_KEY: z.string().min(1),
+  PG_BOSS_DATABASE_URL: z.string().url(),
+  TRANSCRIPTION_STORAGE_BUCKET: z.string().min(1).default("library-files"),
+  WHISPER_MODEL: z.string().min(1).default("base.en"),
+  TRANSCRIPTION_TMP_DIR: z.string().min(1).default("/tmp/lumen-transcription"),
 });
 
 type PublicEnv = z.infer<typeof publicSchema>;
@@ -43,6 +47,10 @@ export function getServerEnv(): ServerEnv {
   if (!serverEnv) {
     serverEnv = serverSchema.parse({
       SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+      PG_BOSS_DATABASE_URL: process.env.PG_BOSS_DATABASE_URL,
+      TRANSCRIPTION_STORAGE_BUCKET: process.env.TRANSCRIPTION_STORAGE_BUCKET,
+      WHISPER_MODEL: process.env.WHISPER_MODEL,
+      TRANSCRIPTION_TMP_DIR: process.env.TRANSCRIPTION_TMP_DIR,
     });
   }
   return serverEnv;

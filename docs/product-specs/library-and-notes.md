@@ -9,13 +9,14 @@ tags. Built across M2 (library + tagging) and M3 (editor).
 - **Documents:** create / rename / delete note records and place them in folders
   in M2. TipTap editing, autosave, JSON content, and derived plain-text search
   fields land in M3.
-- **Files:** create / rename / delete **metadata-only** file records in M2
-  (`name`, `mime_type`, `size_bytes`, `kind`, `folder_id`, `storage_key`). Actual
-  binary upload, Supabase Storage, audio recording rows, and transcription queue
-  integration land in M4.
+- **Files:** create / rename / delete file records. M4 uploads bytes to private
+  Supabase Storage, stores the real `storage_key`, and keeps rename/move/delete
+  metadata operations resource-specific.
+- **Audio recordings:** uploading audio or saving a browser recording creates a
+  `recordings` row, enqueues local CPU transcription, shows status in the
+  library, and opens an in-workspace transcript viewer.
 - **Tags:** create / rename / delete tags; assign / remove tags on documents and
-  files in M2; filter the library by tag. Recording tags become visible once M4
-  creates recordings.
+  files; filter the library by tag.
 
 ## M2 shape
 
@@ -40,4 +41,14 @@ Status: M2 implemented.
 - Existing seeded documents with only `content_text` initialize as a simple
   TipTap paragraph.
 
-Status: M3 implemented; M4 upload/transcription and M5 search remain pending.
+## M4 shape
+
+- `POST /api/library/uploads` accepts `multipart/form-data`, writes the object to
+  `library-files`, creates the `files` row, and creates/enqueues a `recordings`
+  row for audio.
+- The transcription worker uses pg-boss and `nodejs-whisper` locally. It writes
+  `transcripts.full_text`, ordered `transcript_segments`, and recording status.
+- The workspace shows recording status, retry for failed recordings, and a real
+  audio player with clickable transcript segments.
+
+Status: M4 implemented; M5 full-text search remains pending.

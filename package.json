@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:types": "supabase gen types typescript --local > src/server/db/database.types.ts",
-    "docs:db-schema": "bun run scripts/gen-db-schema.ts"
+    "docs:db-schema": "bun run scripts/gen-db-schema.ts",
+    "worker:transcribe": "bun run worker/transcription-worker.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -34,6 +35,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
+    "nodejs-whisper": "^0.3.0",
+    "pg-boss": "^12.18.2",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",

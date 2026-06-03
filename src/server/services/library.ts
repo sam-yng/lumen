@@ -6,6 +6,7 @@ export type LibrarySnapshot = {
   folders: Tables<"folders">[];
   documents: Tables<"documents">[];
   files: Tables<"files">[];
+  recordings: Tables<"recordings">[];
   tags: Tables<"tags">[];
   tagLinks: Tables<"tag_links">[];
 };
@@ -27,10 +28,11 @@ async function selectOwnedRows<Row extends Record<string, unknown>>(
 export async function getLibrarySnapshot(
   ctx: ServiceContext,
 ): Promise<LibrarySnapshot> {
-  const [folders, documents, files, tags] = await Promise.all([
+  const [folders, documents, files, recordings, tags] = await Promise.all([
     selectOwnedRows<Tables<"folders">>(ctx, "folders", "name"),
     selectOwnedRows<Tables<"documents">>(ctx, "documents", "title"),
     selectOwnedRows<Tables<"files">>(ctx, "files", "name"),
+    selectOwnedRows<Tables<"recordings">>(ctx, "recordings", "created_at"),
     selectOwnedRows<Tables<"tags">>(ctx, "tags", "name"),
   ]);
 
@@ -46,6 +48,7 @@ export async function getLibrarySnapshot(
     folders,
     documents,
     files,
+    recordings,
     tags,
     tagLinks: tagLinks.filter((link) => visibleTagIds.has(link.tag_id)),
   };

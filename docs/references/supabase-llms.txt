@@ -1,4 +1,4 @@
-Supabase reference (stub)
+Supabase reference
 
 Canonical docs: https://supabase.com/docs
 LLM-friendly index: https://supabase.com/llms.txt
@@ -9,5 +9,15 @@ types are generated via `bun run db:types`.
 
 Local stack: `bunx supabase start` / `bunx supabase status`.
 
-TODO: drop a pinned snapshot of the relevant pages here if offline reference is
-needed.
+M4 Storage notes:
+
+- Private buckets are controlled by `storage.objects` RLS policies. The
+  `library-files` bucket is private and object keys are scoped as
+  `<user_id>/<generated-file-name>`.
+- Upload/download/delete policies check `bucket_id = 'library-files'` and the
+  first object-name path segment against `auth.uid()`.
+- The app uses cookie-bound Supabase clients for user uploads/downloads, so
+  Storage policies apply. The worker uses the service role only outside client
+  code and must manually scope Postgres queries by `user_id`.
+- The M4 storage migration inserts into `storage.buckets` and creates policies
+  on `storage.objects`; it does not change generated `public` schema types.

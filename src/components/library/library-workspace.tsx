@@ -2,24 +2,27 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  File,
+  File as FileIcon,
   FileText,
+  FileUp,
   Folder,
   FolderPlus,
   Loader2,
+  Mic,
   Pencil,
   Tag,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DocumentEditor } from "@/components/editor/document-editor";
+import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
+import { TranscriptViewer } from "@/components/transcripts/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Database, Tables } from "@/server/db/database.types";
 import type { LibrarySnapshot } from "@/server/services/library";
 import {
   createDocument,
-  createFileMetadata,
   createFolder,
   createTag,
   deleteDocument,
@@ -34,11 +37,13 @@ import {
   updateFileMetadata,
   updateFolder,
   updateTag,
+  uploadFile,
 } from "./library-api";
 
 type FolderRow = Tables<"folders">;
 type DocumentRow = Tables<"documents">;
 type FileRow = Tables<"files">;
+type RecordingRow = Tables<"recordings">;
 type TagRow = Tables<"tags">;
 type TagLinkRow = Tables<"tag_links">;
 type TargetType = Database["public"]["Enums"]["tag_target_type"];
@@ -282,12 +287,16 @@ function ItemRow({
   snapshot,
   item,
   type,
+  recording,
   onOpenDocument,
+  onOpenRecording,
 }: {
   snapshot: LibrarySnapshot;
   item: FolderRow | DocumentRow | FileRow;
   type: "folder" | "document" | "file";
+  recording?: RecordingRow | null;
   onOpenDocument?: (documentId: string) => void;
+  onOpenRecording?: (recordingId: string) => void;
 }) {
   const renameFolder = useLibraryMutation(updateFolder);
   const renameDocument = useLibraryMutation(updateDocument);
@@ -304,8 +313,10 @@ function ItemRow({
       <Folder className="size-5" />
     ) : type === "document" ? (
       <FileText className="size-5" />
+    ) : recording ? (
+      <Mic className="size-5" />
     ) : (
-      <File className="size-5" />
+      <FileIcon className="size-5" />
     );
   const name = "title" in item ? item.title : item.name;
   const targetType = type === "file" ? "file" : "document";
@@ -343,6 +354,11 @@ function ItemRow({
             </p>
           </div>
         </div>
+        {recording && (
+          <span className="inline-flex h-6 w-fit items-center rounded border px-2 text-xs capitalize text-muted-foreground">
+            {recording.status}
+          </span>
+        )}
         {type !== "folder" && (
           <TagChips
             snapshot={snapshot}
@@ -360,6 +376,16 @@ function ItemRow({
             onClick={() => onOpenDocument?.(item.id)}
           >
             Open
+          </Button>
+        )}
+        {recording && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenRecording?.(recording.id)}
+          >
+            Transcript
           </Button>
         )}
         {type !== "folder" && (
@@ -416,10 +442,10 @@ function CreateForms({
 }) {
   const folder = useLibraryMutation(createFolder);
   const document = useLibraryMutation(createDocument);
-  const file = useLibraryMutation(createFileMetadata);
+  const file = useLibraryMutation(uploadFile);
 
   return (
-    <div className="grid gap-3 border-b pb-4 lg:grid-cols-3">
+    <div className="grid gap-3 border-b pb-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
       <form
         className="flex gap-2"
         onSubmit={(event) => {
@@ -457,40 +483,28 @@ function CreateForms({
         </Button>
       </form>
       <form
-        className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_120px_88px_auto]"
+        className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
         onSubmit={(event) => {
           event.preventDefault();
           const form = event.currentTarget;
           const formData = new FormData(form);
-          const name = String(formData.get("name") ?? "");
-          const mimeType = String(formData.get("mimeType") ?? "");
-          const sizeBytes = Number(formData.get("sizeBytes") ?? 0);
-          if (!name.trim() || !mimeType.trim()) return;
-          file.mutate({
-            name,
-            mimeType,
-            sizeBytes,
-            kind: "other",
-            folderId: selectedFolderId,
-          });
+          const upload = formData.get("file");
+          if (!(upload instanceof globalThis.File) || upload.size === 0) return;
+          file.mutate({ file: upload, folderId: selectedFolderId });
           form.reset();
         }}
       >
-        <Input name="name" placeholder="File name" />
-        <Input name="mimeType" placeholder="MIME type" />
-        <Input
-          name="sizeBytes"
-          type="number"
-          min="0"
-          step="1"
-          defaultValue="0"
-          placeholder="Bytes"
-        />
-        <Button type="submit" variant="outline" title="Create file metadata">
-          <span className="sr-only">Create file metadata</span>
-          <File className="size-4" />
+        <Input name="file" type="file" aria-label="Upload file" />
+        <Button type="submit" variant="outline" title="Upload file">
+          <span className="sr-only">Upload file</span>
+          <FileUp className="size-4" />
         </Button>
       </form>
+      <RecordAudioForm
+        onSave={(upload) =>
+          file.mutate({ file: upload, folderId: selectedFolderId })
+        }
+      />
     </div>
   );
 }
@@ -609,11 +623,13 @@ function LibraryContent({
   selectedFolderId,
   selectedTagId,
   onOpenDocument,
+  onOpenRecording,
 }: {
   snapshot: LibrarySnapshot;
   selectedFolderId: string | null;
   selectedTagId: string | null;
   onOpenDocument: (documentId: string) => void;
+  onOpenRecording: (recordingId: string) => void;
 }) {
   const childFolders =
     selectedTagId === null
@@ -637,6 +653,9 @@ function LibraryContent({
   );
   const hasItems =
     childFolders.length > 0 || documents.length > 0 || files.length > 0;
+  const recordingByFileId = new Map(
+    snapshot.recordings.map((recording) => [recording.file_id, recording]),
+  );
 
   return (
     <ul>
@@ -658,7 +677,14 @@ function LibraryContent({
         />
       ))}
       {files.map((file) => (
-        <ItemRow key={file.id} snapshot={snapshot} item={file} type="file" />
+        <ItemRow
+          key={file.id}
+          snapshot={snapshot}
+          item={file}
+          type="file"
+          recording={recordingByFileId.get(file.id) ?? null}
+          onOpenRecording={onOpenRecording}
+        />
       ))}
       {!hasItems && (
         <li className="py-12 text-center text-sm text-muted-foreground">
@@ -673,6 +699,9 @@ export function LibraryWorkspace() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
+    null,
+  );
+  const [selectedRecordingId, setSelectedRecordingId] = useState<string | null>(
     null,
   );
   const { data, error, isLoading } = useQuery({
@@ -698,6 +727,9 @@ export function LibraryWorkspace() {
 
   const selectedDocument =
     data.documents.find((document) => document.id === selectedDocumentId) ??
+    null;
+  const selectedRecording =
+    data.recordings.find((recording) => recording.id === selectedRecordingId) ??
     null;
 
   return (
@@ -738,7 +770,9 @@ export function LibraryWorkspace() {
           className={
             selectedDocument
               ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
-              : ""
+              : selectedRecording
+                ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(460px,0.9fr)]"
+                : ""
           }
         >
           <div>
@@ -748,12 +782,20 @@ export function LibraryWorkspace() {
               selectedFolderId={selectedFolderId}
               selectedTagId={selectedTagId}
               onOpenDocument={setSelectedDocumentId}
+              onOpenRecording={setSelectedRecordingId}
             />
           </div>
           {selectedDocument && (
             <DocumentEditor
               key={selectedDocument.id}
               document={selectedDocument}
+            />
+          )}
+          {selectedRecording && (
+            <TranscriptViewer
+              key={selectedRecording.id}
+              recording={selectedRecording}
+              onClose={() => setSelectedRecordingId(null)}
             />
           )}
         </div>

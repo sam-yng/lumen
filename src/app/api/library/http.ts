@@ -39,6 +39,7 @@ export function serviceErrorResponse(error: unknown) {
     );
   }
 
+  console.error("Unexpected API error", error);
   return Response.json({ error: "Unexpected server error." }, { status: 500 });
 }
 
