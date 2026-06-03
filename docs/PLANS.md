@@ -2,9 +2,9 @@
 
 Milestone execution plans live under [exec-plans/](exec-plans/):
 
-- **active/** — one markdown plan per in-flight milestone.
-  - [m0-harness-and-scaffold.md](exec-plans/active/m0-harness-and-scaffold.md)
+- **active/** — one markdown plan per in-flight milestone. _(none yet)_
 - **completed/** — plans moved here with a short retrospective when done.
+  - [m0-harness-and-scaffold.md](exec-plans/completed/m0-harness-and-scaffold.md)
 - [tech-debt-tracker.md](exec-plans/tech-debt-tracker.md) — known shortcuts.
 
 Build order: M0 harness → M1 schema+RLS → M2 library → M3 editor →

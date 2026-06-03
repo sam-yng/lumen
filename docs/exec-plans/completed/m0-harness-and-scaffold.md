@@ -140,3 +140,22 @@ Rationale: get `bun run check` green first so every subsequent change is gated.
 **Environment risks:** FFmpeg missing — not needed until M4, documented, no M0 blocker. Next 16/React 19 newer than training — mitigated by P1.1/P4.1 doc-reads and verifying `@supabase/ssr` cookie API against installed source. Tailwind v4 + shadcn compatibility — verified live in P2 before relying on it.
 
 **Placeholder scan:** no "TBD/implement later" left as work; the only intentional deferrals (service-role client, OAuth, e2e specs) are explicitly scoped to later milestones with seams, per the brief.
+
+---
+
+## Retrospective (M0 complete — 2026-06-03)
+
+**Shipped:** Full backpressure harness (`bun run check` = Biome + tsc + Vitest, green; lefthook pre-commit; GitHub Actions CI). shadcn/ui (radix/nova) on Tailwind v4. Local Supabase + zod env module + `@supabase/ssr` client factories + `profiles` table with the canonical RLS pattern + auto-create-on-signup trigger + generated types. Supabase Auth end-to-end: signup/login/logout, Next-16 Proxy guard + server-side re-verify. Full `docs/` system of record, AGENTS map, portable db-schema generator. All six docs-sanity-check checks pass.
+
+**Verified in browser:** signup → protected shell (email shown) → logout → `/login`; unauth `/` bounces to `/login`; login round-trips; `handle_new_user` trigger created the profile row (confirmed via psql).
+
+**Deviations from the brief (all approved/justified):**
+- Scaffold pre-existed (`create-next-app` already run: Next 16.2.7 / React 19.2.4) — M0 was reconcile+extend, not bootstrap from zero.
+- **Next 16 renamed `middleware` → `proxy`** (breaking change found in bundled docs). Auth guard lives in `src/proxy.ts`.
+- Supabase now issues **publishable/secret** keys (not anon/service_role JWTs); env names reflect this.
+- M0 "first migration" is a minimal `profiles` table (canonical RLS pattern), not §4 domain tables — those are M1.
+- `format` script corrected to `biome check --write` (scaffold had `biome format --write`).
+
+**Deferred (seams, not stubs):** service-role/worker client → M4; OAuth → M-later (seam comment in auth form); Playwright e2e specs → M6 (config + browser installed now).
+
+**Carried debt:** FFmpeg not installed locally (host dep, needed M4) — tracked in [tech-debt-tracker.md](../tech-debt-tracker.md). CI workflow is wired but not yet exercised on the remote (branch not pushed).
