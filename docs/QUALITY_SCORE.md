@@ -8,7 +8,7 @@ handled, tests meaningful).
 | --- | --- |
 | `bun run check` green | ✅ (M0) |
 | Strict types, no unjustified `any` | ✅ (M0) |
-| Auth + RLS isolation | ✅ profiles pattern (M0); domain tables in M1 |
+| Auth + RLS isolation | ✅ all 9 tables; cross-user isolation verified (M1) |
 | Empty/loading/error states | ⏳ M6 |
 | Vitest units + Playwright e2e | ⏳ smoke only; full e2e in M6 |
 | Docs link-clean | ✅ (M0) |

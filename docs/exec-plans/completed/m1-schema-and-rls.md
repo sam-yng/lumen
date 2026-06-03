@@ -318,3 +318,33 @@ No FTS query logic yet (M5) — only the indexes/columns are prepared. ✅
 
 **Gate/CI:** RLS verification is manual psql against the local DB and is **not**
 added to Vitest, keeping CI DB-free per the M0 backpressure decision.
+
+---
+
+## Retrospective (M1 complete — 2026-06-03)
+
+**Shipped:** One domain migration — all 8 §4 tables with RLS + per-operation
+policies on every table (direct `user_id` on six, parent-join on
+`transcript_segments` / `tag_links`), Postgres enums (→ TS unions), GIN FTS via
+stored generated `tsvector` columns on `documents` + `transcripts`, btree
+indexes on every FK + `recordings.status`, unique constraints, shared
+`updated_at` trigger. Regenerated types + `db-schema.md` (9 tables). Idempotent
+dev seed (demo user + sample library).
+
+**Verified:**
+- `bunx supabase db reset` applies init + domain + seed cleanly.
+- db-schema generator handled the nested-paren generated `tsvector` column.
+- Demo login (`demo@lumen.test` / `demo12345`) returns an access token.
+- **RLS (psql, JWT-claim role switch):** user A sees own rows (2 folders, 1
+  segment via parent-join); user B sees 0 across all tables incl. the join-owned
+  ones; B's attempt to insert a folder owned by A → `new row violates row-level
+  security policy`.
+
+**Deviations / discoveries:**
+- GoTrue 500 "Database error querying schema" on the first seed — the auth.users
+  token columns (`confirmation_token`, `recovery_token`, `email_change*`,
+  `phone_change*`, `reauthentication_token`) must be `''`, not NULL. Fixed in seed.
+- Tag seed UUID originally used `t1` (not hex) — corrected to `c1`.
+
+**Deferred:** no app/service code (M2). FTS *query* logic is M5 — only indexes/
+columns prepared. Storage bucket + worker scoping land in M4.
