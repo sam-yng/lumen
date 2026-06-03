@@ -771,20 +771,19 @@ export function LibraryWorkspace() {
               }
             />
           </div>
-          {selectedDocument && (
+          {selectedDocument ? (
             <DocumentEditor
               key={selectedDocument.id}
               document={selectedDocument}
             />
-          )}
-          {activePanel.kind === "transcript" && (
+          ) : activePanel.kind === "transcript" ? (
             <TranscriptViewer
               key={activePanel.transcriptId}
               transcriptId={activePanel.transcriptId}
               highlightQuery={activePanel.query}
               onClose={() => setActivePanel({ kind: "none" })}
             />
-          )}
+          ) : null}
         </div>
       </section>
     </div>
