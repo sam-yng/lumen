@@ -1,0 +1,10 @@
+Biome reference (stub)
+
+Canonical docs: https://biomejs.dev
+
+Used in Lumen for: linting AND formatting (single tool). Config in biome.json.
+Biome does NOT typecheck — that is `tsc --noEmit`. Run via `bun run check`
+(check), `bun run lint`, `bun run format`.
+
+Note: generated files (src/server/db/database.types.ts) are excluded in
+biome.json.

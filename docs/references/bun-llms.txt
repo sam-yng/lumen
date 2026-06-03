@@ -1,0 +1,11 @@
+Bun reference (stub)
+
+Canonical docs: https://bun.sh/docs
+
+Used in Lumen as: the package manager and script runner. `bun install`,
+`bun run <script>`, `bunx <tool>`. Next.js runs via `bun run dev` / `bun run
+build`.
+
+Runtime note (M4): the transcription worker shells into a native whisper.cpp
+addon; if Bun cannot load the native binding, run THAT process on Node while
+keeping Bun everywhere else.
