@@ -42,6 +42,20 @@ RLS**. Therefore the worker MUST:
 Treat any worker query that is not explicitly `user_id`-scoped as a
 vulnerability.
 
+M4 implementation notes:
+
+- Uploads enter through authenticated Route Handlers. The app derives `user.id`
+  with `supabase.auth.getUser()`, creates object keys under
+  `<user_id>/<generated-name>`, and stores file/recording rows through the
+  user-scoped client.
+- The private `library-files` bucket has `storage.objects` policies that allow
+  authenticated users to access only keys whose first path segment is their
+  `auth.uid()`.
+- Worker jobs contain `{ userId, recordingId, fileId, storageKey }` from the
+  authenticated enqueue path. Worker reads/updates for `recordings`, `files`,
+  and `transcripts` include `eq("user_id", userId)`; segment inserts use the
+  transcript id created by that user-scoped transcript insert.
+
 ## Secrets
 
 - `SUPABASE_SECRET_KEY` is server-only and never imported into client code. All

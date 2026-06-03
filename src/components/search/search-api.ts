@@ -1,5 +1,4 @@
 import type { SearchResult } from "@/server/services/search";
-import type { TranscriptDetail } from "@/server/services/transcripts";
 
 async function requestJson<T>(path: string): Promise<T> {
   const response = await fetch(path, {
@@ -15,14 +14,9 @@ async function requestJson<T>(path: string): Promise<T> {
 }
 
 export const searchQueryKey = (query: string) => ["search", query] as const;
-export const transcriptQueryKey = (id: string) => ["transcript", id] as const;
 
 export function fetchSearch(query: string) {
   return requestJson<{ results: SearchResult[] }>(
     `/api/search?q=${encodeURIComponent(query)}`,
   );
-}
-
-export function fetchTranscript(id: string) {
-  return requestJson<TranscriptDetail>(`/api/transcripts/${id}`);
 }

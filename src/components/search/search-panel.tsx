@@ -25,7 +25,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 type SearchPanelProps = {
   onOpenDocument: (documentId: string) => void;
-  onOpenTranscript: (transcriptId: string, query: string) => void;
+  onOpenTranscript: (recordingId: string) => void;
   onSelectFile: (fileId: string, folderId: string | null) => void;
 };
 
@@ -135,7 +135,7 @@ function SearchResultRow({
       <button
         type="button"
         className={rowClass}
-        onClick={() => onOpenTranscript(result.id, query)}
+        onClick={() => onOpenTranscript(result.recordingId)}
       >
         <FileAudio
           className="mt-0.5 size-4 shrink-0 text-muted-foreground"

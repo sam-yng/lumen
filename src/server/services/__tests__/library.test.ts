@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  createContext,
-  otherUserId,
-  userId,
-} from "@/server/services/__tests__/fake-supabase";
+import type {
+  QueryResult,
+  ServiceContext,
+  ServiceQuery,
+} from "@/server/services/context";
 import { createDocument, updateDocument } from "@/server/services/documents";
 import { extractTipTapText } from "@/server/services/editor-content";
 import { createFileMetadata } from "@/server/services/files";
@@ -13,7 +13,169 @@ import {
   moveFolder,
 } from "@/server/services/folders";
 import { getLibrarySnapshot } from "@/server/services/library";
+import { retryRecordingTranscription } from "@/server/services/recordings";
+import type { StorageProvider } from "@/server/services/storage-provider";
 import { createTag, linkTagToTarget } from "@/server/services/tags";
+import {
+  getTranscriptDetail,
+  writeRecordingTranscript,
+} from "@/server/services/transcripts";
+import { createUploadedFile } from "@/server/services/uploads";
+
+type Row = Record<string, unknown>;
+
+class FakeQuery implements ServiceQuery<Row> {
+  private filters: Array<{ column: string; value: unknown }> = [];
+  private orderBy: string | null = null;
+  private pendingUpdate: Row | null = null;
+  private pendingDelete = false;
+
+  constructor(
+    private readonly rows: Row[],
+    private readonly error: Error | null = null,
+  ) {}
+
+  select() {
+    return this;
+  }
+
+  eq(column: string, value: unknown) {
+    this.filters.push({ column, value });
+    return this;
+  }
+
+  order(column: string) {
+    this.orderBy = column;
+    return this;
+  }
+
+  ilike(_column: string, _pattern: string) {
+    return this;
+  }
+
+  textSearch(
+    _column: string,
+    _query: string,
+    _options?: { type?: "plain" | "phrase" | "websearch"; config?: string },
+  ) {
+    return this;
+  }
+
+  update(values: Row) {
+    this.pendingUpdate = values;
+    return this;
+  }
+
+  insert(values: Row | Row[]) {
+    const insertedRows = Array.isArray(values) ? values : [values];
+    this.rows.push(...insertedRows);
+    return this;
+  }
+
+  delete() {
+    this.pendingDelete = true;
+    return this;
+  }
+
+  async single() {
+    const matchingRows = this.applyFilters(this.rows);
+    if (this.pendingUpdate) {
+      for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
+    }
+    if (this.pendingDelete) this.deleteMatchingRows(matchingRows);
+    const data = matchingRows[0] ?? null;
+    return { data, error: this.error };
+  }
+
+  async maybeSingle() {
+    return this.single();
+  }
+
+  // biome-ignore lint/suspicious/noThenProperty: Supabase query builders are awaitable; the fake mirrors that contract.
+  then<TResult1 = QueryResult<Row>, TResult2 = never>(
+    onfulfilled?:
+      | ((value: QueryResult<Row>) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): PromiseLike<TResult1 | TResult2> {
+    return Promise.resolve({
+      data: this.applyFilters(this.rows),
+      error: this.error,
+    }).then(onfulfilled, onrejected);
+  }
+
+  private applyFilters(rows: Row[]) {
+    let result = rows.filter((row) =>
+      this.filters.every((filter) => row[filter.column] === filter.value),
+    );
+
+    if (this.orderBy) {
+      result = [...result].sort((a, b) =>
+        String(a[this.orderBy ?? ""]).localeCompare(
+          String(b[this.orderBy ?? ""]),
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  private deleteMatchingRows(rowsToDelete: Row[]) {
+    for (const row of rowsToDelete) {
+      const index = this.rows.indexOf(row);
+      if (index >= 0) this.rows.splice(index, 1);
+    }
+  }
+}
+
+class FakeSupabase {
+  readonly tables: Record<string, Row[]>;
+
+  constructor(tables: Record<string, Row[]>) {
+    this.tables = tables;
+  }
+
+  from<TableRow extends Record<string, unknown>>(
+    table: string,
+  ): ServiceQuery<TableRow> {
+    return new FakeQuery(
+      this.tables[table] ?? [],
+    ) as unknown as ServiceQuery<TableRow>;
+  }
+}
+
+const userId = "user-1";
+const otherUserId = "user-2";
+
+function createContext(tables: Record<string, Row[]>): ServiceContext {
+  return {
+    userId,
+    supabase: new FakeSupabase(tables),
+  };
+}
+
+class FakeStorage implements StorageProvider {
+  readonly uploaded: Array<{
+    bucket: string;
+    key: string;
+    bytes: Uint8Array;
+    contentType: string;
+  }> = [];
+  readonly removed: Array<{ bucket: string; key: string }> = [];
+
+  async upload(input: {
+    bucket: string;
+    key: string;
+    bytes: Uint8Array;
+    contentType: string;
+  }) {
+    this.uploaded.push(input);
+  }
+
+  async remove(input: { bucket: string; key: string }) {
+    this.removed.push(input);
+  }
+}
 
 describe("library services", () => {
   it("returns a unified snapshot scoped to the current user", async () => {
@@ -29,6 +191,20 @@ describe("library services", () => {
       files: [
         { id: "file-a", user_id: userId, name: "slides.pdf" },
         { id: "file-b", user_id: otherUserId, name: "other.pdf" },
+      ],
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "pending",
+        },
+        {
+          id: "recording-b",
+          user_id: otherUserId,
+          file_id: "file-b",
+          status: "done",
+        },
       ],
       tags: [
         { id: "tag-a", user_id: userId, name: "biology" },
@@ -57,6 +233,9 @@ describe("library services", () => {
       "doc-a",
     ]);
     expect(snapshot.files.map((file) => file.id)).toEqual(["file-a"]);
+    expect(snapshot.recordings.map((recording) => recording.id)).toEqual([
+      "recording-a",
+    ]);
     expect(snapshot.tags.map((tag) => tag.id)).toEqual(["tag-a"]);
     expect(snapshot.tagLinks.map((link) => link.id)).toEqual(["link-a"]);
   });
@@ -232,6 +411,320 @@ describe("library services", () => {
       size_bytes: 42_000,
       kind: "other",
       storage_key: "metadata/user-1/week-01-pdf",
+    });
+  });
+
+  it("uploads a non-audio file into storage and creates a file row", async () => {
+    const ctx = createContext({
+      folders: [{ id: "folder-a", user_id: userId, name: "Lectures" }],
+      files: [],
+    });
+    const storage = new FakeStorage();
+    const enqueued: unknown[] = [];
+
+    const result = await createUploadedFile(ctx, {
+      bucket: "library-files",
+      name: "week 01.pdf",
+      mimeType: "application/pdf",
+      bytes: new Uint8Array([1, 2, 3]),
+      folderId: "folder-a",
+      storage,
+      enqueueTranscription: async (payload) => enqueued.push(payload),
+    });
+
+    expect(result.recording).toBeNull();
+    expect(result.file).toMatchObject({
+      user_id: userId,
+      folder_id: "folder-a",
+      name: "week 01.pdf",
+      mime_type: "application/pdf",
+      size_bytes: 3,
+      kind: "other",
+    });
+    expect(String(result.file.storage_key)).toMatch(/^user-1\/.+-week-01-pdf$/);
+    expect(storage.uploaded).toEqual([
+      {
+        bucket: "library-files",
+        key: result.file.storage_key,
+        bytes: new Uint8Array([1, 2, 3]),
+        contentType: "application/pdf",
+      },
+    ]);
+    expect(enqueued).toEqual([]);
+  });
+
+  it("uploads audio, creates a pending recording, and enqueues transcription", async () => {
+    const ctx = createContext({
+      files: [],
+      recordings: [],
+    });
+    const storage = new FakeStorage();
+    const enqueued: unknown[] = [];
+
+    const result = await createUploadedFile(ctx, {
+      bucket: "library-files",
+      name: "lecture.mp3",
+      mimeType: "audio/mpeg",
+      bytes: new Uint8Array([4, 5, 6, 7]),
+      folderId: null,
+      storage,
+      enqueueTranscription: async (payload) => enqueued.push(payload),
+    });
+
+    expect(result.file).toMatchObject({
+      user_id: userId,
+      name: "lecture.mp3",
+      mime_type: "audio/mpeg",
+      size_bytes: 4,
+      kind: "audio",
+    });
+    expect(result.recording).toMatchObject({
+      user_id: userId,
+      file_id: result.file.id,
+      status: "pending",
+      error: null,
+    });
+    expect(enqueued).toEqual([
+      {
+        userId,
+        recordingId: result.recording?.id,
+        fileId: result.file.id,
+        storageKey: result.file.storage_key,
+      },
+    ]);
+  });
+
+  it("removes the uploaded object when transcription enqueue fails", async () => {
+    const ctx = createContext({
+      files: [],
+      recordings: [],
+    });
+    const storage = new FakeStorage();
+
+    await expect(
+      createUploadedFile(ctx, {
+        bucket: "library-files",
+        name: "lecture.mp3",
+        mimeType: "audio/mpeg",
+        bytes: new Uint8Array([8, 9]),
+        folderId: null,
+        storage,
+        enqueueTranscription: async () => {
+          throw new Error("queue unavailable");
+        },
+      }),
+    ).rejects.toThrow("queue unavailable");
+
+    expect(storage.removed).toEqual([
+      {
+        bucket: "library-files",
+        key: storage.uploaded[0]?.key,
+      },
+    ]);
+  });
+
+  it("retries failed recordings by resetting status and enqueueing transcription", async () => {
+    const ctx = createContext({
+      files: [
+        {
+          id: "file-a",
+          user_id: userId,
+          storage_key: "user-1/file-a-lecture-mp3",
+        },
+      ],
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "failed",
+          error: "Whisper failed",
+        },
+      ],
+    });
+    const enqueued: unknown[] = [];
+
+    const recording = await retryRecordingTranscription(ctx, {
+      id: "recording-a",
+      enqueueTranscription: async (payload) => enqueued.push(payload),
+    });
+
+    expect(recording).toMatchObject({
+      id: "recording-a",
+      status: "pending",
+      error: null,
+    });
+    expect(enqueued).toEqual([
+      {
+        userId,
+        recordingId: "recording-a",
+        fileId: "file-a",
+        storageKey: "user-1/file-a-lecture-mp3",
+      },
+    ]);
+  });
+
+  it.each(["pending", "processing", "done"] as const)(
+    "rejects retrying a %s recording",
+    async (status) => {
+      const ctx = createContext({
+        recordings: [
+          {
+            id: "recording-a",
+            user_id: userId,
+            file_id: "file-a",
+            status,
+            error: null,
+          },
+        ],
+      });
+
+      await expect(
+        retryRecordingTranscription(ctx, {
+          id: "recording-a",
+          enqueueTranscription: async () => undefined,
+        }),
+      ).rejects.toMatchObject({
+        code: "invalid_input",
+        message: "Only failed recordings can be retried.",
+      });
+    },
+  );
+
+  it("writes transcript text and ordered segments for an owned recording", async () => {
+    const ctx = createContext({
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "processing",
+          error: null,
+        },
+      ],
+      transcripts: [],
+      transcript_segments: [],
+    });
+
+    const result = await writeRecordingTranscript(ctx, {
+      recordingId: "recording-a",
+      fullText: "Hello world Another thought",
+      language: "en",
+      segments: [
+        { startMs: 1200, endMs: 2400, text: "Another thought", speaker: null },
+        { startMs: 0, endMs: 1000, text: "Hello world", speaker: null },
+      ],
+    });
+
+    expect(result.recording).toMatchObject({
+      id: "recording-a",
+      status: "done",
+      error: null,
+      duration_sec: 3,
+    });
+    expect(result.transcript).toMatchObject({
+      user_id: userId,
+      recording_id: "recording-a",
+      full_text: "Hello world Another thought",
+      language: "en",
+    });
+    expect(ctx.supabase).toMatchObject({
+      tables: {
+        transcript_segments: [
+          {
+            transcript_id: result.transcript.id,
+            start_ms: 0,
+            end_ms: 1000,
+            text: "Hello world",
+          },
+          {
+            transcript_id: result.transcript.id,
+            start_ms: 1200,
+            end_ms: 2400,
+            text: "Another thought",
+          },
+        ],
+      },
+    });
+  });
+
+  it("reads transcript detail for an owned recording", async () => {
+    const ctx = createContext({
+      files: [
+        {
+          id: "file-a",
+          user_id: userId,
+          name: "lecture.mp3",
+          storage_key: "user-1/file-a-lecture-mp3",
+        },
+      ],
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "done",
+        },
+      ],
+      transcripts: [
+        {
+          id: "transcript-a",
+          user_id: userId,
+          recording_id: "recording-a",
+          full_text: "First Second",
+          language: "en",
+        },
+      ],
+      transcript_segments: [
+        {
+          id: "segment-b",
+          transcript_id: "transcript-a",
+          start_ms: 1000,
+          end_ms: 2000,
+          text: "Second",
+          speaker: null,
+        },
+        {
+          id: "segment-a",
+          transcript_id: "transcript-a",
+          start_ms: 0,
+          end_ms: 900,
+          text: "First",
+          speaker: null,
+        },
+      ],
+    });
+
+    const detail = await getTranscriptDetail(ctx, {
+      recordingId: "recording-a",
+    });
+
+    expect(detail.file.id).toBe("file-a");
+    expect(detail.recording.id).toBe("recording-a");
+    expect(detail.transcript?.id).toBe("transcript-a");
+    expect(detail.segments.map((segment) => segment.id)).toEqual([
+      "segment-a",
+      "segment-b",
+    ]);
+  });
+
+  it("rejects transcript detail for another user's recording", async () => {
+    const ctx = createContext({
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: otherUserId,
+          file_id: "file-a",
+          status: "done",
+        },
+      ],
+    });
+
+    await expect(
+      getTranscriptDetail(ctx, { recordingId: "recording-a" }),
+    ).rejects.toMatchObject({
+      code: "not_found",
+      message: "Recording not found.",
     });
   });
 

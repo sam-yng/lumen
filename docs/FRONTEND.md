@@ -21,8 +21,10 @@ Conventions for the `app/` and `components/` layers.
 - Query key: `["library"]`. Every mutation invalidates that key after success.
 - The workspace is a dense app surface: sidebar folder tree, current-folder
   content list, metadata creation forms, tag filter, and inline item actions.
-- File rows are metadata-only in M2; do not add browser upload controls until the
-  M4 Storage boundary lands.
+- File rows are real uploads from M4 onward. Browser forms submit
+  `multipart/form-data` to `/api/library/uploads`; the route stores bytes in
+  private Supabase Storage and returns the created `files` row plus an optional
+  `recordings` row for audio.
 
 ## Document editor (M3)
 
@@ -38,19 +40,31 @@ Status: M3 editor conventions captured; upload/transcription UI arrives in M4.
 The dark-theme visual restyle (all milestones) is specified in
 [DESIGN.md](DESIGN.md) and deferred to a post-v1 pass.
 
-## Search & transcripts (M5)
+## Uploads and transcripts (M4)
+
+- The library snapshot includes `recordings`; file rows with a matching
+  recording show the transcription status badge.
+- Uploading an audio file or saving a `MediaRecorder` capture creates a
+  `pending` recording and enqueues local transcription.
+- `TranscriptViewer` opens inside the workspace. It fetches
+  `/api/library/transcripts/:recordingId`, shows pending/processing/failed/done
+  states, retries failed recordings, and uses a real `<audio>` element against
+  `/api/library/files/:id`.
+- Completed transcripts render ordered timestamp segments; clicking a segment
+  seeks the audio element to that segment start.
+
+## Search (M5)
 
 - `SearchPanel` (sidebar) queries `/api/search` with TanStack Query key
   `["search", q]`, debounced 250ms, enabled only for non-empty queries. It owns
   its own key and never touches `["library"]`.
-- `TranscriptViewer` reads `/api/transcripts/:id` with key `["transcript", id]`;
-  read-only, shows recording status + ordered segments.
-- The workspace uses an `activePanel` discriminator (`none | document |
-  transcript`) so the editor and transcript viewer share one panel slot
-  (mutually exclusive via a single ternary).
-- Match highlighting lives in `components/search/highlight.tsx` (shared by the
-  panel and the viewer).
+- Results are one ranked list across document bodies + transcript bodies (FTS)
+  and document titles + file names (ILIKE fallback). Match highlighting lives in
+  `components/search/highlight.tsx`.
+- Result actions reuse the existing workspace panels: a document hit opens the
+  `DocumentEditor`; a transcript hit opens M4's `TranscriptViewer` (looked up by
+  `recordingId` from the snapshot); a file hit selects its folder.
 - Search results intentionally remain visible while a changed query refetches
   (no flicker); a refresh indicator is a deferred polish item.
 
-Status: M5 search + transcript viewer conventions captured.
+Status: M5 search conventions captured; transcript viewing reuses the M4 viewer.

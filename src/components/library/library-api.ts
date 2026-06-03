@@ -26,7 +26,25 @@ async function requestJson<T>(
   return (await response.json()) as T;
 }
 
+async function requestForm<T>(path: string, body: FormData) {
+  const response = await fetch(path, {
+    method: "POST",
+    body,
+  });
+
+  if (!response.ok) {
+    const responseBody = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(responseBody?.error ?? "Request failed.");
+  }
+
+  return (await response.json()) as T;
+}
+
 export const libraryQueryKey = ["library"] as const;
+export const transcriptQueryKey = (recordingId: string) =>
+  ["transcript", recordingId] as const;
 
 export function fetchLibrarySnapshot() {
   return requestJson<LibrarySnapshot>("/api/library");
@@ -100,6 +118,18 @@ export function createFileMetadata(input: {
   });
 }
 
+export function uploadFile(input: { file: File; folderId: string | null }) {
+  const body = new FormData();
+  body.set("file", input.file);
+  body.set("name", input.file.name);
+  body.set("folderId", input.folderId ?? "");
+
+  return requestForm<{
+    file: Tables<"files">;
+    recording: Tables<"recordings"> | null;
+  }>("/api/library/uploads", body);
+}
+
 export function updateFileMetadata(input: {
   id: string;
   name?: string;
@@ -118,6 +148,22 @@ export function deleteFileMetadata(id: string) {
   return requestJson<Tables<"files">>(`/api/library/files/${id}`, {
     method: "DELETE",
   });
+}
+
+export function retryRecording(id: string) {
+  return requestJson<Tables<"recordings">>(`/api/library/recordings/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({}),
+  });
+}
+
+export function fetchTranscriptDetail(recordingId: string) {
+  return requestJson<{
+    file: Tables<"files">;
+    recording: Tables<"recordings">;
+    transcript: Tables<"transcripts"> | null;
+    segments: Tables<"transcript_segments">[];
+  }>(`/api/library/transcripts/${recordingId}`);
 }
 
 export function createTag(input: { name: string; color: string | null }) {
