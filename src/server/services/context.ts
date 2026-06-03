@@ -22,7 +22,9 @@ export type ServiceQuery<Row extends Record<string, unknown>> = PromiseLike<
     column: string,
     options?: { ascending?: boolean; nullsFirst?: boolean },
   ): ServiceQuery<Row>;
-  insert(values: Record<string, unknown>): ServiceQuery<Row>;
+  insert(
+    values: Record<string, unknown> | Record<string, unknown>[],
+  ): ServiceQuery<Row>;
   update(values: Record<string, unknown>): ServiceQuery<Row>;
   delete(): ServiceQuery<Row>;
   single(): Promise<SingleQueryResult<Row>>;

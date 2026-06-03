@@ -1,4 +1,4 @@
-Bun reference (stub)
+Bun reference
 
 Canonical docs: https://bun.sh/docs
 
@@ -9,3 +9,15 @@ build`.
 Runtime note (M4): the transcription worker shells into a native whisper.cpp
 addon; if Bun cannot load the native binding, run THAT process on Node while
 keeping Bun everywhere else.
+
+M4 worker notes:
+
+- `pg-boss@12.18.2` runs under the installed runtime and exposes
+  `PgBoss`, `start()`, `createQueue()`, `send()`, and `work()`. Work handlers
+  receive a job array and auto-complete on success / fail on thrown error.
+- `nodejs-whisper@0.3.0` imports under Bun in this workspace, but it shells into
+  `ffmpeg`, `cmake`, and whisper.cpp assets. Keep worker code Node-compatible so
+  `worker:transcribe` can switch to Node if a host native binding requires it.
+- `nodejs-whisper` returns stdout and writes JSON sidecars when
+  `outputInJson` is enabled. Lumen normalizes sidecar `transcription` segments
+  into `{ startMs, endMs, text, speaker }`.
