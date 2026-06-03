@@ -37,3 +37,20 @@ Conventions for the `app/` and `components/` layers.
 Status: M3 editor conventions captured; upload/transcription UI arrives in M4.
 The dark-theme visual restyle (all milestones) is specified in
 [DESIGN.md](DESIGN.md) and deferred to a post-v1 pass.
+
+## Search & transcripts (M5)
+
+- `SearchPanel` (sidebar) queries `/api/search` with TanStack Query key
+  `["search", q]`, debounced 250ms, enabled only for non-empty queries. It owns
+  its own key and never touches `["library"]`.
+- `TranscriptViewer` reads `/api/transcripts/:id` with key `["transcript", id]`;
+  read-only, shows recording status + ordered segments.
+- The workspace uses an `activePanel` discriminator (`none | document |
+  transcript`) so the editor and transcript viewer share one panel slot
+  (mutually exclusive via a single ternary).
+- Match highlighting lives in `components/search/highlight.tsx` (shared by the
+  panel and the viewer).
+- Search results intentionally remain visible while a changed query refetches
+  (no flicker); a refresh indicator is a deferred polish item.
+
+Status: M5 search + transcript viewer conventions captured.

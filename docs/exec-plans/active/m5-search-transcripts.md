@@ -1761,4 +1761,36 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ## Retrospective
 
-_(Added when the milestone closes.)_
+M5 shipped full-text search and a read-only transcript viewer entirely against
+the M1 schema — no migration. Built subagent-driven (fresh implementer + spec
+review + code-quality review per task), every task left `bun run check` green.
+
+**What landed (commits `7adf2e7`…`54d273e`):** shared Supabase test fake +
+`textSearch`/`ilike` (T1); pure ranking/snippet helpers (T2); `searchLibrary`
+composing four scoped queries (T3); `getTranscriptById` (T4); `/api/search` and
+`/api/transcripts/:id` routes (T5–T6); client fetchers + shared highlight (T7);
+`SearchPanel` (T8); `TranscriptViewer` (T9); workspace wiring via an
+`activePanel` discriminator (T10).
+
+**Review-driven fixes applied beyond the plan:** recency-tiebreak + zero-state
+tests for `rankResults`; LIKE-metacharacter escaping in the name fallback
+(`escapeLikePattern`); structural (ternary) mutual exclusion for the
+editor/transcript panel slot.
+
+**Deliberate deferrals / notes for later passes:**
+- Search results stay visible while a changed query refetches (no flicker); a
+  "refreshing" indicator is deferred.
+- Transcript results show a generic "Transcript" label — surfacing the source
+  file name needs a service-layer join, deferred.
+- Accessibility polish (focus-visible rings, bracket-timestamp screen-reader
+  labels) folds into the post-v1 DESIGN.md restyle.
+- `searchLibrary` runs four queries rather than one RPC (Approach A); revisit
+  only if it becomes a perf concern.
+
+**M4 coordination:** zero edits to `getLibrarySnapshot` / `library.ts` /
+`library-api.ts` / `["library"]`. Only `library-workspace.tsx` is shared with M4,
+touched with one surgical insertion. `TranscriptViewer` is exported so M4 can add
+a "View transcript" button on recording rows.
+
+**Outstanding before milestone close:** the manual browser happy path
+(AGENTS.md rule 3) and human review at the milestone boundary.
