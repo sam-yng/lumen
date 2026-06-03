@@ -2,7 +2,8 @@
 
 Milestone execution plans live under [exec-plans/](exec-plans/):
 
-- **active/** — one markdown plan per in-flight milestone. _(none yet)_
+- **active/** — one markdown plan per in-flight milestone.
+  - [m5-search-transcripts.md](exec-plans/active/m5-search-transcripts.md) — full-text search + read-only transcript viewer (M4 runs in parallel).
 - **completed/** — plans moved here with a short retrospective when done.
   - [m0-harness-and-scaffold.md](exec-plans/completed/m0-harness-and-scaffold.md)
   - [m1-schema-and-rls.md](exec-plans/completed/m1-schema-and-rls.md)
