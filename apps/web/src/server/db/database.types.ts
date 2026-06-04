@@ -216,6 +216,79 @@ export type Database = {
           },
         ]
       }
+      semantic_search_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          content_tsv: unknown
+          created_at: string
+          document_id: string | null
+          embedding: string
+          end_ms: number | null
+          id: string
+          recording_id: string | null
+          source_type: Database["public"]["Enums"]["semantic_search_source_type"]
+          start_ms: number | null
+          transcript_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          content_tsv?: unknown
+          created_at?: string
+          document_id?: string | null
+          embedding: string
+          end_ms?: number | null
+          id?: string
+          recording_id?: string | null
+          source_type: Database["public"]["Enums"]["semantic_search_source_type"]
+          start_ms?: number | null
+          transcript_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          content_tsv?: unknown
+          created_at?: string
+          document_id?: string | null
+          embedding?: string
+          end_ms?: number | null
+          id?: string
+          recording_id?: string | null
+          source_type?: Database["public"]["Enums"]["semantic_search_source_type"]
+          start_ms?: number | null
+          transcript_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "semantic_search_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "semantic_search_chunks_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "semantic_search_chunks_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tag_links: {
         Row: {
           id: string
@@ -344,11 +417,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_semantic_search_chunks: {
+        Args: {
+          match_count?: number
+          match_user_id: string
+          query_embedding: string
+          query_text: string
+        }
+        Returns: {
+          chunk_index: number
+          content: string
+          document_id: string
+          end_ms: number
+          id: string
+          recording_id: string
+          similarity: number
+          source_type: Database["public"]["Enums"]["semantic_search_source_type"]
+          start_ms: number
+          text_rank: number
+          transcript_id: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       file_kind: "audio" | "other"
       recording_status: "pending" | "processing" | "done" | "failed"
+      semantic_search_source_type: "document" | "transcript"
       tag_target_type: "document" | "file" | "recording"
     }
     CompositeTypes: {
@@ -482,6 +577,7 @@ export const Constants = {
     Enums: {
       file_kind: ["audio", "other"],
       recording_status: ["pending", "processing", "done", "failed"],
+      semantic_search_source_type: ["document", "transcript"],
       tag_target_type: ["document", "file", "recording"],
     },
   },

@@ -85,6 +85,29 @@ RLS: enabled
 
 Policies: `recordings_select_own`, `recordings_insert_own`, `recordings_update_own`, `recordings_delete_own`
 
+### semantic_search_chunks
+
+RLS: enabled
+
+| Column | Definition |
+| --- | --- |
+| `id` | uuid primary key default gen_random_uuid() |
+| `user_id` | uuid not null references auth.users (id) on delete cascade |
+| `source_type` | semantic_search_source_type not null |
+| `document_id` | uuid references public.documents (id) on delete cascade |
+| `transcript_id` | uuid references public.transcripts (id) on delete cascade |
+| `recording_id` | uuid references public.recordings (id) on delete cascade |
+| `start_ms` | integer |
+| `end_ms` | integer |
+| `chunk_index` | integer not null |
+| `content` | text not null |
+| `content_tsv` | tsvector generated always as (to_tsvector('english', coalesce(content, ''))) stored |
+| `embedding` | vector(384) not null |
+| `created_at` | timestamptz not null default now() |
+| `updated_at` | timestamptz not null default now() |
+
+Policies: `semantic_search_chunks_select_own`, `semantic_search_chunks_insert_own`, `semantic_search_chunks_update_own`, `semantic_search_chunks_delete_own`
+
 ### tag_links
 
 RLS: enabled
