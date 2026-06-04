@@ -13,6 +13,7 @@ Milestone execution plans live under [exec-plans/](exec-plans/):
   - [m6-harden-and-document.md](exec-plans/completed/m6-harden-and-document.md)
   - [design-implementation-pass.md](exec-plans/completed/design-implementation-pass.md)
   - [monorepo-migration.md](exec-plans/completed/monorepo-migration.md)
+  - [pre-v2-cleanup.md](exec-plans/completed/pre-v2-cleanup.md)
 - [tech-debt-tracker.md](exec-plans/tech-debt-tracker.md) — known shortcuts.
 
 Build order: M0 harness → M1 schema+RLS → M2 library → M3 editor →
