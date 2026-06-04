@@ -42,7 +42,7 @@ vars below have real values.
 - Create: `scripts/download-whisper-model.ts` — build-time model fetch.
 - Modify: `package.json` — add `worker:download-model` script.
 - Modify: `.env.example` — document the new vars + a prod section.
-- Create: `docs/exec-plans/active/prod-readiness/DEPLOY.md` — the env matrix +
+- Create: `docs/exec-plans/active/production/prod-readiness/DEPLOY.md` — the env matrix +
   runbook (this is a NEW doc, not an edit to existing docs).
 
 ---
@@ -199,7 +199,7 @@ git commit -m "feat(env): export parse fns, add NEXT_PUBLIC_APP_URL"
 
 **Files:**
 - Modify: `.env.example`
-- Create: `docs/exec-plans/active/prod-readiness/DEPLOY.md`
+- Create: `docs/exec-plans/active/production/prod-readiness/DEPLOY.md`
 
 - [ ] **Step 1: Append a production section to `.env.example`**
 
@@ -269,7 +269,7 @@ Route Handlers enqueue pg-boss jobs from the request path.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add .env.example docs/exec-plans/active/prod-readiness/DEPLOY.md
+git add .env.example docs/exec-plans/active/production/prod-readiness/DEPLOY.md
 git commit -m "docs(deploy): prod env matrix + runbook"
 ```
 

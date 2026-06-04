@@ -4,7 +4,7 @@
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/completed/pre-v2-cleanup.md`
+> **Depends on:** `docs/exec-plans/completed/post-v1/pre-v2-cleanup.md`
 > **Supersedes:** none
 
 ## Goal
