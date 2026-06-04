@@ -17,10 +17,11 @@
     "worker:transcribe": "bun run worker/transcription-worker.ts"
   },
   "dependencies": {
+    "@lumen/ui": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@tanstack/react-query": "^5.101.0",
-    "@lumen/ui": "workspace:*",
     "@tiptap/core": "^3.24.0",
     "@tiptap/extension-link": "^3.24.0",
     "@tiptap/extension-placeholder": "^3.24.0",
