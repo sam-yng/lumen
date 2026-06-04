@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type {
-  QueryResult,
-  ServiceContext,
-  ServiceQuery,
-} from "@/server/services/context";
+import {
+  createContext,
+  otherUserId,
+  userId,
+} from "@/server/services/__tests__/fake-supabase";
 import { createDocument, updateDocument } from "@/server/services/documents";
 import { extractTipTapText } from "@/server/services/editor-content";
 import { createFileMetadata } from "@/server/services/files";
@@ -21,138 +21,6 @@ import {
   writeRecordingTranscript,
 } from "@/server/services/transcripts";
 import { createUploadedFile } from "@/server/services/uploads";
-
-type Row = Record<string, unknown>;
-
-class FakeQuery implements ServiceQuery<Row> {
-  private filters: Array<{ column: string; value: unknown }> = [];
-  private orderBy: string | null = null;
-  private pendingUpdate: Row | null = null;
-  private pendingDelete = false;
-
-  constructor(
-    private readonly rows: Row[],
-    private readonly error: Error | null = null,
-  ) {}
-
-  select() {
-    return this;
-  }
-
-  eq(column: string, value: unknown) {
-    this.filters.push({ column, value });
-    return this;
-  }
-
-  order(column: string) {
-    this.orderBy = column;
-    return this;
-  }
-
-  ilike(_column: string, _pattern: string) {
-    return this;
-  }
-
-  textSearch(
-    _column: string,
-    _query: string,
-    _options?: { type?: "plain" | "phrase" | "websearch"; config?: string },
-  ) {
-    return this;
-  }
-
-  update(values: Row) {
-    this.pendingUpdate = values;
-    return this;
-  }
-
-  insert(values: Row | Row[]) {
-    const insertedRows = Array.isArray(values) ? values : [values];
-    this.rows.push(...insertedRows);
-    return this;
-  }
-
-  delete() {
-    this.pendingDelete = true;
-    return this;
-  }
-
-  async single() {
-    const matchingRows = this.applyFilters(this.rows);
-    if (this.pendingUpdate) {
-      for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
-    }
-    if (this.pendingDelete) this.deleteMatchingRows(matchingRows);
-    const data = matchingRows[0] ?? null;
-    return { data, error: this.error };
-  }
-
-  async maybeSingle() {
-    return this.single();
-  }
-
-  // biome-ignore lint/suspicious/noThenProperty: Supabase query builders are awaitable; the fake mirrors that contract.
-  then<TResult1 = QueryResult<Row>, TResult2 = never>(
-    onfulfilled?:
-      | ((value: QueryResult<Row>) => TResult1 | PromiseLike<TResult1>)
-      | null,
-    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-  ): PromiseLike<TResult1 | TResult2> {
-    return Promise.resolve({
-      data: this.applyFilters(this.rows),
-      error: this.error,
-    }).then(onfulfilled, onrejected);
-  }
-
-  private applyFilters(rows: Row[]) {
-    let result = rows.filter((row) =>
-      this.filters.every((filter) => row[filter.column] === filter.value),
-    );
-
-    if (this.orderBy) {
-      result = [...result].sort((a, b) =>
-        String(a[this.orderBy ?? ""]).localeCompare(
-          String(b[this.orderBy ?? ""]),
-        ),
-      );
-    }
-
-    return result;
-  }
-
-  private deleteMatchingRows(rowsToDelete: Row[]) {
-    for (const row of rowsToDelete) {
-      const index = this.rows.indexOf(row);
-      if (index >= 0) this.rows.splice(index, 1);
-    }
-  }
-}
-
-class FakeSupabase {
-  readonly tables: Record<string, Row[]>;
-
-  constructor(tables: Record<string, Row[]>) {
-    this.tables = tables;
-  }
-
-  from<TableRow extends Record<string, unknown>>(
-    table: string,
-  ): ServiceQuery<TableRow> {
-    return new FakeQuery(
-      this.tables[table] ?? [],
-    ) as unknown as ServiceQuery<TableRow>;
-  }
-}
-
-const userId = "user-1";
-const otherUserId = "user-2";
-
-function createContext(tables: Record<string, Row[]>): ServiceContext {
-  return {
-    userId,
-    supabase: new FakeSupabase(tables),
-  };
-}
 
 class FakeStorage implements StorageProvider {
   readonly uploaded: Array<{

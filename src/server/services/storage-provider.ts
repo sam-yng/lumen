@@ -75,6 +75,9 @@ export class SupabaseStorageProvider implements StorageProvider {
       .from(input.bucket)
       .download(input.key);
     if (error) {
+      if (error.message.toLowerCase().includes("not found")) {
+        throw new ServiceError("not_found", "File not found.");
+      }
       throw new ServiceError(
         "database",
         `Could not download file: ${error.message}`,

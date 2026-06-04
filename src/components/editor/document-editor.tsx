@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import type { Content } from "@tiptap/core";
-import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Table } from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
@@ -91,13 +90,14 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+          autolink: true,
+        },
+      }),
       Placeholder.configure({
         placeholder: "Start taking notes...",
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
       }),
       Table.configure({
         resizable: true,
