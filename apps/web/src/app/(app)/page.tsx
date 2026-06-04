@@ -1,17 +1,5 @@
-import { LibraryWorkspace } from "@/components/library/library-workspace";
-import { signOut } from "@/server/auth/actions";
-import { createServerSupabase } from "@/server/db/client";
+import { redirect } from "next/navigation";
 
-export default async function HomePage() {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return (
-    <LibraryWorkspace
-      signOutAction={signOut}
-      userEmail={user?.email ?? "Workspace member"}
-    />
-  );
+export default function HomePage() {
+  redirect("/library");
 }

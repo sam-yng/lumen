@@ -14,6 +14,7 @@ test("demo user can open the workspace, search a note, and open the editor", asy
   await page.getByLabel("Password").fill("demo12345");
   await page.getByRole("button", { name: "Log in" }).click();
 
+  await expect(page).toHaveURL(/\/library$/);
   await expect(page.getByRole("heading", { name: "Lumen" })).toBeVisible();
 
   await page.getByLabel("Search notes and transcripts").fill("mitochondria");
@@ -22,10 +23,14 @@ test("demo user can open the workspace, search a note, and open the editor", asy
 
   await result.click();
 
+  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
   await expect(
     page.getByRole("heading", { name: "Welcome to Lumen" }),
   ).toBeVisible();
   await expect(page.getByText("Rich-text note with autosave")).toBeVisible();
+
+  await page.getByRole("link", { name: "Back to library" }).click();
+  await expect(page).toHaveURL(/\/library$/);
   expect(
     consoleWarnings.filter((warning) =>
       warning.includes("Duplicate extension names"),

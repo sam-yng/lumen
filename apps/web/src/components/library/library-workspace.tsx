@@ -21,11 +21,11 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { DocumentEditor } from "@/components/editor/document-editor";
 import { SearchPanel } from "@/components/search/search-panel";
 import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
-import { TranscriptViewer } from "@/components/transcripts/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Database, Tables } from "@/server/db/database.types";
@@ -781,18 +781,19 @@ function LibraryContent({
 export function LibraryWorkspace({
   signOutAction,
   userEmail,
+  view = "library",
 }: {
   signOutAction: SignOutAction;
   userEmail: string;
+  view?: "library" | "tags";
 }) {
+  const router = useRouter();
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
-    null,
-  );
-  const [selectedRecordingId, setSelectedRecordingId] = useState<string | null>(
-    null,
-  );
+  const openDocument = (documentId: string) =>
+    router.push(`/library/notes/${documentId}`);
+  const openRecording = (recordingId: string) =>
+    router.push(`/library/transcripts/${recordingId}`);
   const quickCreateDocument = useLibraryMutation(createDocument);
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
@@ -814,13 +815,6 @@ export function LibraryWorkspace({
       </div>
     );
   }
-
-  const selectedDocument =
-    data.documents.find((document) => document.id === selectedDocumentId) ??
-    null;
-  const selectedRecording =
-    data.recordings.find((recording) => recording.id === selectedRecordingId) ??
-    null;
 
   const selectedTagName = selectedTagId
     ? data.tags.find((tag) => tag.id === selectedTagId)?.name
@@ -867,13 +861,18 @@ export function LibraryWorkspace({
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-4">
           <nav className="mb-4 space-y-1">
-            <button
-              type="button"
-              className="flex h-8 w-full items-center gap-2 rounded-md bg-[var(--accent-soft)] px-2 text-left text-sm font-medium text-[var(--accent-text)]"
+            <Link
+              href="/library"
+              aria-current={view === "library" ? "page" : undefined}
+              className={`flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm ${
+                view === "library"
+                  ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
+                  : "text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+              }`}
             >
               <LibraryIcon className="size-4" />
               Library
-            </button>
+            </Link>
             <button
               type="button"
               className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
@@ -881,13 +880,18 @@ export function LibraryWorkspace({
               <Clock className="size-4" />
               Recents
             </button>
-            <button
-              type="button"
-              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            <Link
+              href="/library/tags"
+              aria-current={view === "tags" ? "page" : undefined}
+              className={`flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm ${
+                view === "tags"
+                  ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
+                  : "text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+              }`}
             >
               <Tag className="size-4" />
               Tags
-            </button>
+            </Link>
             <button
               type="button"
               className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
@@ -915,11 +919,7 @@ export function LibraryWorkspace({
           <FolderTree
             folders={data.folders}
             selectedFolderId={selectedFolderId}
-            onSelect={(folderId) => {
-              setSelectedFolderId(folderId);
-              setSelectedDocumentId(null);
-              setSelectedRecordingId(null);
-            }}
+            onSelect={setSelectedFolderId}
           />
           <TagPanel
             tags={data.tags}
@@ -1024,64 +1024,23 @@ export function LibraryWorkspace({
             ))}
           </div>
           <SearchPanel
-            onOpenDocument={(documentId) => {
-              setSelectedRecordingId(null);
-              setSelectedDocumentId(documentId);
-            }}
-            onOpenTranscript={(recordingId) => {
-              setSelectedDocumentId(null);
-              setSelectedRecordingId(recordingId);
-            }}
+            onOpenDocument={openDocument}
+            onOpenTranscript={openRecording}
             onSelectFile={(_fileId, folderId) => {
               setSelectedFolderId(folderId);
               setSelectedTagId(null);
-              setSelectedDocumentId(null);
-              setSelectedRecordingId(null);
             }}
           />
-          <div
-            className={
-              selectedDocument
-                ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
-                : selectedRecording
-                  ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(460px,0.9fr)]"
-                  : ""
-            }
-          >
-            <div className="space-y-5">
-              <CreateForms selectedFolderId={selectedFolderId} />
-              <LibraryContent
-                snapshot={data}
-                selectedFolderId={selectedFolderId}
-                selectedTagId={selectedTagId}
-                onSelectFolder={(folderId) => {
-                  setSelectedFolderId(folderId);
-                  setSelectedDocumentId(null);
-                  setSelectedRecordingId(null);
-                }}
-                onOpenDocument={(documentId) => {
-                  setSelectedRecordingId(null);
-                  setSelectedDocumentId(documentId);
-                }}
-                onOpenRecording={(recordingId) => {
-                  setSelectedDocumentId(null);
-                  setSelectedRecordingId(recordingId);
-                }}
-              />
-            </div>
-            {selectedDocument && (
-              <DocumentEditor
-                key={selectedDocument.id}
-                document={selectedDocument}
-              />
-            )}
-            {selectedRecording && (
-              <TranscriptViewer
-                key={selectedRecording.id}
-                recording={selectedRecording}
-                onClose={() => setSelectedRecordingId(null)}
-              />
-            )}
+          <div className="space-y-5">
+            <CreateForms selectedFolderId={selectedFolderId} />
+            <LibraryContent
+              snapshot={data}
+              selectedFolderId={selectedFolderId}
+              selectedTagId={selectedTagId}
+              onSelectFolder={setSelectedFolderId}
+              onOpenDocument={openDocument}
+              onOpenRecording={openRecording}
+            />
           </div>
         </div>
       </section>
