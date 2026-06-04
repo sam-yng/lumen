@@ -51,4 +51,5 @@ Status: M2 implemented.
 - The workspace shows recording status, retry for failed recordings, and a real
   audio player with clickable transcript segments.
 
-Status: M4 implemented; M5 full-text search remains pending.
+Status: M4 implemented; M5 full-text search is implemented in
+[search-and-transcripts.md](search-and-transcripts.md).

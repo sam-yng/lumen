@@ -9,8 +9,8 @@ handled, tests meaningful).
 | `bun run check` green | ✅ (M0) |
 | Strict types, no unjustified `any` | ✅ (M0) |
 | Auth + RLS isolation | ✅ all 9 tables; cross-user isolation verified (M1) |
-| Empty/loading/error states | ⏳ M6 |
-| Vitest units + Playwright e2e | ⏳ smoke only; full e2e in M6 |
-| Docs link-clean | ✅ (M0) |
+| Empty/loading/error states | ✅ core workspace, search, editor, upload/transcript states handled |
+| Vitest units + Playwright e2e | ✅ service/worker units plus one browser happy path |
+| Docs link-clean | ✅ (M6) |
 
 Update at each milestone boundary.

@@ -1650,7 +1650,7 @@ Status: M5 implemented.
 In `docs/product-specs/index.md`, add under the existing bullet:
 
 ```markdown
-- [search-and-transcripts.md](search-and-transcripts.md) — full-text search and
+- [search-and-transcripts.md](../../product-specs/search-and-transcripts.md) — full-text search and
   the read-only transcript viewer (M5).
 ```
 
@@ -1720,7 +1720,7 @@ git mv docs/exec-plans/active/m5-search-transcripts.md \
 Edit `docs/PLANS.md`: remove the active bullet and add under `completed/`:
 
 ```markdown
-  - [m5-search-transcripts.md](exec-plans/completed/m5-search-transcripts.md)
+  - [m5-search-transcripts.md](m5-search-transcripts.md)
 ```
 
 Fill in the Retrospective section of the moved plan.

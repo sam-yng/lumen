@@ -10,6 +10,7 @@ Milestone execution plans live under [exec-plans/](exec-plans/):
   - [m3-editor.md](exec-plans/completed/m3-editor.md)
   - [m4-transcription.md](exec-plans/completed/m4-transcription.md)
   - [m5-search-transcripts.md](exec-plans/completed/m5-search-transcripts.md)
+  - [m6-harden-and-document.md](exec-plans/completed/m6-harden-and-document.md)
 - [tech-debt-tracker.md](exec-plans/tech-debt-tracker.md) — known shortcuts.
 
 Build order: M0 harness → M1 schema+RLS → M2 library → M3 editor →
