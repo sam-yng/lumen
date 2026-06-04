@@ -88,7 +88,7 @@ turbo.json               workspace task pipeline
 - [docs/SECURITY.md](docs/SECURITY.md) — auth model, RLS, the worker caveat.
 - [docs/design-docs/index.md](docs/design-docs/index.md) — beliefs + design.
 - [docs/product-specs/index.md](docs/product-specs/index.md) — feature specs.
-- [docs/PLANS.md](docs/PLANS.md) — milestone exec-plans (active/completed).
+- [docs/PLANS.md](docs/PLANS.md) — lifecycle exec-plans (queued/active/completed/archive).
 - [docs/references/index.md](docs/references/index.md) — external doc pointers.
 - [docs/generated/db-schema.md](docs/generated/db-schema.md) — GENERATED schema.
 - [docs/DESIGN.md](docs/DESIGN.md) ·
@@ -99,7 +99,7 @@ turbo.json               workspace task pipeline
 
 ## Working rules
 
-1. Write a milestone plan to `docs/exec-plans/active/`, self-review, then build.
+1. Write an exec plan to `docs/exec-plans/queued/` or `docs/exec-plans/active/`, self-review, then build.
 2. Run `bun run check` after every patch; keep it green.
 3. Run the manual happy path in a browser before declaring a milestone done.
 4. Pause at each milestone boundary for human review.
