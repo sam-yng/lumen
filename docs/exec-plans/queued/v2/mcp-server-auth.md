@@ -4,7 +4,7 @@
 > **Version:** v2
 > **Area:** MCP, auth, external integration
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/queued/v2-ai-mcp/semantic-search.md`
+> **Depends on:** `docs/exec-plans/queued/v2/semantic-search.md`
 > **Supersedes:** none
 
 ## Goal

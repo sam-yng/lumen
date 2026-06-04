@@ -4,7 +4,7 @@
 > **Version:** v2
 > **Area:** semantic search
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/queued/v2-ai-mcp/index.md`
+> **Depends on:** `docs/exec-plans/queued/v2/index.md`
 > **Supersedes:** none
 
 ## Goal
