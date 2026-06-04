@@ -46,31 +46,34 @@ export function SearchPanel({
   const results = data?.results ?? [];
 
   return (
-    <div className="mb-4 flex flex-col gap-2">
+    <div className="mb-5 flex flex-col gap-2">
       <div className="relative">
         <Search
-          className="absolute top-2.5 left-2 size-4 text-muted-foreground"
+          className="absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--text-3)]"
           aria-hidden
         />
         <Input
           aria-label="Search notes and transcripts"
-          className="pl-8"
+          className="h-14 rounded-lg border-[var(--border-soft)] bg-[var(--surface)] pl-11 text-[15px] focus-visible:border-[var(--accent-line)]"
           placeholder="Search notes and transcripts…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
+      <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+        Postgres full-text · notes + transcripts · scoped to you
+      </p>
 
       {debouncedQuery.length > 0 && (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
           {isFetching && results.length === 0 ? (
-            <p className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2 p-3 text-sm text-[var(--text-3)]">
               <Loader2 className="size-4 animate-spin" aria-hidden /> Searching…
             </p>
           ) : results.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">No results.</p>
+            <p className="p-3 text-sm text-[var(--text-3)]">No results.</p>
           ) : (
-            <ul className="divide-y">
+            <ul className="divide-y divide-[var(--border-soft)]">
               {results.map((result) => (
                 <li key={`${result.kind}-${result.id}`}>
                   <SearchResultRow
@@ -103,7 +106,8 @@ function SearchResultRow({
   SearchPanelProps,
   "onOpenDocument" | "onOpenTranscript" | "onSelectFile"
 >) {
-  const rowClass = "flex w-full items-start gap-2 p-3 text-left hover:bg-muted";
+  const rowClass =
+    "flex w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
 
   if (result.kind === "document") {
     return (
@@ -113,7 +117,7 @@ function SearchResultRow({
         onClick={() => onOpenDocument(result.id)}
       >
         <FileText
-          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+          className="mt-0.5 size-4 shrink-0 text-[var(--accent-text)]"
           aria-hidden
         />
         <span className="flex min-w-0 flex-col">
@@ -121,7 +125,7 @@ function SearchResultRow({
             {highlightMatch(result.title, query)}
           </span>
           {result.snippet && (
-            <span className="text-xs text-muted-foreground">
+            <span className="font-serif text-[13px] leading-5 text-[var(--text-2)]">
               {highlightMatch(result.snippet, query)}
             </span>
           )}
@@ -138,12 +142,12 @@ function SearchResultRow({
         onClick={() => onOpenTranscript(result.recordingId)}
       >
         <FileAudio
-          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+          className="mt-0.5 size-4 shrink-0 text-[var(--busy)]"
           aria-hidden
         />
         <span className="flex min-w-0 flex-col">
           <span className="text-sm font-medium">Transcript</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="font-serif text-[13px] leading-5 text-[var(--text-2)]">
             {highlightMatch(result.snippet, query)}
           </span>
         </span>
@@ -158,7 +162,7 @@ function SearchResultRow({
       onClick={() => onSelectFile(result.id, result.folderId)}
     >
       <FileIcon
-        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+        className="mt-0.5 size-4 shrink-0 text-[var(--text-3)]"
         aria-hidden
       />
       <span className="truncate text-sm font-medium">

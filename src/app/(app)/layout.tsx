@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { signOut } from "@/server/auth/actions";
 import { createServerSupabase } from "@/server/db/client";
 
 export default async function AppLayout({
@@ -16,20 +14,5 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-3">
-        <span className="font-semibold">Lumen</span>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user.email}</span>
-          <form action={signOut}>
-            <Button type="submit" variant="outline" size="sm">
-              Log out
-            </Button>
-          </form>
-        </div>
-      </header>
-      <main className="flex min-h-0 flex-1">{children}</main>
-    </div>
-  );
+  return <main className="flex min-h-dvh bg-background">{children}</main>;
 }

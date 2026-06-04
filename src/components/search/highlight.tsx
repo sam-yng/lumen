@@ -8,9 +8,7 @@ export function highlightMatch(text: string, query?: string): ReactNode {
   return (
     <>
       {text.slice(0, index)}
-      <mark className="rounded bg-yellow-200 px-0.5 dark:bg-yellow-500/40">
-        {text.slice(index, index + term.length)}
-      </mark>
+      <mark className="l-mark">{text.slice(index, index + term.length)}</mark>
       {text.slice(index + term.length)}
     </>
   );
