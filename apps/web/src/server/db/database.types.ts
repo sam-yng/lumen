@@ -274,6 +274,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "semantic_search_chunks_document_id_user_id_fkey"
+            columns: ["document_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "semantic_search_chunks_recording_id_fkey"
             columns: ["recording_id"]
             isOneToOne: false
@@ -281,11 +288,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "semantic_search_chunks_recording_id_user_id_fkey"
+            columns: ["recording_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "semantic_search_chunks_transcript_id_fkey"
             columns: ["transcript_id"]
             isOneToOne: false
             referencedRelation: "transcripts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "semantic_search_chunks_transcript_id_recording_id_user_id_fkey"
+            columns: ["transcript_id", "recording_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id", "recording_id", "user_id"]
+          },
+          {
+            foreignKeyName: "semantic_search_chunks_transcript_id_user_id_fkey"
+            columns: ["transcript_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -427,15 +455,11 @@ export type Database = {
         Returns: {
           chunk_index: number
           content: string
-          document_id: string
-          end_ms: number
           id: string
-          recording_id: string
           similarity: number
+          source: Json
           source_type: Database["public"]["Enums"]["semantic_search_source_type"]
-          start_ms: number
           text_rank: number
-          transcript_id: string
           user_id: string
         }[]
       }

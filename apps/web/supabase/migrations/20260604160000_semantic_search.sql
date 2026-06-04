@@ -8,6 +8,15 @@ create extension if not exists vector with schema extensions;
 
 create type semantic_search_source_type as enum ('document', 'transcript');
 
+alter table public.documents
+  add constraint documents_id_user_id_key unique (id, user_id);
+alter table public.recordings
+  add constraint recordings_id_user_id_key unique (id, user_id);
+alter table public.transcripts
+  add constraint transcripts_id_user_id_key unique (id, user_id);
+alter table public.transcripts
+  add constraint transcripts_id_recording_id_user_id_key unique (id, recording_id, user_id);
+
 create table public.semantic_search_chunks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -25,13 +34,31 @@ create table public.semantic_search_chunks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint semantic_search_chunks_one_source check (
-    (source_type = 'document' and document_id is not null and transcript_id is null and recording_id is null) or
-    (source_type = 'transcript' and document_id is null and transcript_id is not null and recording_id is not null)
+    (
+      source_type = 'document'
+      and document_id is not null
+      and transcript_id is null
+      and recording_id is null
+      and start_ms is null
+      and end_ms is null
+    ) or (
+      source_type = 'transcript'
+      and document_id is null
+      and transcript_id is not null
+      and recording_id is not null
+      and start_ms is not null
+      and end_ms is not null
+      and end_ms >= start_ms
+    )
   ),
-  constraint semantic_search_chunks_time_bounds check (
-    (start_ms is null and end_ms is null) or
-    (start_ms is not null and end_ms is not null and end_ms >= start_ms)
-  ),
+  foreign key (document_id, user_id)
+    references public.documents (id, user_id) on delete cascade,
+  foreign key (transcript_id, user_id)
+    references public.transcripts (id, user_id) on delete cascade,
+  foreign key (recording_id, user_id)
+    references public.recordings (id, user_id) on delete cascade,
+  foreign key (transcript_id, recording_id, user_id)
+    references public.transcripts (id, recording_id, user_id) on delete cascade,
   unique (user_id, source_type, document_id, chunk_index),
   unique (user_id, source_type, transcript_id, chunk_index)
 );
@@ -78,11 +105,7 @@ returns table (
   id uuid,
   user_id uuid,
   source_type semantic_search_source_type,
-  document_id uuid,
-  transcript_id uuid,
-  recording_id uuid,
-  start_ms integer,
-  end_ms integer,
+  source jsonb,
   chunk_index integer,
   content text,
   similarity double precision,
@@ -96,11 +119,15 @@ as $$
     c.id,
     c.user_id,
     c.source_type,
-    c.document_id,
-    c.transcript_id,
-    c.recording_id,
-    c.start_ms,
-    c.end_ms,
+    case c.source_type
+      when 'document' then jsonb_build_object('documentId', c.document_id)
+      when 'transcript' then jsonb_build_object(
+        'transcriptId', c.transcript_id,
+        'recordingId', c.recording_id,
+        'startMs', c.start_ms,
+        'endMs', c.end_ms
+      )
+    end as source,
     c.chunk_index,
     c.content,
     1 - (c.embedding operator(extensions.<=>) query_embedding) as similarity,
