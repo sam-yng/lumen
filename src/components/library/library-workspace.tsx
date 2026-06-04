@@ -2,16 +2,24 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronRight,
+  Clock,
   File as FileIcon,
   FileText,
-  FileUp,
   Folder,
   FolderPlus,
+  Library as LibraryIcon,
   Loader2,
+  LogOut,
   Mic,
   Pencil,
+  Plus,
+  Search,
+  Settings,
+  Sparkles,
   Tag,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DocumentEditor } from "@/components/editor/document-editor";
@@ -48,6 +56,17 @@ type RecordingRow = Tables<"recordings">;
 type TagRow = Tables<"tags">;
 type TagLinkRow = Tables<"tag_links">;
 type TargetType = Database["public"]["Enums"]["tag_target_type"];
+type SignOutAction = () => Promise<void>;
+
+const STATUS_TONE = {
+  pending:
+    "bg-[var(--warn-soft)] text-[var(--warn)] ring-1 ring-[color-mix(in_oklch,var(--warn),transparent_65%)]",
+  processing:
+    "bg-[var(--busy-soft)] text-[var(--busy)] ring-1 ring-[color-mix(in_oklch,var(--busy),transparent_65%)]",
+  done: "bg-[var(--ok-soft)] text-[var(--ok)] ring-1 ring-[color-mix(in_oklch,var(--ok),transparent_65%)]",
+  failed:
+    "bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[color-mix(in_oklch,var(--danger),transparent_65%)]",
+} satisfies Record<RecordingRow["status"], string>;
 
 function useLibraryMutation<Input, Output>(
   mutate: (input: Input) => Promise<Output>,
@@ -124,11 +143,17 @@ function FolderTree({
         <button
           type="button"
           onClick={() => onSelect(folder.id)}
-          className={`flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-muted ${
-            selectedFolderId === folder.id ? "bg-muted font-medium" : ""
+          className={`group relative flex h-[var(--row-h)] w-full items-center gap-2 rounded-md pr-2 text-left text-sm text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
+            selectedFolderId === folder.id
+              ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
+              : ""
           }`}
           style={{ paddingLeft: 8 + depth * 16 }}
         >
+          {selectedFolderId === folder.id ? (
+            <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
+          ) : null}
+          <ChevronRight className="size-3.5 shrink-0 text-[var(--text-4)]" />
           <Folder className="size-4 shrink-0" />
           <span className="truncate">{folder.name}</span>
         </button>
@@ -142,11 +167,16 @@ function FolderTree({
       <button
         type="button"
         onClick={() => onSelect(null)}
-        className={`flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-muted ${
-          selectedFolderId === null ? "bg-muted font-medium" : ""
+        className={`group relative flex h-[var(--row-h)] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
+          selectedFolderId === null
+            ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
+            : ""
         }`}
       >
-        <Folder className="size-4 shrink-0" />
+        {selectedFolderId === null ? (
+          <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
+        ) : null}
+        <LibraryIcon className="size-4 shrink-0" />
         <span className="truncate">Library</span>
       </button>
       {renderFolders(null)}
@@ -177,7 +207,7 @@ function TagChips({
             key={tag.id}
             type="button"
             onClick={() => link && unlink.mutate(link.id)}
-            className="inline-flex h-6 items-center gap-1 rounded border px-2 text-xs"
+            className="l-chip border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)] hover:border-[var(--border-strong)]"
             aria-label={`Remove ${tag.name} tag`}
             title={`Remove ${tag.name} tag`}
           >
@@ -229,7 +259,7 @@ function TagAttachForm({
     >
       <select
         name="tagId"
-        className="h-8 rounded-md border bg-background px-2 text-xs"
+        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-xs text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
         aria-label="Tag"
       >
         {availableTags.map((tag) => (
@@ -262,7 +292,7 @@ function MoveSelect({
       <select
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        className="h-8 rounded-md border bg-background px-2 text-xs"
+        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-xs text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
         aria-label="Move to folder"
       >
         <option value="">Library</option>
@@ -289,6 +319,7 @@ function ItemRow({
   item,
   type,
   recording,
+  onOpenFolder,
   onOpenDocument,
   onOpenRecording,
 }: {
@@ -296,6 +327,7 @@ function ItemRow({
   item: FolderRow | DocumentRow | FileRow;
   type: "folder" | "document" | "file";
   recording?: RecordingRow | null;
+  onOpenFolder?: (folderId: string) => void;
   onOpenDocument?: (documentId: string) => void;
   onOpenRecording?: (recordingId: string) => void;
 }) {
@@ -339,24 +371,45 @@ function ItemRow({
     if (type === "file") removeFile.mutate(item.id);
   }
 
+  const meta =
+    type === "file" && "mime_type" in item
+      ? `${item.mime_type ?? "file"} · ${item.size_bytes} bytes`
+      : type === "folder"
+        ? "Folder"
+        : "Rich-text note";
+
   return (
-    <li className="grid gap-3 border-b py-4 md:grid-cols-[minmax(0,1fr)_auto]">
+    <li className="group grid min-h-[58px] gap-3 border-b border-[var(--border-soft)] py-3 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0 space-y-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted/40">
+        <button
+          type="button"
+          onClick={() => {
+            if (type === "folder") onOpenFolder?.(item.id);
+            if (type === "document") onOpenDocument?.(item.id);
+            if (recording) onOpenRecording?.(recording.id);
+          }}
+          className="flex min-w-0 items-center gap-3 rounded-md text-left"
+        >
+          <div
+            className={`grid size-[34px] shrink-0 place-items-center rounded-md border ${
+              recording
+                ? "border-[var(--busy-soft)] bg-[var(--busy-soft)] text-[var(--busy)]"
+                : type === "folder"
+                  ? "border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent-text)]"
+                  : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)]"
+            }`}
+          >
             {icon}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium">{name}</p>
-            <p className="text-xs text-muted-foreground">
-              {type === "file" && "mime_type" in item
-                ? `${item.mime_type} · ${item.size_bytes} bytes`
-                : type}
+            <p className="truncate font-medium text-foreground">{name}</p>
+            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+              {meta}
             </p>
           </div>
-        </div>
+        </button>
         {recording && (
-          <span className="inline-flex h-6 w-fit items-center rounded border px-2 text-xs capitalize text-muted-foreground">
+          <span className={`l-badge w-fit ${STATUS_TONE[recording.status]}`}>
             {recording.status}
           </span>
         )}
@@ -368,7 +421,7 @@ function ItemRow({
           />
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 opacity-100 md:opacity-0 md:transition md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         {type === "document" && (
           <Button
             type="button"
@@ -414,7 +467,7 @@ function ItemRow({
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={rename}
           title={`Rename ${name}`}
         >
@@ -424,7 +477,7 @@ function ItemRow({
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={remove}
           title={`Delete ${name}`}
         >
@@ -446,7 +499,7 @@ function CreateForms({
   const file = useLibraryMutation(uploadFile);
 
   return (
-    <div className="grid gap-3 border-b pb-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+    <div className="grid gap-3 border-b border-[var(--border-soft)] pb-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
       <form
         className="flex gap-2"
         onSubmit={(event) => {
@@ -478,9 +531,9 @@ function CreateForms({
         }}
       >
         <Input name="title" placeholder="Document title" />
-        <Button type="submit" variant="outline" title="Create document">
+        <Button type="submit" title="Create document">
           <span className="sr-only">Create document</span>
-          <FileText className="size-4" />
+          <Plus className="size-4" />
         </Button>
       </form>
       <form
@@ -498,7 +551,7 @@ function CreateForms({
         <Input name="file" type="file" aria-label="Upload file" />
         <Button type="submit" variant="outline" title="Upload file">
           <span className="sr-only">Upload file</span>
-          <FileUp className="size-4" />
+          <Upload className="size-4" />
         </Button>
       </form>
       <RecordAudioForm
@@ -524,7 +577,7 @@ function TagPanel({
   const remove = useLibraryMutation(deleteTag);
 
   return (
-    <section className="space-y-3 border-t pt-4">
+    <section className="space-y-3 border-t border-[var(--border-soft)] pt-4">
       <form
         className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_96px_auto]"
         onSubmit={(event) => {
@@ -623,12 +676,14 @@ function LibraryContent({
   snapshot,
   selectedFolderId,
   selectedTagId,
+  onSelectFolder,
   onOpenDocument,
   onOpenRecording,
 }: {
   snapshot: LibrarySnapshot;
   selectedFolderId: string | null;
   selectedTagId: string | null;
+  onSelectFolder: (folderId: string) => void;
   onOpenDocument: (documentId: string) => void;
   onOpenRecording: (recordingId: string) => void;
 }) {
@@ -659,44 +714,77 @@ function LibraryContent({
   );
 
   return (
-    <ul>
-      {childFolders.map((folder) => (
-        <ItemRow
-          key={folder.id}
-          snapshot={snapshot}
-          item={folder}
-          type="folder"
-        />
-      ))}
-      {documents.map((document) => (
-        <ItemRow
-          key={document.id}
-          snapshot={snapshot}
-          item={document}
-          type="document"
-          onOpenDocument={onOpenDocument}
-        />
-      ))}
-      {files.map((file) => (
-        <ItemRow
-          key={file.id}
-          snapshot={snapshot}
-          item={file}
-          type="file"
-          recording={recordingByFileId.get(file.id) ?? null}
-          onOpenRecording={onOpenRecording}
-        />
-      ))}
+    <div className="space-y-6">
+      {childFolders.length > 0 ? (
+        <section>
+          <h3 className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+            Folders
+          </h3>
+          <ul className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)] px-3">
+            {childFolders.map((folder) => (
+              <ItemRow
+                key={folder.id}
+                snapshot={snapshot}
+                item={folder}
+                type="folder"
+                onOpenFolder={onSelectFolder}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {documents.length > 0 || files.length > 0 ? (
+        <section>
+          <h3 className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+            Notes & files
+          </h3>
+          <ul className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)] px-3">
+            {documents.map((document) => (
+              <ItemRow
+                key={document.id}
+                snapshot={snapshot}
+                item={document}
+                type="document"
+                onOpenDocument={onOpenDocument}
+              />
+            ))}
+            {files.map((file) => (
+              <ItemRow
+                key={file.id}
+                snapshot={snapshot}
+                item={file}
+                type="file"
+                recording={recordingByFileId.get(file.id) ?? null}
+                onOpenRecording={onOpenRecording}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {!hasItems && (
-        <li className="py-12 text-center text-sm text-muted-foreground">
-          Nothing here yet.
-        </li>
+        <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface)] p-8 text-center">
+          <div className="max-w-sm">
+            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-text)]">
+              <FileText className="size-5" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold">Nothing here yet</h3>
+            <p className="mt-1 text-sm text-[var(--text-3)]">
+              Create a note, upload a file, or record audio in this folder.
+            </p>
+          </div>
+        </div>
       )}
-    </ul>
+    </div>
   );
 }
 
-export function LibraryWorkspace() {
+export function LibraryWorkspace({
+  signOutAction,
+  userEmail,
+}: {
+  signOutAction: SignOutAction;
+  userEmail: string;
+}) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
@@ -705,6 +793,7 @@ export function LibraryWorkspace() {
   const [selectedRecordingId, setSelectedRecordingId] = useState<string | null>(
     null,
   );
+  const quickCreateDocument = useLibraryMutation(createDocument);
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -733,88 +822,267 @@ export function LibraryWorkspace() {
     data.recordings.find((recording) => recording.id === selectedRecordingId) ??
     null;
 
+  const selectedTagName = selectedTagId
+    ? data.tags.find((tag) => tag.id === selectedTagId)?.name
+    : null;
+
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="min-h-0 overflow-auto border-b p-4 lg:border-r lg:border-b-0">
-        <div className="mb-4">
-          <h1 className="text-lg font-semibold">Lumen</h1>
-          <p className="text-sm text-muted-foreground">Study library</p>
+    <div className="grid h-dvh min-h-0 flex-1 grid-cols-1 overflow-hidden bg-background lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="flex min-h-0 flex-col overflow-hidden border-b border-[var(--border-soft)] bg-[var(--surface)] lg:border-r lg:border-b-0">
+        <div className="border-b border-[var(--border-soft)] p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="inline-flex items-center gap-2">
+              <span className="size-[11px] rounded-full bg-primary shadow-[0_0_24px_var(--accent-glow)]" />
+              <h1 className="font-semibold">Lumen</h1>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              title="Settings"
+            >
+              <Settings className="size-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                const title = window.prompt("New note title", "Untitled note");
+                if (title?.trim()) {
+                  quickCreateDocument.mutate({
+                    title: title.trim(),
+                    folderId: selectedFolderId,
+                  });
+                }
+              }}
+            >
+              <Plus className="size-4" />
+              New note
+            </Button>
+            <Button type="button" variant="outline" size="icon" title="Search">
+              <Search className="size-4" />
+            </Button>
+          </div>
         </div>
-        <SearchPanel
-          onOpenDocument={(documentId) => {
-            setSelectedRecordingId(null);
-            setSelectedDocumentId(documentId);
-          }}
-          onOpenTranscript={(recordingId) => {
-            setSelectedDocumentId(null);
-            setSelectedRecordingId(recordingId);
-          }}
-          onSelectFile={(_fileId, folderId) => {
-            setSelectedFolderId(folderId);
-            setSelectedTagId(null);
-            setSelectedDocumentId(null);
-            setSelectedRecordingId(null);
-          }}
-        />
-        <FolderTree
-          folders={data.folders}
-          selectedFolderId={selectedFolderId}
-          onSelect={setSelectedFolderId}
-        />
-        <TagPanel
-          tags={data.tags}
-          selectedTagId={selectedTagId}
-          onSelectTag={setSelectedTagId}
-        />
+        <div className="min-h-0 flex-1 overflow-auto p-4">
+          <nav className="mb-4 space-y-1">
+            <button
+              type="button"
+              className="flex h-8 w-full items-center gap-2 rounded-md bg-[var(--accent-soft)] px-2 text-left text-sm font-medium text-[var(--accent-text)]"
+            >
+              <LibraryIcon className="size-4" />
+              Library
+            </button>
+            <button
+              type="button"
+              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            >
+              <Clock className="size-4" />
+              Recents
+            </button>
+            <button
+              type="button"
+              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            >
+              <Tag className="size-4" />
+              Tags
+            </button>
+            <button
+              type="button"
+              className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            >
+              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              Ask Lumen
+              <span className="ml-auto font-mono text-[10px] text-[var(--text-4)]">
+                v2
+              </span>
+            </button>
+          </nav>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+              Library
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              title="New folder"
+            >
+              <FolderPlus className="size-3.5" />
+            </Button>
+          </div>
+          <FolderTree
+            folders={data.folders}
+            selectedFolderId={selectedFolderId}
+            onSelect={(folderId) => {
+              setSelectedFolderId(folderId);
+              setSelectedDocumentId(null);
+              setSelectedRecordingId(null);
+            }}
+          />
+          <TagPanel
+            tags={data.tags}
+            selectedTagId={selectedTagId}
+            onSelectTag={setSelectedTagId}
+          />
+        </div>
+        <div className="border-t border-[var(--border-soft)] p-4">
+          <div className="flex items-center gap-3">
+            <div className="grid size-9 place-items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--busy))] text-sm font-semibold text-[var(--on-accent)]">
+              {userEmail.slice(0, 1).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">Workspace</p>
+              <p className="truncate text-xs text-[var(--text-3)]">
+                {userEmail}
+              </p>
+            </div>
+            <form action={signOutAction}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon-sm"
+                title="Log out"
+              >
+                <LogOut className="size-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
       </aside>
-      <section className="min-h-0 overflow-auto p-4 lg:p-6">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">
+      <section className="min-h-0 overflow-auto">
+        <div className="sticky top-0 z-20 flex min-h-[52px] items-center justify-between gap-3 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+          <div className="flex min-w-0 items-center gap-2 text-sm text-[var(--text-3)]">
+            <button
+              type="button"
+              className="truncate hover:text-foreground"
+              onClick={() => setSelectedFolderId(null)}
+            >
+              Library
+            </button>
+            {selectedFolderId ? (
+              <>
+                <ChevronRight className="size-4 shrink-0" />
+                <span className="truncate text-foreground">
+                  {folderName(data, selectedFolderId)}
+                </span>
+              </>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="ghost" size="icon-sm" title="Search">
+              <Search className="size-4" />
+            </Button>
+            <Button type="button" variant="outline" size="sm">
+              <Upload className="size-4" />
+              Upload
+            </Button>
+            <Button type="button" size="sm">
+              <Plus className="size-4" />
+              New note
+            </Button>
+          </div>
+        </div>
+        <div className="p-4 lg:p-6">
+          <div className="mb-5">
+            <h2 className="text-2xl font-semibold">
               {folderName(data, selectedFolderId)}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {selectedTagId
-                ? `Filtered by ${
-                    data.tags.find((tag) => tag.id === selectedTagId)?.name ??
-                    "tag"
-                  }`
-                : "Folders, documents, and file metadata"}
+            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+              {selectedTagName
+                ? `Filtered by ${selectedTagName}`
+                : `${data.folders.length + data.documents.length + data.files.length} items`}
             </p>
           </div>
-        </div>
-        <div
-          className={
-            selectedDocument
-              ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
-              : selectedRecording
-                ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(460px,0.9fr)]"
-                : ""
-          }
-        >
-          <div>
-            <CreateForms selectedFolderId={selectedFolderId} />
-            <LibraryContent
-              snapshot={data}
-              selectedFolderId={selectedFolderId}
-              selectedTagId={selectedTagId}
-              onOpenDocument={setSelectedDocumentId}
-              onOpenRecording={setSelectedRecordingId}
-            />
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <span className="font-mono text-[11.5px] text-[var(--text-3)]">
+              Filter
+            </span>
+            <Button
+              type="button"
+              variant={selectedTagId === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedTagId(null)}
+            >
+              All
+            </Button>
+            {data.tags.map((tag) => (
+              <Button
+                key={tag.id}
+                type="button"
+                variant={selectedTagId === tag.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedTagId(tag.id)}
+              >
+                <span
+                  className="size-2 rounded-full"
+                  style={{ backgroundColor: tag.color ?? "var(--accent)" }}
+                />
+                {tag.name}
+              </Button>
+            ))}
           </div>
-          {selectedDocument && (
-            <DocumentEditor
-              key={selectedDocument.id}
-              document={selectedDocument}
-            />
-          )}
-          {selectedRecording && (
-            <TranscriptViewer
-              key={selectedRecording.id}
-              recording={selectedRecording}
-              onClose={() => setSelectedRecordingId(null)}
-            />
-          )}
+          <SearchPanel
+            onOpenDocument={(documentId) => {
+              setSelectedRecordingId(null);
+              setSelectedDocumentId(documentId);
+            }}
+            onOpenTranscript={(recordingId) => {
+              setSelectedDocumentId(null);
+              setSelectedRecordingId(recordingId);
+            }}
+            onSelectFile={(_fileId, folderId) => {
+              setSelectedFolderId(folderId);
+              setSelectedTagId(null);
+              setSelectedDocumentId(null);
+              setSelectedRecordingId(null);
+            }}
+          />
+          <div
+            className={
+              selectedDocument
+                ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]"
+                : selectedRecording
+                  ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(460px,0.9fr)]"
+                  : ""
+            }
+          >
+            <div className="space-y-5">
+              <CreateForms selectedFolderId={selectedFolderId} />
+              <LibraryContent
+                snapshot={data}
+                selectedFolderId={selectedFolderId}
+                selectedTagId={selectedTagId}
+                onSelectFolder={(folderId) => {
+                  setSelectedFolderId(folderId);
+                  setSelectedDocumentId(null);
+                  setSelectedRecordingId(null);
+                }}
+                onOpenDocument={(documentId) => {
+                  setSelectedRecordingId(null);
+                  setSelectedDocumentId(documentId);
+                }}
+                onOpenRecording={(recordingId) => {
+                  setSelectedDocumentId(null);
+                  setSelectedRecordingId(recordingId);
+                }}
+              />
+            </div>
+            {selectedDocument && (
+              <DocumentEditor
+                key={selectedDocument.id}
+                document={selectedDocument}
+              />
+            )}
+            {selectedRecording && (
+              <TranscriptViewer
+                key={selectedRecording.id}
+                recording={selectedRecording}
+                onClose={() => setSelectedRecordingId(null)}
+              />
+            )}
+          </div>
         </div>
       </section>
     </div>

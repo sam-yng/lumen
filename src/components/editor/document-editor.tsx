@@ -18,7 +18,6 @@ import {
   LinkIcon,
   List,
   ListChecks,
-  Save,
   TableIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -71,8 +70,8 @@ function ToolbarButton({
   return (
     <Button
       type="button"
-      variant={active ? "default" : "outline"}
-      size="sm"
+      variant={active ? "default" : "ghost"}
+      size="icon-sm"
       onClick={onClick}
       title={label}
     >
@@ -113,8 +112,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
     content,
     editorProps: {
       attributes: {
-        class:
-          "min-h-72 rounded-md border bg-background px-4 py-3 text-sm leading-7 outline-none prose prose-sm max-w-none",
+        class: "lumen-editor min-h-[460px] outline-none",
       },
     },
     onUpdate: () => {
@@ -177,23 +175,39 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
           : saveState === "error"
             ? "Save failed"
             : "Ready";
+  const statusTone =
+    saveState === "dirty"
+      ? "bg-[var(--warn)]"
+      : saveState === "saving"
+        ? "bg-[var(--warn)] animate-pulse"
+        : saveState === "error"
+          ? "bg-[var(--danger)]"
+          : saveState === "saved"
+            ? "bg-[var(--ok)]"
+            : "bg-[var(--text-4)]";
+  const wordCount = editor.getText().trim().split(/\s+/).filter(Boolean).length;
+  const updated = document.updated_at
+    ? new Date(document.updated_at).toLocaleDateString()
+    : "Not saved";
 
   return (
-    <section className="space-y-3 rounded-md border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section className="min-w-0 overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
+      <div className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4">
         <div className="min-w-0">
-          <h3 className="truncate font-semibold">{document.title}</h3>
-          <p className="text-xs text-muted-foreground">
-            Rich-text note with autosave
+          <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+            Library / note
           </p>
+          <h3 className="truncate text-[17px] font-semibold">
+            {document.title}
+          </h3>
         </div>
-        <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-          <Save className="size-4" />
+        <div className="inline-flex items-center gap-2 font-mono text-[11.5px] text-[var(--text-3)]">
+          <span className={`size-2 rounded-full ${statusTone}`} />
           {status}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="sticky top-0 z-10 flex min-h-[42px] flex-wrap items-center justify-center gap-1 border-b border-[var(--border-soft)] bg-[var(--surface)] px-3">
         <ToolbarButton
           label="Bold"
           active={editor.isActive("bold")}
@@ -208,6 +222,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         >
           <Italic className="size-4" />
         </ToolbarButton>
+        <span className="mx-1 h-5 w-px bg-[var(--border-soft)]" />
         <ToolbarButton
           label="Heading"
           active={editor.isActive("heading", { level: 2 })}
@@ -231,6 +246,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         >
           <ListChecks className="size-4" />
         </ToolbarButton>
+        <span className="mx-1 h-5 w-px bg-[var(--border-soft)]" />
         <ToolbarButton
           label="Link"
           active={editor.isActive("link")}
@@ -252,8 +268,16 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         </ToolbarButton>
       </div>
 
-      <EditorContent editor={editor} />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="mx-auto max-w-[700px] px-5 py-8">
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <span className="l-chip border-dashed text-[var(--text-3)]">Tag</span>
+        </div>
+        <p className="mb-6 font-mono text-[11.5px] text-[var(--text-3)]">
+          Updated {updated} · {wordCount} words · in Library
+        </p>
+        <EditorContent editor={editor} />
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+      </div>
     </section>
   );
 }

@@ -3,13 +3,14 @@
 Visual and interaction design language for Lumen v1 (dark theme), built on
 Tailwind v4 + shadcn/ui.
 
-> **Status: SPEC, not yet implemented.** This captures the high-fidelity design
-> handoff (`design_handoff_lumen_v1`) so styling can be applied and enforced as
-> one pass after v1's functional milestones land. The current
-> [`globals.css`](../src/app/globals.css) still ships the default shadcn neutral
-> palette — none of the tokens below are wired up yet. Do not treat anything here
-> as describing the running app. When the restyle happens, map these tokens onto
-> the `.dark` block + Tailwind v4 `@theme` layer and update this status line.
+> **Status: IMPLEMENTED for the v1 design pass.** This captures the
+> high-fidelity design handoff (`design_handoff_lumen_v1`) and now describes the
+> running app's dark-first visual language. The token layer is wired through
+> [`globals.css`](../src/app/globals.css), the root layout loads the reading
+> font, and the v1 auth/library/editor/transcript/search surfaces have been
+> restyled from this spec. Design-time-only controls such as Tweaks, plus v2+
+> features such as Ask Lumen/MCP/semantic search, remain documented intent rather
+> than shipping v1 UI.
 >
 > Source of truth for the visuals is the handoff bundle's `tokens.css` /
 > `app.css` (design references in HTML/CSS + in-browser-Babel JSX — a precise

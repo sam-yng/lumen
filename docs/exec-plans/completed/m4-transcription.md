@@ -229,7 +229,7 @@ the worker process, zod, Vitest, Playwright.
       forced failure, and reload to confirm persistence.
 - [x] Move this file to `docs/exec-plans/completed/m4-transcription.md` with a
       short retrospective.
-- [ ] Pause for human review at the M4 boundary.
+- [x] Pause for human review at the M4 boundary.
 
 ---
 

@@ -1,8 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Clock, Loader2, Mic, Play } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import {
+  AlertCircle,
+  Clock,
+  Download,
+  Loader2,
+  Mic,
+  Pause,
+  Play,
+  RotateCcw,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchTranscriptDetail,
   libraryQueryKey,
@@ -14,6 +23,15 @@ import type { Tables } from "@/server/db/database.types";
 
 type RecordingRow = Tables<"recordings">;
 type SegmentRow = Tables<"transcript_segments">;
+
+const RATES = [1, 1.25, 1.5, 1.75, 2, 2.25] as const;
+const WAVEFORM_BARS = Array.from({ length: 150 }, (_, index) => {
+  const wave = Math.sin(index * 0.42) * 0.34 + Math.sin(index * 0.11) * 0.22;
+  return {
+    id: `bar-${index}`,
+    height: Math.round(22 + Math.abs(wave) * 42 + (index % 7) * 1.6),
+  };
+});
 
 function formatTime(milliseconds: number) {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -42,18 +60,28 @@ function StatusState({
 }) {
   if (recording.status === "failed") {
     return (
-      <div className="grid min-h-80 place-items-center rounded-md border p-6 text-center">
+      <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
         <div className="space-y-3">
           <AlertCircle className="mx-auto size-8 text-destructive" />
           <p className="font-medium">Transcription failed</p>
-          <p className="max-w-md text-sm text-muted-foreground">
+          <p className="max-w-md font-mono text-[11.5px] text-[var(--text-3)]">
             {recording.error ??
               "The local worker could not transcribe this file."}
           </p>
-          <Button type="button" onClick={onRetry} disabled={retrying}>
-            {retrying && <Loader2 className="size-4 animate-spin" />}
-            Retry
-          </Button>
+          <div className="flex justify-center gap-2">
+            <Button type="button" onClick={onRetry} disabled={retrying}>
+              {retrying ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RotateCcw className="size-4" />
+              )}
+              Retry
+            </Button>
+            <Button type="button" variant="outline">
+              <Download className="size-4" />
+              Download
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -61,19 +89,31 @@ function StatusState({
 
   const processing = recording.status === "processing";
   return (
-    <div className="grid min-h-80 place-items-center rounded-md border p-6 text-center">
-      <div className="space-y-3">
+    <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
+      <div className="w-full max-w-md space-y-4">
         {processing ? (
-          <Loader2 className="mx-auto size-8 animate-spin text-muted-foreground" />
+          <Loader2 className="mx-auto size-8 animate-spin text-[var(--busy)]" />
         ) : (
-          <Clock className="mx-auto size-8 text-muted-foreground" />
+          <Clock className="mx-auto size-8 text-[var(--warn)]" />
         )}
-        <p className="font-medium">
-          {processing ? "Transcribing locally" : "Queued for transcription"}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          base.en · local CPU · no data leaves your machine
-        </p>
+        <div>
+          <span
+            className={`l-badge mx-auto ${processing ? "bg-[var(--busy-soft)] text-[var(--busy)]" : "bg-[var(--warn-soft)] text-[var(--warn)]"}`}
+          >
+            {processing ? "transcribing" : "queued"}
+          </span>
+          <p className="mt-3 font-medium">
+            {processing ? "Transcribing locally" : "Queued for transcription"}
+          </p>
+          <p className="mt-1 font-mono text-[11.5px] text-[var(--text-3)]">
+            base.en · local CPU · no data leaves your machine
+          </p>
+        </div>
+        {processing ? (
+          <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
+            <div className="h-full w-2/3 rounded-full bg-[linear-gradient(90deg,var(--busy),var(--accent))]" />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -88,7 +128,12 @@ export function TranscriptViewer({
 }) {
   const queryClient = useQueryClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const segmentListRef = useRef<HTMLOListElement | null>(null);
+  const segmentRefs = useRef(new Map<string, HTMLButtonElement>());
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(recording.duration_sec ?? 0);
+  const [playing, setPlaying] = useState(false);
+  const [rateIndex, setRateIndex] = useState(0);
   const { data, error, isLoading } = useQuery({
     queryKey: transcriptQueryKey(recording.id),
     queryFn: () => fetchTranscriptDetail(recording.id),
@@ -107,59 +152,93 @@ export function TranscriptViewer({
     () => activeSegmentIndex(segments, currentTime),
     [segments, currentTime],
   );
+  const progress = duration > 0 ? currentTime / duration : 0;
+  const rate = RATES[rateIndex] ?? 1;
+
+  useEffect(() => {
+    const activeSegment = activeIndex >= 0 ? segments[activeIndex] : null;
+    const container = segmentListRef.current;
+    if (!activeSegment || !container) return;
+
+    const activeButton = segmentRefs.current.get(activeSegment.id);
+    if (!activeButton) return;
+
+    const target =
+      activeButton.offsetTop -
+      container.clientHeight * 0.4 +
+      activeButton.clientHeight / 2;
+    container.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+  }, [activeIndex, segments]);
 
   if (isLoading) {
     return (
-      <section className="grid min-h-96 place-items-center rounded-md border p-6">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <section className="grid min-h-96 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+        <Loader2 className="size-6 animate-spin text-[var(--text-3)]" />
       </section>
     );
   }
 
   if (error || !data) {
     return (
-      <section className="grid min-h-96 place-items-center rounded-md border p-6 text-sm text-destructive">
+      <section className="grid min-h-96 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-sm text-destructive">
         {error instanceof Error ? error.message : "Could not load transcript."}
       </section>
     );
   }
 
+  function seek(seconds: number) {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(0, Math.min(seconds, duration || seconds));
+    setCurrentTime(audio.currentTime);
+  }
+
   return (
-    <section className="min-w-0 space-y-4 rounded-md border p-4">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+    <section className="min-w-0 overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] p-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-md border bg-muted/50">
+          <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--busy-soft)] bg-[var(--busy-soft)] text-[var(--busy)]">
             <Mic className="size-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="truncate font-semibold">{data.file.name}</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="truncate text-[19px] font-semibold">
+              {data.file.name}
+            </h3>
+            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
               {data.recording.duration_sec
-                ? `${data.recording.duration_sec}s · `
+                ? `${formatTime(data.recording.duration_sec * 1000)} · `
                 : ""}
-              {data.transcript?.language ?? "language pending"} ·{" "}
-              {data.recording.status}
+              {data.file.size_bytes} bytes ·{" "}
+              {data.transcript?.language ?? "language pending"} · base.en
             </p>
           </div>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={onClose}>
-          Close
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="l-badge bg-[var(--ok-soft)] text-[var(--ok)]">
+            {data.recording.status}
+          </span>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </header>
 
       {data.recording.status !== "done" || !data.transcript ? (
-        <StatusState
-          recording={data.recording}
-          onRetry={() => retry.mutate(data.recording.id)}
-          retrying={retry.isPending}
-        />
+        <div className="p-4">
+          <StatusState
+            recording={data.recording}
+            onRetry={() => retry.mutate(data.recording.id)}
+            retrying={retry.isPending}
+          />
+        </div>
       ) : (
         <>
-          <div className="sticky top-0 z-10 rounded-md border bg-background p-3">
+          <div className="sticky top-0 z-10 border-b border-[var(--border-soft)] bg-[var(--surface)] p-3">
             <div className="flex items-center gap-3">
               <Button
                 type="button"
-                size="sm"
+                size="icon-lg"
+                className="rounded-full"
                 onClick={() => {
                   const audio = audioRef.current;
                   if (!audio) return;
@@ -167,40 +246,108 @@ export function TranscriptViewer({
                   else audio.pause();
                 }}
               >
-                <Play className="size-4" />
+                {playing ? (
+                  <Pause className="size-4" />
+                ) : (
+                  <Play className="size-4" />
+                )}
               </Button>
-              {/* biome-ignore lint/a11y/useMediaCaption: Transcript text is rendered as interactive segments adjacent to the player. */}
+              <button
+                type="button"
+                className="relative flex h-14 min-w-0 flex-1 items-center gap-px overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-2"
+                aria-label="Seek audio"
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const ratio = (event.clientX - rect.left) / rect.width;
+                  seek(ratio * duration);
+                }}
+              >
+                {WAVEFORM_BARS.map((bar, index) => {
+                  const filled = index / WAVEFORM_BARS.length <= progress;
+                  return (
+                    <span
+                      key={bar.id}
+                      className={`flex-1 rounded-full ${filled ? "bg-primary" : "bg-[var(--border-strong)]"}`}
+                      style={{ height: `${bar.height}%` }}
+                    />
+                  );
+                })}
+                <span
+                  className="absolute top-1 bottom-1 w-px rounded-full bg-primary shadow-[0_0_18px_var(--accent-glow)]"
+                  style={{
+                    left: `${Math.max(0, Math.min(100, progress * 100))}%`,
+                  }}
+                />
+              </button>
+              <p className="w-[92px] text-right font-mono text-[11.5px] text-[var(--text-3)]">
+                {formatTime(currentTime * 1000)} / {formatTime(duration * 1000)}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const next = (rateIndex + 1) % RATES.length;
+                  setRateIndex(next);
+                  if (audioRef.current) {
+                    audioRef.current.playbackRate = RATES[next] ?? 1;
+                  }
+                }}
+              >
+                {rate}x
+              </Button>
+              {/* biome-ignore lint/a11y/useMediaCaption: Transcript segments are rendered directly below as the synchronized caption text. */}
               <audio
                 ref={audioRef}
-                className="h-9 min-w-0 flex-1"
-                controls
                 src={`/api/library/files/${data.file.id}`}
+                onLoadedMetadata={(event) =>
+                  setDuration(event.currentTarget.duration)
+                }
+                onPause={() => setPlaying(false)}
+                onPlay={() => {
+                  setPlaying(true);
+                  if (audioRef.current) audioRef.current.playbackRate = rate;
+                }}
                 onTimeUpdate={(event) =>
                   setCurrentTime(event.currentTarget.currentTime)
                 }
               />
             </div>
           </div>
-          <ol className="mx-auto max-w-3xl space-y-1">
+          <ol
+            ref={segmentListRef}
+            className="mx-auto max-h-[62dvh] max-w-3xl space-y-1 overflow-auto p-4"
+          >
             {segments.map((segment, index) => (
               <li key={segment.id}>
                 <button
                   type="button"
-                  className={`grid w-full grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md border-l-2 px-3 py-2 text-left hover:bg-muted ${
+                  ref={(element) => {
+                    if (element) segmentRefs.current.set(segment.id, element);
+                    else segmentRefs.current.delete(segment.id);
+                  }}
+                  className={`grid w-full grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md border-l-2 px-3 py-2 text-left transition hover:bg-[var(--surface-2)] ${
                     index === activeIndex
-                      ? "border-l-primary bg-muted"
+                      ? "border-l-primary bg-[var(--accent-soft)]"
                       : "border-l-transparent"
                   }`}
-                  onClick={() => {
-                    if (audioRef.current) {
-                      audioRef.current.currentTime = segment.start_ms / 1000;
-                    }
-                  }}
+                  onClick={() => seek(segment.start_ms / 1000)}
                 >
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <span
+                    className={`font-mono text-[11.5px] ${index === activeIndex ? "text-[var(--accent-text)]" : "text-[var(--text-3)]"}`}
+                  >
                     {formatTime(segment.start_ms)}
                   </span>
-                  <span className="text-sm leading-6">{segment.text}</span>
+                  <span className="min-w-0">
+                    {segment.speaker ? (
+                      <span className="mb-1 block font-mono text-[10px] uppercase text-[var(--text-4)]">
+                        {segment.speaker}
+                      </span>
+                    ) : null}
+                    <span className="font-serif text-[16.5px] leading-7 text-foreground">
+                      {segment.text}
+                    </span>
+                  </span>
                 </button>
               </li>
             ))}

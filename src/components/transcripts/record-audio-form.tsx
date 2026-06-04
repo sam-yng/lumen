@@ -1,13 +1,29 @@
 "use client";
 
 import { Mic, Square } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+
+function formatElapsed(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remaining = seconds % 60;
+  return `${minutes}:${String(remaining).padStart(2, "0")}`;
+}
 
 export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!recording) return;
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 500);
+    return () => window.clearInterval(interval);
+  }, [recording]);
 
   async function start() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -28,6 +44,7 @@ export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
     };
     recorder.start();
     setRecording(true);
+    setElapsed(0);
   }
 
   function stop() {
@@ -35,10 +52,23 @@ export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] p-1">
+      <span
+        className={`grid size-8 place-items-center rounded-md ${
+          recording
+            ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+            : "bg-[var(--surface-3)] text-[var(--text-3)]"
+        }`}
+      >
+        <Mic className={`size-4 ${recording ? "animate-pulse" : ""}`} />
+      </span>
+      <span className="w-12 font-mono text-[11.5px] text-[var(--text-3)]">
+        {formatElapsed(elapsed)}
+      </span>
       <Button
         type="button"
-        variant="outline"
+        variant={recording ? "ghost" : "outline"}
+        size="icon-sm"
         onClick={() => void start()}
         disabled={recording}
         title="Start recording"
@@ -49,6 +79,7 @@ export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
       <Button
         type="button"
         variant="outline"
+        size="icon-sm"
         onClick={stop}
         disabled={!recording}
         title="Stop and save recording"
