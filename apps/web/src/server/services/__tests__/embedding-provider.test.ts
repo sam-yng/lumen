@@ -39,6 +39,7 @@ describe("DeterministicEmbeddingProvider", () => {
 
     expect(first).toEqual(second);
     expect(l2Norm(first ?? [])).toBeCloseTo(1, 6);
+    expect(first?.some((value) => value !== 0)).toBe(true);
   });
 });
 

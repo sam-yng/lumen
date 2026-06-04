@@ -18,6 +18,18 @@ function longestSuffixPrefixOverlap(left: string, right: string) {
   return 0;
 }
 
+function longWord(length: number) {
+  let word = "";
+  let index = 0;
+
+  while (word.length < length) {
+    word += `x${index.toString(36).padStart(4, "0")}`;
+    index += 1;
+  }
+
+  return word.slice(0, length);
+}
+
 describe("chunkDocument", () => {
   it("returns no chunks for empty or whitespace text", () => {
     expect(chunkDocument({ documentId: "doc-1", text: "" })).toEqual([]);
@@ -66,6 +78,24 @@ describe("chunkDocument", () => {
 
       expect(current.length).toBeLessThanOrEqual(MAX_CHUNK_CHARS);
       expect(overlap).toBeGreaterThanOrEqual(CHUNK_OVERLAP_CHARS - 30);
+      expect(overlap).toBeLessThanOrEqual(CHUNK_OVERLAP_CHARS + 30);
+    }
+  });
+
+  it("does not let sparse whitespace make overlap balloon past the target", () => {
+    const chunks = chunkDocument({
+      documentId: "doc-1",
+      text: `${"a".repeat(300)} ${longWord(2_000)}`,
+    });
+
+    expect(chunks.length).toBeGreaterThan(1);
+
+    for (let index = 1; index < chunks.length; index += 1) {
+      const previous = chunks[index - 1]?.content ?? "";
+      const current = chunks[index]?.content ?? "";
+      const overlap = longestSuffixPrefixOverlap(previous, current);
+
+      expect(current.length).toBeLessThanOrEqual(MAX_CHUNK_CHARS);
       expect(overlap).toBeLessThanOrEqual(CHUNK_OVERLAP_CHARS + 30);
     }
   });
@@ -122,5 +152,34 @@ describe("chunkTranscript", () => {
       startMs: 3_000,
       endMs: 3_500,
     });
+  });
+
+  it("splits a single oversized segment without losing transcript metadata", () => {
+    const chunks = chunkTranscript([
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 9_000,
+        text: longWord(MAX_CHUNK_CHARS * 2),
+      },
+    ]);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.map((chunk) => chunk.chunkIndex)).toEqual(
+      chunks.map((_, index) => index),
+    );
+
+    for (const chunk of chunks) {
+      expect(chunk).toMatchObject({
+        sourceType: "transcript",
+        documentId: null,
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 9_000,
+      });
+      expect(chunk.content.length).toBeLessThanOrEqual(MAX_CHUNK_CHARS);
+    }
   });
 });

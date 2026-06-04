@@ -73,3 +73,12 @@
   git add docs/exec-plans/active/v2-ai-mcp/task-2-chunking-embedding-provider.md apps/web/src/server/services/semantic-chunking.ts apps/web/src/server/services/embedding-provider.ts apps/web/src/server/services/__tests__/semantic-chunking.test.ts apps/web/src/server/services/__tests__/embedding-provider.test.ts
   git commit -m "feat: add semantic chunking and embeddings"
   ```
+
+## Quality Review Follow-Up
+
+- [x] Added a regression test for a single transcript segment longer than `MAX_CHUNK_CHARS`.
+- [x] Split oversized transcript chunks so every returned transcript chunk stays at or below `MAX_CHUNK_CHARS` while preserving transcript metadata.
+- [x] Added a sparse-whitespace document regression proving overlap does not balloon beyond `CHUNK_OVERLAP_CHARS + 30`.
+- [x] Limited overlap whitespace preference to whitespace near the target overlap window.
+- [x] Changed deterministic token lowercasing from `toLocaleLowerCase()` to `toLowerCase()`.
+- [x] Asserted representative non-empty text produces at least one non-zero embedding value.

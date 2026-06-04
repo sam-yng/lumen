@@ -36,6 +36,8 @@ export type SearchChunk =
       content: string;
     };
 
+const OVERLAP_WHITESPACE_TOLERANCE_CHARS = 30;
+
 function normalizeText(text: string | null) {
   return text?.replace(/\s+/g, " ").trim() ?? "";
 }
@@ -67,8 +69,12 @@ function findNextChunkStart(
     currentEnd - CHUNK_OVERLAP_CHARS,
   );
   const whitespaceStart = text.lastIndexOf(" ", targetStart);
+  const whitespaceDistance = targetStart - whitespaceStart;
 
-  if (whitespaceStart > currentStart) {
+  if (
+    whitespaceStart > currentStart &&
+    whitespaceDistance <= OVERLAP_WHITESPACE_TOLERANCE_CHARS
+  ) {
     return whitespaceStart + 1;
   }
 
@@ -176,5 +182,20 @@ export function chunkTranscript(
 
   flushCurrentSegments();
 
-  return chunks;
+  return chunks
+    .flatMap((chunk) => {
+      if (chunk.content.length <= MAX_CHUNK_CHARS) {
+        return [chunk];
+      }
+
+      return splitText(chunk.content).map((content) => ({
+        ...chunk,
+        chunkIndex: 0,
+        content,
+      }));
+    })
+    .map((chunk, chunkIndex) => ({
+      ...chunk,
+      chunkIndex,
+    }));
 }

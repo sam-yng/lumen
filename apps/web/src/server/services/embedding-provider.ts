@@ -9,7 +9,7 @@ function normalizeText(text: string) {
 }
 
 function tokenize(text: string) {
-  return text.toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [text];
+  return text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [text];
 }
 
 function hashToken(token: string, seed: number) {
