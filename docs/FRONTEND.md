@@ -52,3 +52,19 @@ The dark-theme visual restyle (all milestones) is specified in
   `/api/library/files/:id`.
 - Completed transcripts render ordered timestamp segments; clicking a segment
   seeks the audio element to that segment start.
+
+## Search (M5)
+
+- `SearchPanel` (sidebar) queries `/api/search` with TanStack Query key
+  `["search", q]`, debounced 250ms, enabled only for non-empty queries. It owns
+  its own key and never touches `["library"]`.
+- Results are one ranked list across document bodies + transcript bodies (FTS)
+  and document titles + file names (ILIKE fallback). Match highlighting lives in
+  `components/search/highlight.tsx`.
+- Result actions reuse the existing workspace panels: a document hit opens the
+  `DocumentEditor`; a transcript hit opens M4's `TranscriptViewer` (looked up by
+  `recordingId` from the snapshot); a file hit selects its folder.
+- Search results intentionally remain visible while a changed query refetches
+  (no flicker); a refresh indicator is a deferred polish item.
+
+Status: M5 search conventions captured; transcript viewing reuses the M4 viewer.

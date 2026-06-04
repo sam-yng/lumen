@@ -49,6 +49,18 @@ class FakeQuery implements ServiceQuery<Row> {
     return this;
   }
 
+  ilike(_column: string, _pattern: string) {
+    return this;
+  }
+
+  textSearch(
+    _column: string,
+    _query: string,
+    _options?: { type?: "plain" | "phrase" | "websearch"; config?: string },
+  ) {
+    return this;
+  }
+
   update(values: Row) {
     this.pendingUpdate = values;
     return this;

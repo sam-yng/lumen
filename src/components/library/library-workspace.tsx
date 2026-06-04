@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DocumentEditor } from "@/components/editor/document-editor";
+import { SearchPanel } from "@/components/search/search-panel";
 import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
 import { TranscriptViewer } from "@/components/transcripts/transcript-viewer";
 import { Button } from "@/components/ui/button";
@@ -739,6 +740,22 @@ export function LibraryWorkspace() {
           <h1 className="text-lg font-semibold">Lumen</h1>
           <p className="text-sm text-muted-foreground">Study library</p>
         </div>
+        <SearchPanel
+          onOpenDocument={(documentId) => {
+            setSelectedRecordingId(null);
+            setSelectedDocumentId(documentId);
+          }}
+          onOpenTranscript={(recordingId) => {
+            setSelectedDocumentId(null);
+            setSelectedRecordingId(recordingId);
+          }}
+          onSelectFile={(_fileId, folderId) => {
+            setSelectedFolderId(folderId);
+            setSelectedTagId(null);
+            setSelectedDocumentId(null);
+            setSelectedRecordingId(null);
+          }}
+        />
         <FolderTree
           folders={data.folders}
           selectedFolderId={selectedFolderId}
