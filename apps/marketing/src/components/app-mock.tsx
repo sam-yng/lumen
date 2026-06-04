@@ -18,7 +18,12 @@ export function AppMock() {
   return (
     <section className="mx-auto -mt-6 w-full max-w-5xl px-6 pb-10">
       <Reveal className="reveal">
-        <div className="border-border-soft bg-surface overflow-hidden rounded-xl border shadow-[var(--shadow-pop)]">
+        {/* Decorative product illustration — hidden from assistive tech and the
+            document outline so its mock content isn't announced as real. */}
+        <div
+          aria-hidden="true"
+          className="border-border-soft bg-surface overflow-hidden rounded-xl border shadow-[var(--shadow-pop)]"
+        >
           {/* window bar */}
           <div className="border-border-soft flex items-center gap-2 border-b px-4 py-3">
             <span className="bg-surface-3 h-3 w-3 rounded-full" />
@@ -50,9 +55,9 @@ export function AppMock() {
             {/* note pane */}
             <div className="p-6">
               <span className="l-chip mb-4">Lecture note</span>
-              <h3 className="font-serif text-xl font-semibold text-foreground">
+              <p className="font-serif text-xl font-semibold text-foreground">
                 Cellular respiration
-              </h3>
+              </p>
               <div className="mt-4 space-y-2">
                 <div className="bg-surface-2 h-3 w-5/6 rounded" />
                 <div className="bg-surface-2 h-3 w-full rounded" />
