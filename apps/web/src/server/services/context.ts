@@ -8,6 +8,11 @@ export type QueryResult<Row extends Record<string, unknown>> = {
   error: ServiceDatabaseError | null;
 };
 
+export type RpcResult<Row extends Record<string, unknown>> = {
+  data: Row[];
+  error: ServiceDatabaseError | null;
+};
+
 export type SingleQueryResult<Row extends Record<string, unknown>> = {
   data: Row | null;
   error: ServiceDatabaseError | null;
@@ -39,6 +44,10 @@ export type ServiceQuery<Row extends Record<string, unknown>> = PromiseLike<
 
 export type ServiceSupabaseClient = {
   from<Row extends Record<string, unknown>>(table: string): ServiceQuery<Row>;
+  rpc<Row extends Record<string, unknown>>(
+    fn: string,
+    args: Record<string, unknown>,
+  ): Promise<RpcResult<Row>>;
 };
 
 export type ServiceContext = {
