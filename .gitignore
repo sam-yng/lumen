@@ -19,6 +19,9 @@ playwright-report/
 
 # turbo
 /.turbo/
+
+# Supabase CLI scratch if run from repo root (canonical dir is apps/web/supabase)
+/supabase/
 /apps/*/.turbo/
 
 # next.js
