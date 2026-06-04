@@ -135,6 +135,31 @@ describe("serializeEmbedding", () => {
   });
 });
 
+describe("FakeSupabase query logging", () => {
+  it("logs select filters after the query chain is finalized", async () => {
+    const ctx = createContext({
+      semantic_search_chunks: [
+        chunkRow({ id: "owned" }),
+        chunkRow({ id: "other", user_id: otherUserId }),
+      ],
+    });
+
+    await ctx.supabase
+      .from<Row>("semantic_search_chunks")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    const selectEntries = queryLog(ctx).filter(
+      (entry) =>
+        entry.action === "select" && entry.table === "semantic_search_chunks",
+    );
+
+    expect(selectEntries).toHaveLength(1);
+    expectFilters(selectEntries[0], { user_id: userId });
+  });
+});
+
 describe("indexDocumentSearchChunks", () => {
   it("rejects documents not owned by the context user before embedding or queries", async () => {
     const tables = {

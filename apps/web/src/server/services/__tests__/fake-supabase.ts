@@ -20,6 +20,7 @@ export class FakeQuery implements ServiceQuery<Row> {
   private filters: Array<{ column: string; value: unknown }> = [];
   private ilikeFilters: Array<{ column: string; needle: string }> = [];
   private orderBy: string | null = null;
+  private pendingSelect = false;
   private pendingUpdate: Row | null = null;
   private pendingDelete = false;
 
@@ -31,11 +32,7 @@ export class FakeQuery implements ServiceQuery<Row> {
   ) {}
 
   select() {
-    this.queryLog.push({
-      action: "select",
-      table: this.table,
-      filters: [...this.filters],
-    });
+    this.pendingSelect = true;
     return this;
   }
 
@@ -87,6 +84,7 @@ export class FakeQuery implements ServiceQuery<Row> {
 
   async single() {
     const matchingRows = this.applyFilters(this.rows);
+    this.logPendingSelect();
     this.logPendingMutation();
     if (this.pendingUpdate) {
       for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
@@ -108,6 +106,7 @@ export class FakeQuery implements ServiceQuery<Row> {
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): PromiseLike<TResult1 | TResult2> {
     const matchingRows = this.applyFilters(this.rows);
+    this.logPendingSelect();
     this.logPendingMutation();
     if (this.pendingUpdate) {
       for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
@@ -118,6 +117,19 @@ export class FakeQuery implements ServiceQuery<Row> {
       data: matchingRows,
       error: this.error,
     }).then(onfulfilled, onrejected);
+  }
+
+  private logPendingSelect() {
+    if (!this.pendingSelect) {
+      return;
+    }
+
+    this.queryLog.push({
+      action: "select",
+      table: this.table,
+      filters: [...this.filters],
+    });
+    this.pendingSelect = false;
   }
 
   private logPendingMutation() {
