@@ -1,8 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 export const TAG_COLOR_PRESETS = [
   { label: "Green", value: "#22c55e" },
@@ -21,8 +19,8 @@ export function TagColorPicker({
   value: string;
   onChange: (value: string) => void;
 }) {
-  // Mirror the controlled value internally so the hidden form field reflects a
-  // click even when the parent has not yet re-rendered with the new value.
+  // Mirror the controlled value internally so the field reflects a change even
+  // when the parent has not yet re-rendered with the new value.
   const [selected, setSelected] = useState(value);
   useEffect(() => setSelected(value), [value]);
 
@@ -32,34 +30,25 @@ export function TagColorPicker({
   }
 
   return (
-    <fieldset className="flex items-center gap-2" aria-label="Tag color">
-      <input type="hidden" name={name} value={selected} readOnly />
-      {TAG_COLOR_PRESETS.map((preset) => {
-        const isSelected = preset.value === selected;
-        return (
-          <label
-            key={preset.value}
-            title={preset.label}
-            className={cn(
-              "grid size-8 cursor-pointer place-items-center rounded-md border border-[var(--border-soft)]",
-              isSelected &&
-                "border-[var(--accent-line)] ring-3 ring-[var(--accent-soft)]",
-            )}
-            style={{ backgroundColor: preset.value }}
-          >
-            <input
-              type="radio"
-              name={`${name}-picker`}
-              value={preset.label}
-              checked={isSelected}
-              aria-label={preset.label}
-              className="sr-only"
-              onChange={() => choose(preset.value)}
-            />
-            {isSelected ? <Check className="size-4 text-white" /> : null}
-          </label>
-        );
-      })}
-    </fieldset>
+    <div className="flex items-center gap-2">
+      <span
+        aria-hidden
+        className="size-5 shrink-0 rounded-md border border-[var(--border-soft)]"
+        style={{ backgroundColor: selected }}
+      />
+      <select
+        name={name}
+        value={selected}
+        aria-label="Tag color"
+        onChange={(event) => choose(event.target.value)}
+        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-[13px] text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
+      >
+        {TAG_COLOR_PRESETS.map((preset) => (
+          <option key={preset.value} value={preset.value}>
+            {preset.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

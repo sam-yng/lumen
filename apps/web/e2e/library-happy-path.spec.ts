@@ -72,8 +72,7 @@ test("tags are created with a preset color", async ({ page }) => {
   await login(page);
 
   await page.getByLabel("Tag name").fill("Exam");
-  // The radio is visually hidden behind its swatch label; click the label.
-  await page.getByTitle("Blue").click();
+  await page.getByLabel("Tag color").selectOption({ label: "Blue" });
   await page.getByRole("button", { name: "Create tag" }).click();
 
   // The new tag shows as a filter chip; exact match avoids the

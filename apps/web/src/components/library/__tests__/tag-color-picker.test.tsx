@@ -6,7 +6,7 @@ import {
 } from "@/components/library/tag-color-picker";
 
 describe("TagColorPicker", () => {
-  it("submits a preset color through a hidden form value", () => {
+  it("submits a preset color through the named select", () => {
     const onChange = vi.fn();
     render(
       <TagColorPicker
@@ -16,13 +16,13 @@ describe("TagColorPicker", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("radio", { name: TAG_COLOR_PRESETS[2].label }),
-    );
+    const select = screen.getByLabelText("Tag color");
+    fireEvent.change(select, { target: { value: TAG_COLOR_PRESETS[2].value } });
 
     expect(onChange).toHaveBeenCalledWith(TAG_COLOR_PRESETS[2].value);
-    expect(
-      screen.getByDisplayValue(TAG_COLOR_PRESETS[2].value),
-    ).toHaveAttribute("name", "color");
+    expect(select).toHaveAttribute("name", "color");
+    expect((select as HTMLSelectElement).value).toBe(
+      TAG_COLOR_PRESETS[2].value,
+    );
   });
 });
