@@ -33,6 +33,9 @@ product, production, AI/MCP, retrieval, and docs.
   - [prod-auth.md](exec-plans/active/prod-readiness/prod-auth.md)
   - [prod-sentry.md](exec-plans/active/prod-readiness/prod-sentry.md)
   - [prod-legal-pages.md](exec-plans/active/prod-readiness/prod-legal-pages.md)
+- **Marketing landing redesign**
+  - [marketing-landing-redesign.md](exec-plans/active/marketing-landing-redesign.md)
+    (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md))
 
 ## Completed
 

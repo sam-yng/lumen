@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Design spec:** [`docs/superpowers/specs/2026-06-04-marketing-landing-redesign-design.md`](../../superpowers/specs/2026-06-04-marketing-landing-redesign-design.md)
+
 **Goal:** Grow `apps/marketing` from a static hero + feature grid into a richer, lightly animated single-page site (dark + purple, CSS-only motion, zero new deps).
 
 **Architecture:** Server Components compose section components in `page.tsx`. Motion is pure CSS (`@keyframes`, transitions in `globals.css`) plus one small client `<Reveal>` wrapper that uses the browser-native `IntersectionObserver` to toggle an `is-visible` class. Only `<Reveal>` and `<SiteHeader>` are client components; everything else is server-rendered. `prefers-reduced-motion` disables motion via a CSS media query.
