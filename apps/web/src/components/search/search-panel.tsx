@@ -8,7 +8,7 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type Ref, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import type { SearchResult } from "@/server/services/search";
 import { highlightMatch } from "./highlight";
@@ -27,12 +27,14 @@ type SearchPanelProps = {
   onOpenDocument: (documentId: string) => void;
   onOpenTranscript: (recordingId: string) => void;
   onSelectFile: (fileId: string, folderId: string | null) => void;
+  inputRef?: Ref<HTMLInputElement>;
 };
 
 export function SearchPanel({
   onOpenDocument,
   onOpenTranscript,
   onSelectFile,
+  inputRef,
 }: SearchPanelProps) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query.trim(), 250);
@@ -53,6 +55,7 @@ export function SearchPanel({
           aria-hidden
         />
         <Input
+          ref={inputRef}
           aria-label="Search notes and transcripts"
           className="h-14 rounded-lg border-[var(--border-soft)] bg-[var(--surface)] pl-11 text-[15px] focus-visible:border-[var(--accent-line)]"
           placeholder="Search notes and transcripts…"
