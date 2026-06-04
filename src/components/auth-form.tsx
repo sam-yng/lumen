@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { AuthState } from "@/server/auth/actions";
+import { type AuthState, verifySignUpOtp } from "@/server/auth/actions";
 
 type AuthAction = (prev: AuthState, formData: FormData) => Promise<AuthState>;
 
 type AuthFormProps = {
   mode: "login" | "signup";
   action: AuthAction;
+  initialState?: AuthState;
 };
 
 const COPY = {
@@ -42,15 +43,96 @@ const COPY = {
   },
 } as const;
 
-export function AuthForm({ mode, action }: AuthFormProps) {
+function isOtpSentState(
+  state: AuthState,
+): state is { status: "otp-sent"; email: string; error?: string } {
+  return Boolean(state && "status" in state && state.status === "otp-sent");
+}
+
+export function AuthForm({ mode, action, initialState }: AuthFormProps) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     action,
-    undefined,
+    initialState,
   );
+  const [otpState, otpFormAction, otpPending] = useActionState<
+    AuthState,
+    FormData
+  >(verifySignUpOtp, undefined);
   const copy = COPY[mode];
+  const pendingOtpState = isOtpSentState(otpState)
+    ? otpState
+    : isOtpSentState(state)
+      ? { ...state, error: otpState?.error ?? state.error }
+      : undefined;
+
+  if (pendingOtpState) {
+    return (
+      <Card
+        key="otp"
+        className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
+      >
+        <CardHeader className="gap-2">
+          <CardTitle className="text-[22px] font-semibold leading-tight">
+            Check your email
+          </CardTitle>
+          <CardDescription className="text-[var(--text-2)]">
+            Enter the six-digit confirmation code from your inbox.
+          </CardDescription>
+        </CardHeader>
+        <form action={otpFormAction}>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="email"
+                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              >
+                Email
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={pendingOtpState.email}
+                readOnly
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="token"
+                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              >
+                Confirmation code
+              </Label>
+              <Input
+                id="token"
+                name="token"
+                inputMode="numeric"
+                maxLength={6}
+                pattern="[0-9]{6}"
+                required
+              />
+            </div>
+            {pendingOtpState.error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {pendingOtpState.error}
+              </p>
+            ) : null}
+          </CardContent>
+          <CardFooter className="mt-4 flex flex-col gap-3 border-0 bg-transparent pt-0">
+            <Button type="submit" className="w-full" disabled={otpPending}>
+              {otpPending ? "…" : "Verify email"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]">
+    <Card
+      key="credentials"
+      className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
+    >
       <CardHeader className="gap-2">
         <CardTitle className="text-[22px] font-semibold leading-tight">
           {copy.title}
@@ -93,6 +175,23 @@ export function AuthForm({ mode, action }: AuthFormProps) {
               required
             />
           </div>
+          {mode === "signup" ? (
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              >
+                Confirm password
+              </Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+          ) : null}
           {state?.error ? (
             <p className="text-sm text-destructive" role="alert">
               {state.error}
