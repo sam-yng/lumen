@@ -92,6 +92,36 @@ describe("rankResults", () => {
     expect(results[0]).toMatchObject({ kind: "document", id: "same", tier: 0 });
   });
 
+  it("keeps the FTS body snippet when the same document also has a semantic hit", () => {
+    const results = rankResults({
+      query: "cell",
+      documentBodyHits: [
+        doc({
+          id: "same",
+          content_text: "The cell body text should remain the snippet.",
+        }),
+      ],
+      transcriptHits: [],
+      documentTitleHits: [],
+      fileNameHits: [],
+      semanticDocumentHits: [
+        {
+          document: doc({ id: "same" }),
+          snippet: "semantic snippet should lose",
+          similarity: 0.99,
+        },
+      ],
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      kind: "document",
+      id: "same",
+      snippet: "The cell body text should remain the snippet.",
+      tier: 0,
+    });
+  });
+
   it("includes transcript hits at tier 0 with a snippet", () => {
     const results = rankResults({
       query: "lecture",
@@ -274,6 +304,141 @@ describe("searchLibrary", () => {
     );
   });
 
+  it("hydrates semantic documents by missing ids instead of all owned documents", async () => {
+    const ctx = createContext(
+      {
+        documents: [
+          doc({
+            id: "semantic-doc",
+            user_id: userId,
+            title: "Chemistry notes",
+            content_text: "No lexical match here.",
+          }),
+          doc({
+            id: "unrelated-owned",
+            user_id: userId,
+            title: "Unrelated",
+            content_text: "No lexical match here either.",
+          }),
+        ],
+        transcripts: [],
+        files: [],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "chunk-1",
+            user_id: userId,
+            source_type: "document",
+            source: { documentId: "semantic-doc" },
+            chunk_index: 0,
+            content: "semantic document passage",
+            similarity: 0.91,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const results = await searchLibrary(ctx, "cell", { embeddingProvider });
+
+    expect(results.map((result) => result.id)).toEqual(["semantic-doc"]);
+    expect(
+      (ctx.supabase as FakeSupabase).queryLog.some(
+        (entry) =>
+          entry.action === "select" &&
+          entry.table === "documents" &&
+          entry.filters.some(
+            (filter) => filter.column === "user_id" && filter.value === userId,
+          ) &&
+          entry.filters.some(
+            (filter) =>
+              filter.column === "id" &&
+              Array.isArray(filter.value) &&
+              filter.value.length === 1 &&
+              filter.value[0] === "semantic-doc",
+          ),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not return semantic RPC rows without user ownership", async () => {
+    const ctx = createContext(
+      {
+        documents: [
+          doc({
+            id: "semantic-doc",
+            user_id: userId,
+            content_text: "No lexical match here.",
+          }),
+        ],
+        transcripts: [],
+        files: [],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "chunk-without-user",
+            source_type: "document",
+            source: { documentId: "semantic-doc" },
+            chunk_index: 0,
+            content: "row without user id should be filtered",
+            similarity: 0.99,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const results = await searchLibrary(ctx, "cell", { embeddingProvider });
+
+    expect(results).toEqual([]);
+  });
+
+  it("skips malformed semantic sources without crashing", async () => {
+    const ctx = createContext(
+      {
+        documents: [
+          doc({
+            id: "semantic-doc",
+            user_id: userId,
+            content_text: "No lexical match here.",
+          }),
+        ],
+        transcripts: [],
+        files: [],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "bad-document-source",
+            user_id: userId,
+            source_type: "document",
+            source: { documentId: 123 },
+            chunk_index: 0,
+            content: "bad document source",
+            similarity: 0.9,
+            text_rank: 0,
+          },
+          {
+            id: "bad-transcript-source",
+            user_id: userId,
+            source_type: "transcript",
+            source: { transcriptId: "transcript-1" },
+            chunk_index: 0,
+            content: "bad transcript source",
+            similarity: 0.9,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    await expect(
+      searchLibrary(ctx, "cell", { embeddingProvider }),
+    ).resolves.toEqual([]);
+  });
+
   it("returns semantic transcript chunks with recordingId", async () => {
     const ctx = createContext(
       { documents: [], transcripts: [], files: [] },
@@ -335,6 +500,20 @@ describe("searchLibrary", () => {
     await expect(
       searchLibrary(ctx, "cell", { embeddingProvider: invalidProvider }),
     ).rejects.toThrow("Embedding must have 384 dimensions.");
+    expect((ctx.supabase as FakeSupabase).rpcLog).toEqual([]);
+  });
+
+  it("rejects the wrong number of query embeddings before calling the semantic RPC", async () => {
+    const wrongCountProvider: EmbeddingProvider = {
+      async embed() {
+        return [queryEmbedding, queryEmbedding];
+      },
+    };
+    const ctx = createContext({ documents: [], transcripts: [], files: [] });
+
+    await expect(
+      searchLibrary(ctx, "cell", { embeddingProvider: wrongCountProvider }),
+    ).rejects.toThrow("Embedding provider returned 2 embeddings for 1 query.");
     expect((ctx.supabase as FakeSupabase).rpcLog).toEqual([]);
   });
 });

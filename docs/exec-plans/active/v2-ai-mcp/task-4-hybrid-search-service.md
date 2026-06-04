@@ -41,6 +41,17 @@ semantic embedding/index helpers.
 - [x] Run `bun run check` from the repo root.
 - [x] Self-review the diff and commit with a conventional commit.
 
+## Quality Review Fixes
+
+- [x] Add `ServiceQuery.in()` and fake `.in()` filtering so semantic document
+  hydration can select only missing document ids.
+- [x] Make fake `match_semantic_search_chunks` return only rows whose `user_id`
+  exactly matches `match_user_id`.
+- [x] Add regression tests for targeted hydration filters, strict fake RPC
+  ownership, wrong embedding counts, malformed semantic sources, and
+  FTS-over-semantic dedupe.
+- [x] Rerun the focused search test file and `bun run check`.
+
 ## Self-Review
 
 - Spec coverage: the steps cover provider optionality, embedding validation,

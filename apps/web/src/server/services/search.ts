@@ -409,15 +409,17 @@ async function getSemanticDocumentMap(
       .filter((document) => wantedIds.has(document.id))
       .map((document) => [document.id, document]),
   );
+  const missingIds = [...wantedIds].filter((id) => !documentById.has(id));
 
-  if (documentById.size === wantedIds.size) {
+  if (missingIds.length === 0) {
     return documentById;
   }
 
   const { data, error } = await ctx.supabase
     .from<Tables<"documents">>("documents")
     .select("*")
-    .eq("user_id", ctx.userId);
+    .eq("user_id", ctx.userId)
+    .in("id", missingIds);
 
   assertNoDatabaseError(error, "Could not load semantic documents");
 

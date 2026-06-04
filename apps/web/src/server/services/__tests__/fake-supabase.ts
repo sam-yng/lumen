@@ -22,6 +22,7 @@ export const otherUserId = "user-2";
 
 export class FakeQuery implements ServiceQuery<Row> {
   private filters: Array<{ column: string; value: unknown }> = [];
+  private inFilters: Array<{ column: string; values: unknown[] }> = [];
   private ilikeFilters: Array<{ column: string; needle: string }> = [];
   private textSearchFilters: Array<{ column: string; needle: string }> = [];
   private orderBy: string | null = null;
@@ -43,6 +44,11 @@ export class FakeQuery implements ServiceQuery<Row> {
 
   eq(column: string, value: unknown) {
     this.filters.push({ column, value });
+    return this;
+  }
+
+  in(column: string, values: unknown[]) {
+    this.inFilters.push({ column, values });
     return this;
   }
 
@@ -134,7 +140,13 @@ export class FakeQuery implements ServiceQuery<Row> {
     this.queryLog.push({
       action: "select",
       table: this.table,
-      filters: [...this.filters],
+      filters: [
+        ...this.filters,
+        ...this.inFilters.map((filter) => ({
+          column: filter.column,
+          value: filter.values,
+        })),
+      ],
     });
     this.pendingSelect = false;
   }
@@ -162,6 +174,11 @@ export class FakeQuery implements ServiceQuery<Row> {
     let result = rows
       .filter((row) =>
         this.filters.every((filter) => row[filter.column] === filter.value),
+      )
+      .filter((row) =>
+        this.inFilters.every((filter) =>
+          filter.values.includes(row[filter.column]),
+        ),
       )
       .filter((row) =>
         this.ilikeFilters.every((filter) =>
@@ -237,9 +254,7 @@ export class FakeSupabase {
     let rows = this.rpcRows[fn] ?? [];
 
     if (fn === "match_semantic_search_chunks") {
-      rows = rows.filter(
-        (row) => !("user_id" in row) || row.user_id === args.match_user_id,
-      );
+      rows = rows.filter((row) => row.user_id === args.match_user_id);
     }
 
     return { data: rows as RowType[], error: null };

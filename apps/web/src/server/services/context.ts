@@ -27,6 +27,7 @@ export type ServiceQuery<Row extends Record<string, unknown>> = PromiseLike<
     column: string,
     options?: { ascending?: boolean; nullsFirst?: boolean },
   ): ServiceQuery<Row>;
+  in(column: string, values: unknown[]): ServiceQuery<Row>;
   ilike(column: string, pattern: string): ServiceQuery<Row>;
   textSearch(
     column: string,
