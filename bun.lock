@@ -9,6 +9,25 @@
         "turbo": "^2",
       },
     },
+    "apps/marketing": {
+      "name": "@lumen/marketing",
+      "version": "0.1.0",
+      "dependencies": {
+        "@lumen/ui": "workspace:*",
+        "next": "16.2.7",
+        "react": "19.2.4",
+        "react-dom": "19.2.4",
+      },
+      "devDependencies": {
+        "@biomejs/biome": "2.2.0",
+        "@tailwindcss/postcss": "^4",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "tailwindcss": "^4",
+        "typescript": "^5",
+      },
+    },
     "apps/web": {
       "name": "@lumen/web",
       "version": "0.1.0",
@@ -263,6 +282,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
+
+    "@lumen/marketing": ["@lumen/marketing@workspace:apps/marketing"],
 
     "@lumen/ui": ["@lumen/ui@workspace:packages/ui"],
 

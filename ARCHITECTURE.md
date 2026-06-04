@@ -44,6 +44,11 @@ apps/web/src/app/ (routes, UI) -> apps/web/src/server/services/* -> Supabase (RL
   point.
 - **`packages/ui`** — shared design tokens only. It exports
   `@lumen/ui/tokens.css` and must stay independent from app code.
+- **`apps/marketing`** — the public marketing site (port 3001): a
+  dependency-light Next.js App Router app that renders a static landing page
+  with metadata, `robots.txt`, and `sitemap.xml`. It consumes `@lumen/ui`
+  tokens and links out to the app, but holds no Supabase client, service layer,
+  or user data — so it shares no isolation boundary with `apps/web`.
 
 ## Seams for v2+ (do not violate)
 

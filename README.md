@@ -41,7 +41,8 @@ Sign up at `/signup`, and you land in the protected workspace shell.
 | `bun run check` | root gate: Biome + Turbo typecheck/test |
 | `bun run lint` / `bun run format` | root Biome lint / autofix |
 | `bun run typecheck` / `bun run test` | Turbo package tasks |
-| `cd apps/web && bun run dev` | app Next dev server |
+| `cd apps/web && bun run dev` | app Next dev server (port 3000) |
+| `cd apps/marketing && bun run dev` | marketing site Next dev server (port 3001) |
 | `cd apps/web && bun run build` / `bun run start` | app production build / serve |
 | `cd apps/web && bun run test:e2e` | app Playwright |
 | `cd apps/web && bun run db:types` | regenerate `apps/web/src/server/db/database.types.ts` |
@@ -62,7 +63,8 @@ The agent-facing map of the whole repo is [AGENTS.md](AGENTS.md).
 
 ## Workspace Layout
 
-- `apps/web` — the current authenticated study workspace app.
+- `apps/web` — the authenticated study workspace app (port 3000).
+- `apps/marketing` — the public marketing site (port 3001).
 - `packages/ui` — shared CSS design tokens, exported as `@lumen/ui/tokens.css`.
 
 ## Roadmap

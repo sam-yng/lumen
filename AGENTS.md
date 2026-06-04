@@ -25,9 +25,10 @@ bun run format                    # root Biome check --write (autofix)
 bun run typecheck                 # Turbo typecheck across packages
 bun run test                      # Turbo test across packages
 
-cd apps/web && bun run dev        # app Next dev server
+cd apps/web && bun run dev        # app Next dev server (port 3000)
 cd apps/web && bun run build      # app production build
 cd apps/web && bun run test:e2e   # app Playwright
+cd apps/marketing && bun run dev  # marketing site Next dev server (port 3001)
 cd apps/web && bun run db:types   # regenerate src/server/db/database.types.ts (never hand-edit)
 cd apps/web && bun run docs:db-schema  # regenerate docs/generated/db-schema.md (never hand-edit)
 cd apps/web && bun run worker:transcribe
@@ -59,6 +60,7 @@ apps/web/src/proxy.ts    session refresh + protected-route guard
 apps/web/supabase/       config.toml + migrations/ (schema source of truth)
 apps/web/scripts/        gen-db-schema.ts
 apps/web/worker/         transcription worker (M4)
+apps/marketing/src/app/  public landing page: page + static metadata, robots, sitemap (port 3001)
 packages/ui/             shared CSS design tokens (`@lumen/ui/tokens.css`)
 turbo.json               workspace task pipeline
 ```
@@ -73,6 +75,9 @@ turbo.json               workspace task pipeline
   `user_id`** (security-critical).
 - `packages/ui` is design-token only. App packages may import it; shared
   packages must not import `apps/web`.
+- `apps/marketing` is a public, static, unauthenticated site: no Supabase
+  client, no service layer, no user data. Keep it dependency-light; it links
+  out to the app (`NEXT_PUBLIC_APP_URL`) rather than importing it.
 - Not in v1: MCP server, AI assistant, vector/semantic search, embeddings,
   streaming/live transcription, diarization, realtime collab. Seams, not stubs.
 

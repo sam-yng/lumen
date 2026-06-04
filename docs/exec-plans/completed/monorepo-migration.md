@@ -47,3 +47,28 @@ Marketing app scaffolding and content are deferred to a later PR.
   green.
 - Docs: update the repo map in the same change so other agents resume against
   the new paths.
+
+## Retrospective
+
+Done. The migration shipped in two passes on `task/monorepo-migration`:
+
+- **Pass 1** (phases 1, 2, 5): moved the app into `apps/web` with history
+  preserved, added the workspace root + `turbo.json`, extracted shared tokens
+  into `packages/ui`, and updated the docs/CI for the new layout.
+- **Pass 2** (phases 3, 4): scaffolded `apps/marketing` — a dependency-light
+  Next.js 16 App Router app on port 3001 that imports `@lumen/ui` tokens and
+  renders a static landing page with `metadata`, `robots.txt`, and
+  `sitemap.xml`. Originally scoped as a later PR; folded onto the same branch.
+
+Notes for the next agent:
+
+- `apps/marketing` is intentionally **public, static, and dataless** — no
+  Supabase client, no service layer. It links to the app via
+  `NEXT_PUBLIC_APP_URL` and sets its own origin via `NEXT_PUBLIC_SITE_URL`
+  (see `apps/marketing/.env.example`); both default to localhost in dev.
+- `sitemap.ts` uses a hand-bumped `lastModified` since the landing page is the
+  only indexable route today. Add real routes there as the public surface grows.
+- Verification: root `bun run check` green across all three packages
+  (`@lumen/web`, `@lumen/ui`, `@lumen/marketing`); `next build` for marketing
+  prerenders `/`, `/robots.txt`, `/sitemap.xml` as static; landing page
+  rendered and spot-checked in a browser.

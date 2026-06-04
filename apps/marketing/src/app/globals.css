@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "@lumen/ui/tokens.css";
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+    font: 400 15px / 1.6 var(--font-ui);
+    letter-spacing: 0;
+  }
+  html {
+    @apply font-sans;
+    background: var(--canvas);
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+}
