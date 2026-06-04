@@ -5,6 +5,13 @@ import type {
 } from "@/server/services/context";
 
 export type Row = Record<string, unknown>;
+export type QueryAction = "delete" | "insert" | "select" | "update";
+export type QueryLogEntry = {
+  action: QueryAction;
+  table: string;
+  filters: Array<{ column: string; value: unknown }>;
+  values?: Row | Row[];
+};
 
 export const userId = "user-1";
 export const otherUserId = "user-2";
@@ -17,11 +24,18 @@ export class FakeQuery implements ServiceQuery<Row> {
   private pendingDelete = false;
 
   constructor(
+    private readonly table: string,
     private readonly rows: Row[],
+    private readonly queryLog: QueryLogEntry[],
     private readonly error: Error | null = null,
   ) {}
 
   select() {
+    this.queryLog.push({
+      action: "select",
+      table: this.table,
+      filters: [...this.filters],
+    });
     return this;
   }
 
@@ -51,17 +65,34 @@ export class FakeQuery implements ServiceQuery<Row> {
 
   update(values: Row) {
     this.pendingUpdate = values;
+    this.queryLog.push({
+      action: "update",
+      table: this.table,
+      filters: [...this.filters],
+      values,
+    });
     return this;
   }
 
   insert(values: Row | Row[]) {
     const insertedRows = Array.isArray(values) ? values : [values];
     this.rows.push(...insertedRows);
+    this.queryLog.push({
+      action: "insert",
+      table: this.table,
+      filters: [...this.filters],
+      values,
+    });
     return this;
   }
 
   delete() {
     this.pendingDelete = true;
+    this.queryLog.push({
+      action: "delete",
+      table: this.table,
+      filters: this.filters,
+    });
     return this;
   }
 
@@ -86,8 +117,14 @@ export class FakeQuery implements ServiceQuery<Row> {
       | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): PromiseLike<TResult1 | TResult2> {
+    const matchingRows = this.applyFilters(this.rows);
+    if (this.pendingUpdate) {
+      for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
+    }
+    if (this.pendingDelete) this.deleteMatchingRows(matchingRows);
+
     return Promise.resolve({
-      data: this.applyFilters(this.rows),
+      data: matchingRows,
       error: this.error,
     }).then(onfulfilled, onrejected);
   }
@@ -127,6 +164,7 @@ export class FakeQuery implements ServiceQuery<Row> {
 }
 
 export class FakeSupabase {
+  readonly queryLog: QueryLogEntry[] = [];
   readonly tables: Record<string, Row[]>;
 
   constructor(tables: Record<string, Row[]>) {
@@ -137,7 +175,9 @@ export class FakeSupabase {
     table: string,
   ): ServiceQuery<TableRow> {
     return new FakeQuery(
+      table,
       this.tables[table] ?? [],
+      this.queryLog,
     ) as unknown as ServiceQuery<TableRow>;
   }
 }
