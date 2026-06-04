@@ -154,6 +154,32 @@ describe("chunkTranscript", () => {
     });
   });
 
+  it("uses true time bounds for overlapping grouped segments", () => {
+    const chunks = chunkTranscript([
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 0,
+        endMs: 10_000,
+        text: "wide segment",
+      },
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 2_000,
+        text: "narrow segment",
+      },
+    ]);
+
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toMatchObject({
+      startMs: 0,
+      endMs: 10_000,
+      content: "wide segment narrow segment",
+    });
+  });
+
   it("splits a single oversized segment without losing transcript metadata", () => {
     const chunks = chunkTranscript([
       {

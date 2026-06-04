@@ -88,3 +88,4 @@
 - [x] Rejected sparse embedding arrays by validating every vector index.
 - [x] Preserved input order for transcript segments with equal timestamps.
 - [x] Kept transcript chunks separated when transcript or recording ids differ.
+- [x] Used true min/max time bounds for grouped transcript chunks.

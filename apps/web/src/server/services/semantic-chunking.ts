@@ -143,9 +143,12 @@ export function chunkTranscript(
     }
 
     const firstSegment = currentSegments[0];
-    const lastSegment = currentSegments[currentSegments.length - 1];
+    const startMs = Math.min(
+      ...currentSegments.map((segment) => segment.startMs),
+    );
+    const endMs = Math.max(...currentSegments.map((segment) => segment.endMs));
 
-    if (!(firstSegment && lastSegment)) {
+    if (!firstSegment) {
       return;
     }
 
@@ -154,8 +157,8 @@ export function chunkTranscript(
       documentId: null,
       transcriptId: firstSegment.transcriptId,
       recordingId: firstSegment.recordingId,
-      startMs: firstSegment.startMs,
-      endMs: lastSegment.endMs,
+      startMs,
+      endMs,
       chunkIndex: chunks.length,
       content: currentSegments.map((segment) => segment.text).join(" "),
     });
