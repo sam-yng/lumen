@@ -20,12 +20,20 @@ import {
   ListChecks,
   TableIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   libraryQueryKey,
   updateDocument,
 } from "@/components/library/library-api";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { Json, Tables } from "@/server/db/database.types";
 
 type DocumentRow = Tables<"documents">;
@@ -85,6 +93,9 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
   const queryClient = useQueryClient();
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkHref, setLinkHref] = useState("");
+  const linkFieldId = useId();
   const content = useMemo(() => initialContent(document), [document]);
   const editor = useEditor({
     immediatelyRender: false,
@@ -154,15 +165,20 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
     );
   }
 
-  function setLink() {
+  function openLinkDialog() {
     const current = editor?.getAttributes("link").href as string | undefined;
-    const href = window.prompt("Link URL", current ?? "https://");
-    if (href === null) return;
-    if (href.trim() === "") {
+    setLinkHref(current ?? "https://");
+    setLinkDialogOpen(true);
+  }
+
+  function applyLink() {
+    const href = linkHref.trim();
+    if (href === "") {
       editor?.chain().focus().unsetLink().run();
-      return;
+    } else {
+      editor?.chain().focus().setLink({ href }).run();
     }
-    editor?.chain().focus().setLink({ href }).run();
+    setLinkDialogOpen(false);
   }
 
   const status =
@@ -250,7 +266,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         <ToolbarButton
           label="Link"
           active={editor.isActive("link")}
-          onClick={setLink}
+          onClick={openLinkDialog}
         >
           <LinkIcon className="size-4" />
         </ToolbarButton>
@@ -278,6 +294,43 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         <EditorContent editor={editor} />
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
       </div>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent>
+          <DialogTitle className="text-sm font-semibold">Link</DialogTitle>
+          <form
+            className="mt-3 space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applyLink();
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor={linkFieldId}>Link URL</Label>
+              <Input
+                id={linkFieldId}
+                value={linkHref}
+                placeholder="https://"
+                onChange={(event) => setLinkHref(event.target.value)}
+                autoFocus
+              />
+              <p className="text-[12px] text-[var(--text-3)]">
+                Leave empty to remove the link.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" size="sm">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" size="sm">
+                Apply
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
