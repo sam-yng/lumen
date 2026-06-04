@@ -9,6 +9,12 @@
 > `bunx supabase ...` should run from `apps/web`; the root `bun run check`
 > remains the workspace gate.
 
+> **Task 1 already shipped (2026-06-04):** the auth OTP + confirm-password work
+> landed in `c7bd793 feat(auth): require signup email code` (now in `main`).
+> `verifySignUpOtp`/`otp-sent` state, the confirm-password field, the auth-form
+> test, and `apps/web/supabase/templates/confirmation.html` all exist. **Skip
+> Task 1 — start at Task 2.**
+
 **Goal:** Fix the pre-v2 cleanup issues: clearer `/library` routes, full-page notes/transcripts, working library controls, preset tag colors, custom dialogs, upload selection polish, smaller responsive UI, and sign-up email OTP confirmation.
 
 **Architecture:** Keep Supabase services/API handlers as the domain seam. Move view state that represents "where the user is" into Next 16 App Router routes, then split the large library client component into focused components that still share the existing TanStack Query snapshot and mutation helpers. Add small UI primitives locally only where the current shadcn subset is missing the necessary behavior.
@@ -72,7 +78,7 @@ Generated files remain untouched unless a task explicitly regenerates them.
 
 ---
 
-### Task 1: Auth OTP And Confirm Password
+### Task 1: Auth OTP And Confirm Password — ✅ DONE (shipped in `c7bd793`, skip)
 
 **Files:**
 - Modify: `src/server/auth/actions.ts`
