@@ -118,12 +118,12 @@ external MCP hosts.
 
 Implement these as separate plans so each can ship and be reviewed on its own:
 
-1. [semantic-search.md](semantic-search.md) - pgvector, local embeddings,
+1. `semantic-search.md` - pgvector, local embeddings,
    chunking, hybrid search, and worker indexing.
-2. [mcp-server-auth.md](mcp-server-auth.md) - TypeScript MCP server,
+2. `mcp-server-auth.md` - TypeScript MCP server,
    Streamable HTTP transport, Supabase JWT validation, OAuth 2.1 posture, and
    user isolation tests.
-3. [in-app-assistant.md](in-app-assistant.md) - MCP client, Claude agent loop,
+3. `in-app-assistant.md` - MCP client, Claude agent loop,
    chat panel, tool-call UX, and demo docs.
 
 ## Sequencing
@@ -327,59 +327,59 @@ Replace the full file with:
 ```markdown
 # Plans
 
-Execution plans live under [exec-plans/](exec-plans/). The folder is organized
+Execution plans live under `exec-plans/`. The folder is organized
 by lifecycle, not by release number, because post-MVP work can overlap across
 product, production, AI/MCP, retrieval, and docs.
 
 ## Lifecycle
 
-- **[queued/](exec-plans/queued/)** - approved or drafted plans that are not yet
+- **`queued/`** - approved or drafted plans that are not yet
   being implemented.
-- **[active/](exec-plans/active/)** - in-flight work. Grouped initiatives may
+- **`active/`** - in-flight work. Grouped initiatives may
   use an `index.md` plus child plans.
-- **[completed/](exec-plans/completed/)** - shipped plans with retrospectives
+- **`completed/`** - shipped plans with retrospectives
   and verification notes.
-- **[archive/](exec-plans/archive/)** - superseded plans or historical planning
+- **`archive/`** - superseded plans or historical planning
   material that should not guide current implementation.
-- **[tech-debt-tracker.md](exec-plans/tech-debt-tracker.md)** - known shortcuts
+- **`tech-debt-tracker.md`** - known shortcuts
   and follow-ups that cut across statuses and versions.
 
 ## Queued
 
 - **v2 AI & MCP**
-  - [index.md](exec-plans/queued/v2-ai-mcp/index.md)
-  - [semantic-search.md](exec-plans/queued/v2-ai-mcp/semantic-search.md)
-  - [mcp-server-auth.md](exec-plans/queued/v2-ai-mcp/mcp-server-auth.md)
-  - [in-app-assistant.md](exec-plans/queued/v2-ai-mcp/in-app-assistant.md)
+  - `exec-plans/queued/v2-ai-mcp/index.md`
+  - `exec-plans/queued/v2-ai-mcp/semantic-search.md`
+  - `exec-plans/queued/v2-ai-mcp/mcp-server-auth.md`
+  - `exec-plans/queued/v2-ai-mcp/in-app-assistant.md`
 
 ## Active
 
 - **Production readiness**
-  - [index.md](exec-plans/active/prod-readiness/index.md)
-  - [prod-env-and-deploy.md](exec-plans/active/prod-readiness/prod-env-and-deploy.md)
-  - [prod-auth.md](exec-plans/active/prod-readiness/prod-auth.md)
-  - [prod-sentry.md](exec-plans/active/prod-readiness/prod-sentry.md)
-  - [prod-legal-pages.md](exec-plans/active/prod-readiness/prod-legal-pages.md)
+  - `exec-plans/active/prod-readiness/index.md`
+  - `exec-plans/active/prod-readiness/prod-env-and-deploy.md`
+  - `exec-plans/active/prod-readiness/prod-auth.md`
+  - `exec-plans/active/prod-readiness/prod-sentry.md`
+  - `exec-plans/active/prod-readiness/prod-legal-pages.md`
 - **Planning system cleanup**
-  - [planning-system-cleanup.md](exec-plans/active/planning-system-cleanup.md)
+  - `exec-plans/active/planning-system-cleanup.md`
 
 ## Completed
 
 ### v1 completed milestones
 
-- [m0-harness-and-scaffold.md](exec-plans/completed/m0-harness-and-scaffold.md)
-- [m1-schema-and-rls.md](exec-plans/completed/m1-schema-and-rls.md)
-- [m2-library.md](exec-plans/completed/m2-library.md)
-- [m3-editor.md](exec-plans/completed/m3-editor.md)
-- [m4-transcription.md](exec-plans/completed/m4-transcription.md)
-- [m5-search-transcripts.md](exec-plans/completed/m5-search-transcripts.md)
-- [m6-harden-and-document.md](exec-plans/completed/m6-harden-and-document.md)
+- `exec-plans/completed/m0-harness-and-scaffold.md`
+- `exec-plans/completed/m1-schema-and-rls.md`
+- `exec-plans/completed/m2-library.md`
+- `exec-plans/completed/m3-editor.md`
+- `exec-plans/completed/m4-transcription.md`
+- `exec-plans/completed/m5-search-transcripts.md`
+- `exec-plans/completed/m6-harden-and-document.md`
 
 ### Post-v1 cleanup and foundation
 
-- [design-implementation-pass.md](exec-plans/completed/design-implementation-pass.md)
-- [monorepo-migration.md](exec-plans/completed/monorepo-migration.md)
-- [pre-v2-cleanup.md](exec-plans/completed/pre-v2-cleanup.md)
+- `exec-plans/completed/design-implementation-pass.md`
+- `exec-plans/completed/monorepo-migration.md`
+- `exec-plans/completed/pre-v2-cleanup.md`
 
 ## Archive
 
@@ -391,13 +391,13 @@ No archived plans yet.
 Replace:
 
 ```markdown
-- [docs/PLANS.md](docs/PLANS.md) — milestone exec-plans (active/completed).
+- `docs/PLANS.md` — milestone exec-plans (active/completed).
 ```
 
 with:
 
 ```markdown
-- [docs/PLANS.md](docs/PLANS.md) — lifecycle exec-plans (queued/active/completed/archive).
+- `docs/PLANS.md` — lifecycle exec-plans (queued/active/completed/archive).
 ```
 
 - [ ] **Step 3: Update the first working rule in `AGENTS.md`**
@@ -555,13 +555,13 @@ In `docs/PLANS.md`, remove this active entry:
 
 ```markdown
 - **Planning system cleanup**
-  - [planning-system-cleanup.md](exec-plans/active/planning-system-cleanup.md)
+  - `exec-plans/active/planning-system-cleanup.md`
 ```
 
 Add this bullet under "Post-v1 cleanup and foundation":
 
 ```markdown
-- [planning-system-cleanup.md](exec-plans/completed/planning-system-cleanup.md)
+- `exec-plans/completed/planning-system-cleanup.md`
 ```
 
 - [ ] **Step 7: Run final verification**
@@ -596,3 +596,14 @@ git commit -m "docs(plans): complete planning system cleanup"
 - **Scope check:** The plan is docs-only. It does not implement pgvector,
   embeddings, MCP server code, assistant UI, auth changes, or production
   readiness child plans.
+
+## Retrospective
+
+Completed 2026-06-04. The planning tree now uses lifecycle folders, `docs/PLANS.md`
+links active and queued grouped initiatives, and v2 AI/MCP planning starts as a
+queued group with separate semantic-search, MCP-server/auth, and in-app
+assistant child plans. Completed v1 milestone files were preserved under their
+existing names.
+
+Verification: Markdown internal link check passed, `docs/generated/db-schema.md`
+matched migrations after regeneration, and `bun run check` was green.

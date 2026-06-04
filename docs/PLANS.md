@@ -33,8 +33,6 @@ product, production, AI/MCP, retrieval, and docs.
   - [prod-auth.md](exec-plans/active/prod-readiness/prod-auth.md)
   - [prod-sentry.md](exec-plans/active/prod-readiness/prod-sentry.md)
   - [prod-legal-pages.md](exec-plans/active/prod-readiness/prod-legal-pages.md)
-- **Planning system cleanup**
-  - [planning-system-cleanup.md](exec-plans/active/planning-system-cleanup.md)
 
 ## Completed
 
@@ -52,6 +50,7 @@ product, production, AI/MCP, retrieval, and docs.
 
 - [design-implementation-pass.md](exec-plans/completed/design-implementation-pass.md)
 - [monorepo-migration.md](exec-plans/completed/monorepo-migration.md)
+- [planning-system-cleanup.md](exec-plans/completed/planning-system-cleanup.md)
 - [pre-v2-cleanup.md](exec-plans/completed/pre-v2-cleanup.md)
 
 ## Archive
