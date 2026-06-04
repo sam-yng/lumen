@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Path note after the monorepo migration:** this plan was written before the
+> app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 **Goal:** Capture unhandled errors from both runtimes — the Next.js app (Vercel) and the transcription worker (Railway) — into Sentry, so failures on remote boxes are visible instead of silent.
 
 **Architecture:** Two separate SDKs. The app uses `@sentry/nextjs` with the Next 16 instrumentation conventions (`instrumentation.ts` + `onRequestError`, `instrumentation-client.ts`, `global-error.tsx`, `withSentryConfig`). The worker is a plain Node/Bun process and uses `@sentry/node` directly, wrapping `startTranscriptionWorker` and each job. DSNs come from env vars, never committed.

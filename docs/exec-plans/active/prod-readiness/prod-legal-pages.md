@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Path note after the monorepo migration:** this plan was written before the
+> app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 **Goal:** Ship publicly reachable `/privacy` and `/terms` pages with real first-draft copy tailored to Lumen (a study workspace that stores user-uploaded files + audio and runs local transcription), wired into the footer, with placeholders only for the legal-entity details a human must supply.
 
 **Architecture:** Two static Server Component routes under a shared public-legal layout, plus a small `LegalFooter` linked from the app shell and the auth screens. Routes are added to the proxy's public prefixes so they're viewable logged-out. Copy embeds the data-handling reality of the app (Supabase storage, Railway worker, Sentry, Google OAuth, SMTP) and the rights from GDPR/CCPA; an explicit non-lawyer disclaimer is included.

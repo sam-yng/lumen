@@ -5,12 +5,13 @@ Tailwind v4 + shadcn/ui.
 
 > **Status: IMPLEMENTED for the v1 design pass.** This captures the
 > high-fidelity design handoff (`design_handoff_lumen_v1`) and now describes the
-> running app's dark-first visual language. The token layer is wired through
-> [`globals.css`](../src/app/globals.css), the root layout loads the reading
-> font, and the v1 auth/library/editor/transcript/search surfaces have been
-> restyled from this spec. Design-time-only controls such as Tweaks, plus v2+
-> features such as Ask Lumen/MCP/semantic search, remain documented intent rather
-> than shipping v1 UI.
+> running app's dark-first visual language. The token layer is shared through
+> [`packages/ui`](../packages/ui/src/styles/tokens.css) and imported by
+> [`globals.css`](../apps/web/src/app/globals.css), the root layout loads the
+> reading font, and the v1 auth/library/editor/transcript/search surfaces have
+> been restyled from this spec. Design-time-only controls such as Tweaks, plus
+> v2+ features such as Ask Lumen/MCP/semantic search, remain documented intent
+> rather than shipping v1 UI.
 >
 > Source of truth for the visuals is the handoff bundle's `tokens.css` /
 > `app.css` (design references in HTML/CSS + in-browser-Babel JSX — a precise

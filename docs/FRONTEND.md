@@ -1,13 +1,14 @@
 # Frontend
 
-Conventions for the `app/` and `components/` layers.
+Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 
 - Next.js 16 App Router, Server Components by default; `"use client"` only where
   interactivity needs it.
 - Data fetching: TanStack Query on the client (provider in
-  `src/components/providers.tsx`); Server Components read via the server Supabase
-  client.
-- UI: Tailwind v4 + shadcn/ui (`src/components/ui/`).
+  `apps/web/src/components/providers.tsx`); Server Components read via the
+  server Supabase client.
+- UI: Tailwind v4 + shadcn/ui (`apps/web/src/components/ui/`). Shared design
+  tokens live in `packages/ui` and are consumed as `@lumen/ui/tokens.css`.
 - Forms: React 19 `useActionState` + server actions; validate with zod.
 - Visual language: see [DESIGN.md](DESIGN.md) for the full token system,
   per-screen specs, and interaction states. **Not yet implemented** — the dark
@@ -60,7 +61,7 @@ The dark-theme visual restyle (all milestones) is specified in
   its own key and never touches `["library"]`.
 - Results are one ranked list across document bodies + transcript bodies (FTS)
   and document titles + file names (ILIKE fallback). Match highlighting lives in
-  `components/search/highlight.tsx`.
+  `apps/web/src/components/search/highlight.tsx`.
 - Result actions reuse the existing workspace panels: a document hit opens the
   `DocumentEditor`; a transcript hit opens M4's `TranscriptViewer` (looked up by
   `recordingId` from the snapshot); a file hit selects its folder.

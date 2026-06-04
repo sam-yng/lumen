@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Aggregate backpressure gate: Biome + tsc --noEmit + Vitest.
+      # Aggregate backpressure gate: root Biome + Turbo typecheck/test.
       # Deliberately DB-free so it runs without a live Supabase stack.
       - name: Check
         run: bun run check

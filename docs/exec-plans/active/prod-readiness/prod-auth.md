@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Path note after the monorepo migration:** this plan was written before the
+> app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 **Goal:** Take auth from "works locally with confirmations off" to production-grade: email confirmation, password reset, Google OAuth, and app-level rate limiting on abuse/cost-sensitive actions.
 
 **Architecture:** Keep the existing server-action + `@supabase/ssr` cookie model. Add the two route handlers the PKCE flow needs (`/auth/confirm` for email-link OTP via `verifyOtp`, `/auth/callback` for OAuth code exchange via `exchangeCodeForSession`). Build redirect URLs from `NEXT_PUBLIC_APP_URL` (added by the env/deploy plan). Add a reusable Postgres-backed rate limiter applied at the service-layer enqueue seam and the password-reset action.

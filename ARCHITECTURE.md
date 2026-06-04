@@ -7,16 +7,18 @@ the seams that let the v2+ AI/MCP layer drop in without a rewrite.
 
 ## Stack
 
-- **Runtime/tooling:** Bun (package manager + script runner).
-- **Framework:** Next.js 16 (App Router, `src/`) + React 19 + TypeScript strict.
+- **Runtime/tooling:** Bun workspaces + Turborepo.
+- **Framework:** Next.js 16 (App Router, `apps/web/src/`) + React 19 +
+  TypeScript strict.
   - Note: Next 16 renamed the `middleware` convention to **`proxy`** — see
-    `src/proxy.ts`.
+    `apps/web/src/proxy.ts`.
 - **Backend:** Supabase — Postgres + Auth + Storage + Row-Level Security, run
   locally via the Supabase CLI (Docker). Schema lives in SQL migrations under
-  `supabase/migrations/`; types are generated, never hand-edited.
-- **Lint/format:** Biome. **Typecheck:** `tsc --noEmit`. **Tests:** Vitest +
-  Playwright. See [BACKPRESSURE.md](BACKPRESSURE.md).
-- **UI:** Tailwind v4 + shadcn/ui. **Client data:** TanStack Query.
+  `apps/web/supabase/migrations/`; types are generated, never hand-edited.
+- **Lint/format:** Biome at the workspace root. **Typecheck/tests:** Turbo runs
+  package tasks (`tsc --noEmit`, Vitest). See [BACKPRESSURE.md](BACKPRESSURE.md).
+- **UI:** Tailwind v4 + shadcn/ui, with shared CSS tokens in `packages/ui`.
+  **Client data:** TanStack Query.
 - **Validation:** zod (all API input + env config).
 - **Editor (M3):** TipTap. **Queue/worker (M4):** pg-boss + a separate worker
   process running `nodejs-whisper`.
@@ -24,20 +26,24 @@ the seams that let the v2+ AI/MCP layer drop in without a rewrite.
 ## Layers
 
 ```
-app/ (routes, UI)  ->  server/services/* (domain logic)  ->  Supabase (RLS)
-        ^                        ^
-   thin route handlers      authenticated context
-   + server actions         (user_id + user-scoped client)
+apps/web/src/app/ (routes, UI) -> apps/web/src/server/services/* -> Supabase (RLS)
+              ^                              ^
+       thin route handlers              authenticated context
+       + server actions                 (user_id + user-scoped client)
 ```
 
-- **`app/`** — App Router routes, Server Components, server actions, Route
-  Handlers. Kept thin: validate input (zod), call a service.
-- **`server/services/*`** *(introduced in M2)* — framework-agnostic domain
-  operations. Each takes an **authenticated context** (the user's id + a
-  user-scoped Supabase client) and enforces per-user scoping. They must be
-  callable outside an HTTP request.
-- **`server/db/`** — Supabase client factories (`client.ts`) and generated types.
-- **`server/config/env.ts`** — the single zod-validated env access point.
+- **`apps/web/src/app/`** — App Router routes, Server Components, server
+  actions, Route Handlers. Kept thin: validate input (zod), call a service.
+- **`apps/web/src/server/services/*`** *(introduced in M2)* —
+  framework-agnostic domain operations. Each takes an **authenticated context**
+  (the user's id + a user-scoped Supabase client) and enforces per-user scoping.
+  They must be callable outside an HTTP request.
+- **`apps/web/src/server/db/`** — Supabase client factories (`client.ts`) and
+  generated types.
+- **`apps/web/src/server/config/env.ts`** — the single zod-validated env access
+  point.
+- **`packages/ui`** — shared design tokens only. It exports
+  `@lumen/ui/tokens.css` and must stay independent from app code.
 
 ## Seams for v2+ (do not violate)
 

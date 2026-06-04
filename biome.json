@@ -11,11 +11,16 @@
       "**",
       "!node_modules",
       "!.claude",
+      "!.turbo",
+      "!apps/*/.turbo",
       "!.next",
+      "!apps/*/.next",
+      "!apps/*/out",
+      "!apps/*/node_modules",
       "!dist",
       "!build",
-      "!src/server/db/database.types.ts",
-      "!supabase/.temp"
+      "!apps/web/src/server/db/database.types.ts",
+      "!apps/web/supabase/.temp"
     ]
   },
   "formatter": {

@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Path note after the monorepo migration:** this plan was written before the
+> app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 **Goal:** Make production environment configuration real and explicit, and give the transcription worker a deployable Railway entrypoint (Dockerfile with native deps) so app→Vercel / worker→Railway can both boot from injected env vars.
 
 **Architecture:** Tighten the single zod env point (`src/server/config/env.ts`) so prod misconfig fails loud instead of silently defaulting to localhost. Add an `APP_URL` for absolute auth redirect links (needed by the auth plan). Ship a worker Dockerfile that installs ffmpeg + the whisper.cpp build toolchain and bakes the model, so Railway runs `bun run worker:transcribe` against injected secrets.

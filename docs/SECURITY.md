@@ -5,8 +5,8 @@
 - Supabase Auth, email/password to start (OAuth providers are a clean future
   add — there is a seam in the auth forms, no provider code yet).
 - Sessions are cookie-based via `@supabase/ssr`. The Next.js **Proxy**
-  (`src/proxy.ts`, formerly "middleware") refreshes the session on every request
-  and guards the protected `(app)` shell.
+  (`apps/web/src/proxy.ts`, formerly "middleware") refreshes the session on
+  every request and guards the protected `(app)` shell.
 - Defense in depth: protected Server Components **re-verify** the user with
   `supabase.auth.getUser()` (which revalidates against the auth server) rather
   than trusting routing alone.
@@ -25,9 +25,9 @@ The canonical pattern (established by `profiles` in the M0 init migration):
 Every M1 domain table copies this pattern. The policy summary is regenerated
 into [generated/db-schema.md](generated/db-schema.md).
 
-The app's Supabase clients (`src/server/db/client.ts`) use the **publishable**
-(anon) key and are bound to the user's session, so every query runs under that
-user's RLS policies.
+The app's Supabase clients (`apps/web/src/server/db/client.ts`) use the
+**publishable** (anon) key and are bound to the user's session, so every query
+runs under that user's RLS policies.
 
 ## The service-role / worker caveat (security-critical)
 
@@ -59,7 +59,7 @@ M4 implementation notes:
 ## Secrets
 
 - `SUPABASE_SECRET_KEY` is server-only and never imported into client code. All
-  env access goes through `src/server/config/env.ts`; the secret is read only by
-  `getServerEnv()`.
+  env access goes through `apps/web/src/server/config/env.ts`; the secret is
+  read only by `getServerEnv()`.
 - `.env.local` is gitignored; `.env.example` documents the shape with
   placeholders.

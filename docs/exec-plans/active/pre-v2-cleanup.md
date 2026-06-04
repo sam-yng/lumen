@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Path note after the monorepo migration:** this plan was written before the
+> app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 **Goal:** Fix the pre-v2 cleanup issues: clearer `/library` routes, full-page notes/transcripts, working library controls, preset tag colors, custom dialogs, upload selection polish, smaller responsive UI, and sign-up email OTP confirmation.
 
 **Architecture:** Keep Supabase services/API handlers as the domain seam. Move view state that represents "where the user is" into Next 16 App Router routes, then split the large library client component into focused components that still share the existing TanStack Query snapshot and mutation helpers. Add small UI primitives locally only where the current shadcn subset is missing the necessary behavior.
