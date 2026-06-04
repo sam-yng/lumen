@@ -284,6 +284,64 @@ describe("indexTranscriptSearchChunks", () => {
     });
   });
 
+  it("deletes owned stale transcript chunks and skips embedding and insert when all segments are blank", async () => {
+    const tables = {
+      semantic_search_chunks: [
+        chunkRow({
+          id: "owned-stale",
+          source_type: "transcript",
+          document_id: null,
+          transcript_id: "transcript-1",
+          recording_id: "recording-1",
+          start_ms: 0,
+          end_ms: 1_000,
+        }),
+        chunkRow({
+          id: "other-user-stale",
+          user_id: otherUserId,
+          source_type: "transcript",
+          document_id: null,
+          transcript_id: "transcript-1",
+          recording_id: "recording-1",
+        }),
+      ],
+    };
+    const ctx = createContext(tables);
+    const { calls, provider } = embeddingProvider([vector(1)]);
+
+    await indexTranscriptSearchChunks(ctx, {
+      transcript: transcript(),
+      segments: [
+        segment({ id: "segment-1", text: " \n\t " }),
+        segment({
+          id: "segment-2",
+          start_ms: 1_000,
+          end_ms: 2_000,
+          text: "",
+        }),
+      ],
+      provider,
+    });
+
+    const deleteEntry = queryLog(ctx).find(
+      (entry) =>
+        entry.action === "delete" && entry.table === "semantic_search_chunks",
+    );
+    expectFilters(deleteEntry, {
+      user_id: userId,
+      source_type: "transcript",
+      transcript_id: "transcript-1",
+    });
+
+    expect(tables.semantic_search_chunks.map((row) => row.id)).toEqual([
+      "other-user-stale",
+    ]);
+    expect(calls).toEqual([]);
+    expect(queryLog(ctx).some((entry) => entry.action === "insert")).toBe(
+      false,
+    );
+  });
+
   it("embeds all transcript chunk contents in one call and serializes 384-dim vectors", async () => {
     const tables: { semantic_search_chunks: Row[] } = {
       semantic_search_chunks: [],

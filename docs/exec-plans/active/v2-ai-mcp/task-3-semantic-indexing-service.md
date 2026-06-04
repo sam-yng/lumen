@@ -23,3 +23,4 @@
 - [x] Run focused semantic-index tests until green.
 - [x] Run `bun run check`.
 - [x] Self-review, keep changes scoped, and commit with a conventional commit.
+- [x] Follow-up: add blank transcript segment coverage proving stale owned chunks are deleted without embedding or inserting.
