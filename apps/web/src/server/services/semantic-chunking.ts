@@ -121,8 +121,9 @@ export function chunkTranscript(
 ): SearchChunk[] {
   const chunks: SearchChunk[] = [];
   const orderedSegments = input
-    .map((segment) => ({
+    .map((segment, inputIndex) => ({
       ...segment,
+      inputIndex,
       text: normalizeText(segment.text),
     }))
     .filter((segment) => segment.text.length > 0)
@@ -130,7 +131,7 @@ export function chunkTranscript(
       (left, right) =>
         left.startMs - right.startMs ||
         left.endMs - right.endMs ||
-        left.text.localeCompare(right.text),
+        left.inputIndex - right.inputIndex,
     );
 
   let currentSegments: typeof orderedSegments = [];
@@ -168,8 +169,16 @@ export function chunkTranscript(
       currentLength === 0
         ? segment.text.length
         : currentLength + 1 + segment.text.length;
+    const firstCurrentSegment = currentSegments[0];
+    const sourceChanged =
+      firstCurrentSegment !== undefined &&
+      (segment.transcriptId !== firstCurrentSegment.transcriptId ||
+        segment.recordingId !== firstCurrentSegment.recordingId);
 
-    if (currentSegments.length > 0 && nextLength > MAX_CHUNK_CHARS) {
+    if (
+      currentSegments.length > 0 &&
+      (sourceChanged || nextLength > MAX_CHUNK_CHARS)
+    ) {
       flushCurrentSegments();
     }
 

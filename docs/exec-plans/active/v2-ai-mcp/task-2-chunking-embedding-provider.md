@@ -19,15 +19,18 @@
 
 ## Task Steps
 
-- [ ] **Step 1: Write failing chunking tests**
+> **Status:** completed. Initial implementation and quality-review follow-ups
+> are committed; this checklist is retained as execution history.
+
+- [x] **Step 1: Write failing chunking tests**
 
   Add tests for empty text, document source metadata and chunk indexes, transcript time bounds, and long-text chunk sizes/overlap.
 
-- [ ] **Step 2: Write failing embedding provider tests**
+- [x] **Step 2: Write failing embedding provider tests**
 
   Add tests for one output vector per input, 384 dimensions, blank rejection, deterministic output, unit-length vectors, and `assertEmbedding` validation.
 
-- [ ] **Step 3: Run focused tests to verify RED**
+- [x] **Step 3: Run focused tests to verify RED**
 
   Run:
 
@@ -37,15 +40,15 @@
 
   Expected: fail because the two service modules do not exist yet.
 
-- [ ] **Step 4: Implement semantic chunking**
+- [x] **Step 4: Implement semantic chunking**
 
   Export exactly the requested public types/functions plus `MAX_CHUNK_CHARS = 900` and `CHUNK_OVERLAP_CHARS = 150`. Normalize whitespace with `text.replace(/\s+/g, " ").trim()`, split documents at deterministic whitespace boundaries near the limit with overlap, and sort/group transcript segments by `startMs` while preserving grouped bounds.
 
-- [ ] **Step 5: Implement deterministic embedding provider**
+- [x] **Step 5: Implement deterministic embedding provider**
 
   Export `EMBEDDING_DIMENSIONS = 384`, `EmbeddingProvider`, `DeterministicEmbeddingProvider`, and `assertEmbedding`. Reject blank text before embedding, tokenize lowercase words, hash tokens into signed dimensions, L2-normalize non-empty vectors, and validate dimensions/finite values.
 
-- [ ] **Step 6: Run focused tests to verify GREEN**
+- [x] **Step 6: Run focused tests to verify GREEN**
 
   Run:
 
@@ -55,7 +58,7 @@
 
   Expected: pass.
 
-- [ ] **Step 7: Run root gate**
+- [x] **Step 7: Run root gate**
 
   Run:
 
@@ -65,7 +68,7 @@
 
   Expected: Biome, typecheck, and tests pass across the workspace.
 
-- [ ] **Step 8: Self-review and commit**
+- [x] **Step 8: Self-review and commit**
 
   Inspect `git diff`, ensure the public exports match the task exactly, keep changes scoped to the four requested code/test files plus this plan, then commit:
 
@@ -82,3 +85,6 @@
 - [x] Limited overlap whitespace preference to whitespace near the target overlap window.
 - [x] Changed deterministic token lowercasing from `toLocaleLowerCase()` to `toLowerCase()`.
 - [x] Asserted representative non-empty text produces at least one non-zero embedding value.
+- [x] Rejected sparse embedding arrays by validating every vector index.
+- [x] Preserved input order for transcript segments with equal timestamps.
+- [x] Kept transcript chunks separated when transcript or recording ids differ.

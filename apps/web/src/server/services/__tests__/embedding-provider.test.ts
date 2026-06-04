@@ -63,4 +63,10 @@ describe("assertEmbedding", () => {
       "Embedding values must be finite numbers.",
     );
   });
+
+  it("throws for sparse arrays with holes", () => {
+    expect(() => assertEmbedding(Array(EMBEDDING_DIMENSIONS))).toThrow(
+      "Embedding values must be finite numbers.",
+    );
+  });
 });

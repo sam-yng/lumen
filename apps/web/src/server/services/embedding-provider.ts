@@ -63,8 +63,10 @@ export function assertEmbedding(vector: number[]): number[] {
     throw new Error("Embedding must have 384 dimensions.");
   }
 
-  if (!vector.every((value) => Number.isFinite(value))) {
-    throw new Error("Embedding values must be finite numbers.");
+  for (let index = 0; index < EMBEDDING_DIMENSIONS; index += 1) {
+    if (!Number.isFinite(vector[index])) {
+      throw new Error("Embedding values must be finite numbers.");
+    }
   }
 
   return vector;

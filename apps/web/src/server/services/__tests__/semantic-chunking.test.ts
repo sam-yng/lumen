@@ -182,4 +182,57 @@ describe("chunkTranscript", () => {
       expect(chunk.content.length).toBeLessThanOrEqual(MAX_CHUNK_CHARS);
     }
   });
+
+  it("preserves input order for same-timestamp segments", () => {
+    const chunks = chunkTranscript([
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 2_000,
+        text: "zulu",
+      },
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 2_000,
+        text: "alpha",
+      },
+    ]);
+
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]?.content).toBe("zulu alpha");
+  });
+
+  it("does not group segments from different transcripts or recordings", () => {
+    const chunks = chunkTranscript([
+      {
+        transcriptId: "transcript-1",
+        recordingId: "recording-1",
+        startMs: 1_000,
+        endMs: 2_000,
+        text: "first transcript",
+      },
+      {
+        transcriptId: "transcript-2",
+        recordingId: "recording-2",
+        startMs: 1_100,
+        endMs: 2_100,
+        text: "second transcript",
+      },
+    ]);
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toMatchObject({
+      transcriptId: "transcript-1",
+      recordingId: "recording-1",
+      content: "first transcript",
+    });
+    expect(chunks[1]).toMatchObject({
+      transcriptId: "transcript-2",
+      recordingId: "recording-2",
+      content: "second transcript",
+    });
+  });
 });
