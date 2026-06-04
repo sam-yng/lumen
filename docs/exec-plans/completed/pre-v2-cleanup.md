@@ -1,5 +1,19 @@
 # Pre-v2 Cleanup Implementation Plan
 
+> **Status: COMPLETED (2026-06-04).** All tasks actioned on `task/v1-cleanup`
+> after the monorepo migration.
+>
+> **Retrospective:** Task 1 (auth OTP / confirm password) was already shipped in
+> `c7bd793` before the migration. Tasks 2–7 landed as route-backed library /
+> note / transcript / tags views, a Radix dialog + picker primitive set, a full
+> workspace split into focused modules with every dead control wired and all
+> `window.prompt`/`confirm` removed, an editor link dialog, tighter control
+> density with responsive icon-only action bars, and an expanded Playwright
+> suite (3 specs) verified green against the local Supabase stack alongside
+> `bun run check`. The tag color picker shipped as a dropdown (refined from the
+> originally-planned swatch radios). All paths were translated to the new
+> `apps/web/` monorepo layout.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **Path note after the monorepo migration:** this plan was written before the
@@ -8,6 +22,12 @@
 > App-local commands such as `bun run dev`, `bun run db:types`, and
 > `bunx supabase ...` should run from `apps/web`; the root `bun run check`
 > remains the workspace gate.
+
+> **Task 1 already shipped (2026-06-04):** the auth OTP + confirm-password work
+> landed in `c7bd793 feat(auth): require signup email code` (now in `main`).
+> `verifySignUpOtp`/`otp-sent` state, the confirm-password field, the auth-form
+> test, and `apps/web/supabase/templates/confirmation.html` all exist. **Skip
+> Task 1 — start at Task 2.**
 
 **Goal:** Fix the pre-v2 cleanup issues: clearer `/library` routes, full-page notes/transcripts, working library controls, preset tag colors, custom dialogs, upload selection polish, smaller responsive UI, and sign-up email OTP confirmation.
 
@@ -72,7 +92,7 @@ Generated files remain untouched unless a task explicitly regenerates them.
 
 ---
 
-### Task 1: Auth OTP And Confirm Password
+### Task 1: Auth OTP And Confirm Password — ✅ DONE (shipped in `c7bd793`, skip)
 
 **Files:**
 - Modify: `src/server/auth/actions.ts`

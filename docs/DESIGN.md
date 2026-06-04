@@ -138,6 +138,11 @@ the existing components (`LibraryWorkspace`, `DocumentEditor`, `FolderTree`,
 `TagPanel`, `AuthForm`) rather than rebuilding; only the M4 transcription/record/
 upload screens are new.
 
+**Routes (pre-v2 cleanup):** `/library` (list + actions),
+`/library/notes/[id]` (full-page note), `/library/transcripts/[recordingId]`
+(full-page transcript), `/library/tags` (Tags view). `/` and authenticated auth
+pages redirect to `/library`.
+
 ### 1. Auth (restyle `AuthForm`)
 
 - Login = "Log in" / "Welcome back to Lumen."; signup = "Sign up" / "Create your
@@ -243,9 +248,10 @@ transcripts · scoped to you". Empty state = "Try" suggestion list. Results = ic
 
 ### 7. Recents / Tags
 
-- Recents: row list of recently opened items with crumb + updated.
-- Tags: card grid, one card per tag (colored dot + name + mono count + up to 4
-  member rows). Maps to `tags` + `tag_links`.
+- Recents: **deferred** — the sidebar entry is visible but disabled in v1
+  (explanatory `title`, not clickable); the row list ships in a later release.
+- Tags: `/library/tags` view for create/rename/delete with five preset colors
+  and tag filtering. Maps to `tags` + `tag_links`.
 
 ### 8. Ask Lumen — v2 preview (do NOT build in v1)
 

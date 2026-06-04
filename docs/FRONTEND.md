@@ -17,11 +17,20 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 
 ## Library workspace (M2)
 
-- The protected `/` page renders `LibraryWorkspace`, a focused client component
-  using TanStack Query against `/api/library`.
+- `/library` renders `LibraryWorkspace`, a focused client component using
+  TanStack Query against `/api/library` (`/` redirects to `/library`).
 - Query key: `["library"]`. Every mutation invalidates that key after success.
 - The workspace is a dense app surface: sidebar folder tree, current-folder
-  content list, metadata creation forms, tag filter, and inline item actions.
+  content list, create actions, tag filter, and inline item actions. It is the
+  query boundary; the chrome and pieces live in `library-shell`,
+  `library-sidebar`, `library-actions`, `library-content`, `library-item-row`,
+  and `tag-panel`.
+- Destructive/text-entry flows use the local `dialog` primitive
+  (`TextInputDialog` / `ConfirmDialog`) — never `window.prompt`/`confirm`.
+- **Responsive action bars:** top-bar action buttons keep their icon at all
+  widths and hide the text label below the `sm` breakpoint (`hidden sm:inline`)
+  so a narrow viewport never overflows. Keep a `title`/`sr-only` label on
+  icon-only controls.
 - File rows are real uploads from M4 onward. Browser forms submit
   `multipart/form-data` to `/api/library/uploads`; the route stores bytes in
   private Supabase Storage and returns the created `files` row plus an optional
@@ -29,8 +38,9 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 
 ## Document editor (M3)
 
-- Documents open inside the library workspace via `DocumentEditor`; no separate
-  editor route exists in v1 yet.
+- Documents open full-page at `/library/notes/[id]` via `DocumentEditor`, with a
+  "Back to library" link. Transcripts open at
+  `/library/transcripts/[recordingId]`.
 - TipTap runs only in a client component and uses `immediatelyRender: false` for
   Next.js hydration safety.
 - Autosave calls the existing document PATCH endpoint with `contentJson`, then
