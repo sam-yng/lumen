@@ -8,9 +8,11 @@ import {
   userId,
 } from "@/server/services/__tests__/fake-supabase";
 import { EMBEDDING_DIMENSIONS } from "@/server/services/embedding-provider";
+import type { ServiceError } from "@/server/services/errors";
 import {
   indexDocumentSearchChunks,
   indexTranscriptSearchChunks,
+  serializeEmbedding,
 } from "@/server/services/semantic-index";
 
 function document(overrides: Partial<Tables<"documents">> = {}) {
@@ -114,7 +116,49 @@ function expectFilters(
   }
 }
 
+async function expectInvalidInput(
+  action: () => Promise<void>,
+  message: string,
+) {
+  await expect(action()).rejects.toMatchObject({
+    code: "invalid_input",
+    message,
+  } satisfies Partial<ServiceError>);
+}
+
+describe("serializeEmbedding", () => {
+  it("validates vectors before serializing pgvector literals", () => {
+    expect(serializeEmbedding(vector(0.5))).toBe(`[${vector(0.5).join(",")}]`);
+    expect(() => serializeEmbedding([1, 2, 3])).toThrow(
+      "Embedding must have 384 dimensions.",
+    );
+  });
+});
+
 describe("indexDocumentSearchChunks", () => {
+  it("rejects documents not owned by the context user before embedding or queries", async () => {
+    const tables = {
+      semantic_search_chunks: [chunkRow({ id: "owned-stale" })],
+    };
+    const ctx = createContext(tables);
+    const { calls, provider } = embeddingProvider([vector(0.25)]);
+
+    await expectInvalidInput(
+      () =>
+        indexDocumentSearchChunks(ctx, {
+          document: document({ user_id: otherUserId }),
+          provider,
+        }),
+      "Document does not belong to the current user.",
+    );
+
+    expect(calls).toEqual([]);
+    expect(queryLog(ctx)).toEqual([]);
+    expect(tables.semantic_search_chunks.map((row) => row.id)).toEqual([
+      "owned-stale",
+    ]);
+  });
+
   it("deletes only owned chunks for the document source and inserts fresh chunks", async () => {
     const tables = {
       semantic_search_chunks: [
@@ -195,6 +239,70 @@ describe("indexDocumentSearchChunks", () => {
 });
 
 describe("indexTranscriptSearchChunks", () => {
+  it("rejects transcripts not owned by the context user before embedding or queries", async () => {
+    const tables = {
+      semantic_search_chunks: [
+        chunkRow({
+          id: "owned-stale",
+          source_type: "transcript",
+          document_id: null,
+          transcript_id: "transcript-1",
+          recording_id: "recording-1",
+        }),
+      ],
+    };
+    const ctx = createContext(tables);
+    const { calls, provider } = embeddingProvider([vector(0.75)]);
+
+    await expectInvalidInput(
+      () =>
+        indexTranscriptSearchChunks(ctx, {
+          transcript: transcript({ user_id: otherUserId }),
+          segments: [segment()],
+          provider,
+        }),
+      "Transcript does not belong to the current user.",
+    );
+
+    expect(calls).toEqual([]);
+    expect(queryLog(ctx)).toEqual([]);
+    expect(tables.semantic_search_chunks.map((row) => row.id)).toEqual([
+      "owned-stale",
+    ]);
+  });
+
+  it("rejects mismatched transcript segments before embedding or queries", async () => {
+    const tables = {
+      semantic_search_chunks: [
+        chunkRow({
+          id: "owned-stale",
+          source_type: "transcript",
+          document_id: null,
+          transcript_id: "transcript-1",
+          recording_id: "recording-1",
+        }),
+      ],
+    };
+    const ctx = createContext(tables);
+    const { calls, provider } = embeddingProvider([vector(0.75)]);
+
+    await expectInvalidInput(
+      () =>
+        indexTranscriptSearchChunks(ctx, {
+          transcript: transcript(),
+          segments: [segment({ transcript_id: "transcript-2" })],
+          provider,
+        }),
+      "Transcript segment does not belong to the indexed transcript.",
+    );
+
+    expect(calls).toEqual([]);
+    expect(queryLog(ctx)).toEqual([]);
+    expect(tables.semantic_search_chunks.map((row) => row.id)).toEqual([
+      "owned-stale",
+    ]);
+  });
+
   it("deletes only owned chunks for the transcript source and inserts fresh chunks", async () => {
     const tables = {
       semantic_search_chunks: [
@@ -382,5 +490,41 @@ describe("indexTranscriptSearchChunks", () => {
     expect(tables.semantic_search_chunks.map((row) => row.embedding)).toEqual([
       ...expectedEmbeddings.map((embedding) => `[${embedding.join(",")}]`),
     ]);
+  });
+
+  it("throws a clear error when the provider returns too few embeddings", async () => {
+    const tables: { semantic_search_chunks: Row[] } = {
+      semantic_search_chunks: [],
+    };
+    const ctx = createContext(tables);
+    const { provider } = embeddingProvider([vector(0.1)]);
+
+    await expectInvalidInput(
+      () =>
+        indexTranscriptSearchChunks(ctx, {
+          transcript: transcript(),
+          segments: [
+            segment({
+              id: "segment-1",
+              start_ms: 0,
+              end_ms: 1_000,
+              text: "alpha ".repeat(200),
+            }),
+            segment({
+              id: "segment-2",
+              start_ms: 1_000,
+              end_ms: 2_000,
+              text: "bravo ".repeat(200),
+            }),
+          ],
+          provider,
+        }),
+      "Embedding provider returned 1 embeddings for 4 chunks.",
+    );
+
+    expect(queryLog(ctx).some((entry) => entry.action === "insert")).toBe(
+      false,
+    );
+    expect(tables.semantic_search_chunks).toEqual([]);
   });
 });

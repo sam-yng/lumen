@@ -24,3 +24,4 @@
 - [x] Run `bun run check`.
 - [x] Self-review, keep changes scoped, and commit with a conventional commit.
 - [x] Follow-up: add blank transcript segment coverage proving stale owned chunks are deleted without embedding or inserting.
+- [x] Quality follow-up: validate caller-provided source rows before indexing, snapshot fake query filters at execution, clarify embedding count mismatches, and validate exported embedding serialization.

@@ -2,7 +2,7 @@ import type { Tables, TablesInsert } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertEmbedding } from "@/server/services/embedding-provider";
-import { assertNoDatabaseError } from "@/server/services/errors";
+import { assertNoDatabaseError, ServiceError } from "@/server/services/errors";
 import {
   chunkDocument,
   chunkTranscript,
@@ -12,7 +12,7 @@ import {
 type SearchChunkInsert = TablesInsert<"semantic_search_chunks">;
 
 export function serializeEmbedding(vector: number[]): string {
-  return `[${vector.join(",")}]`;
+  return `[${assertEmbedding(vector).join(",")}]`;
 }
 
 async function insertFreshChunks(
@@ -25,6 +25,13 @@ async function insertFreshChunks(
   }
 
   const embeddings = await provider.embed(chunks.map((chunk) => chunk.content));
+  if (embeddings.length !== chunks.length) {
+    throw new ServiceError(
+      "invalid_input",
+      `Embedding provider returned ${embeddings.length} embeddings for ${chunks.length} chunks.`,
+    );
+  }
+
   const rows: SearchChunkInsert[] = chunks.map((chunk, index) => ({
     user_id: ctx.userId,
     source_type: chunk.sourceType,
@@ -35,7 +42,7 @@ async function insertFreshChunks(
     end_ms: chunk.endMs,
     chunk_index: chunk.chunkIndex,
     content: chunk.content,
-    embedding: serializeEmbedding(assertEmbedding(embeddings[index] ?? [])),
+    embedding: serializeEmbedding(embeddings[index] ?? []),
   }));
 
   const { error } = await ctx.supabase
@@ -49,6 +56,13 @@ export async function indexDocumentSearchChunks(
   ctx: ServiceContext,
   input: { document: Tables<"documents">; provider: EmbeddingProvider },
 ): Promise<void> {
+  if (input.document.user_id !== ctx.userId) {
+    throw new ServiceError(
+      "invalid_input",
+      "Document does not belong to the current user.",
+    );
+  }
+
   const chunks = chunkDocument({
     documentId: input.document.id,
     text: input.document.content_text,
@@ -74,6 +88,24 @@ export async function indexTranscriptSearchChunks(
     provider: EmbeddingProvider;
   },
 ): Promise<void> {
+  if (input.transcript.user_id !== ctx.userId) {
+    throw new ServiceError(
+      "invalid_input",
+      "Transcript does not belong to the current user.",
+    );
+  }
+
+  if (
+    input.segments.some(
+      (segment) => segment.transcript_id !== input.transcript.id,
+    )
+  ) {
+    throw new ServiceError(
+      "invalid_input",
+      "Transcript segment does not belong to the indexed transcript.",
+    );
+  }
+
   const chunks = chunkTranscript(
     input.segments.map((segment) => ({
       transcriptId: input.transcript.id,

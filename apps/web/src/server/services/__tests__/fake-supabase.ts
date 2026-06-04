@@ -65,12 +65,6 @@ export class FakeQuery implements ServiceQuery<Row> {
 
   update(values: Row) {
     this.pendingUpdate = values;
-    this.queryLog.push({
-      action: "update",
-      table: this.table,
-      filters: [...this.filters],
-      values,
-    });
     return this;
   }
 
@@ -88,16 +82,12 @@ export class FakeQuery implements ServiceQuery<Row> {
 
   delete() {
     this.pendingDelete = true;
-    this.queryLog.push({
-      action: "delete",
-      table: this.table,
-      filters: this.filters,
-    });
     return this;
   }
 
   async single() {
     const matchingRows = this.applyFilters(this.rows);
+    this.logPendingMutation();
     if (this.pendingUpdate) {
       for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
     }
@@ -118,6 +108,7 @@ export class FakeQuery implements ServiceQuery<Row> {
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): PromiseLike<TResult1 | TResult2> {
     const matchingRows = this.applyFilters(this.rows);
+    this.logPendingMutation();
     if (this.pendingUpdate) {
       for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
     }
@@ -127,6 +118,25 @@ export class FakeQuery implements ServiceQuery<Row> {
       data: matchingRows,
       error: this.error,
     }).then(onfulfilled, onrejected);
+  }
+
+  private logPendingMutation() {
+    if (this.pendingUpdate) {
+      this.queryLog.push({
+        action: "update",
+        table: this.table,
+        filters: [...this.filters],
+        values: this.pendingUpdate,
+      });
+    }
+
+    if (this.pendingDelete) {
+      this.queryLog.push({
+        action: "delete",
+        table: this.table,
+        filters: [...this.filters],
+      });
+    }
   }
 
   private applyFilters(rows: Row[]) {
