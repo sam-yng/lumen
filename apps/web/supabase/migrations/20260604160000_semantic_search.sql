@@ -21,9 +21,9 @@ create table public.semantic_search_chunks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   source_type semantic_search_source_type not null,
-  document_id uuid references public.documents (id) on delete cascade,
-  transcript_id uuid references public.transcripts (id) on delete cascade,
-  recording_id uuid references public.recordings (id) on delete cascade,
+  document_id uuid,
+  transcript_id uuid,
+  recording_id uuid,
   start_ms integer,
   end_ms integer,
   chunk_index integer not null,
@@ -115,6 +115,9 @@ language sql
 stable
 set search_path = ''
 as $$
+  with query as (
+    select websearch_to_tsquery('english', query_text) as text_query
+  )
   select
     c.id,
     c.user_id,
@@ -127,20 +130,22 @@ as $$
         'startMs', c.start_ms,
         'endMs', c.end_ms
       )
+      else jsonb_build_object()
     end as source,
     c.chunk_index,
     c.content,
     1 - (c.embedding operator(extensions.<=>) query_embedding) as similarity,
-    ts_rank_cd(c.content_tsv, websearch_to_tsquery('english', query_text)) as text_rank
+    ts_rank_cd(c.content_tsv, q.text_query) as text_rank
   from public.semantic_search_chunks c
+  cross join query q
   where c.user_id = match_user_id
     and (
       c.embedding operator(extensions.<=>) query_embedding < 0.85
-      or c.content_tsv @@ websearch_to_tsquery('english', query_text)
+      or c.content_tsv @@ q.text_query
     )
   order by
     (1 - (c.embedding operator(extensions.<=>) query_embedding)) desc,
-    ts_rank_cd(c.content_tsv, websearch_to_tsquery('english', query_text)) desc,
+    ts_rank_cd(c.content_tsv, q.text_query) desc,
     c.updated_at desc
   limit greatest(1, least(match_count, 20));
 $$;

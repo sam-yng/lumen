@@ -267,13 +267,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "semantic_search_chunks_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "semantic_search_chunks_document_id_user_id_fkey"
             columns: ["document_id", "user_id"]
             isOneToOne: false
@@ -281,25 +274,11 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
           {
-            foreignKeyName: "semantic_search_chunks_recording_id_fkey"
-            columns: ["recording_id"]
-            isOneToOne: false
-            referencedRelation: "recordings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "semantic_search_chunks_recording_id_user_id_fkey"
             columns: ["recording_id", "user_id"]
             isOneToOne: false
             referencedRelation: "recordings"
             referencedColumns: ["id", "user_id"]
-          },
-          {
-            foreignKeyName: "semantic_search_chunks_transcript_id_fkey"
-            columns: ["transcript_id"]
-            isOneToOne: false
-            referencedRelation: "transcripts"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "semantic_search_chunks_transcript_id_recording_id_user_id_fkey"

@@ -94,9 +94,9 @@ RLS: enabled
 | `id` | uuid primary key default gen_random_uuid() |
 | `user_id` | uuid not null references auth.users (id) on delete cascade |
 | `source_type` | semantic_search_source_type not null |
-| `document_id` | uuid references public.documents (id) on delete cascade |
-| `transcript_id` | uuid references public.transcripts (id) on delete cascade |
-| `recording_id` | uuid references public.recordings (id) on delete cascade |
+| `document_id` | uuid |
+| `transcript_id` | uuid |
+| `recording_id` | uuid |
 | `start_ms` | integer |
 | `end_ms` | integer |
 | `chunk_index` | integer not null |
