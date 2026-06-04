@@ -18,6 +18,26 @@ tags. Built across M2 (library + tagging) and M3 (editor).
 - **Tags:** create / rename / delete tags; assign / remove tags on documents and
   files; filter the library by tag.
 
+## Routes (pre-v2 cleanup)
+
+The workspace is route-backed instead of a single split-pane screen:
+
+- `/library` — folder tree, notes, files, tag filter, and create actions.
+- `/library/notes/[id]` — full-page note editor with a "Back to library" link.
+- `/library/transcripts/[recordingId]` — full-page transcript viewer.
+- `/library/tags` — tag management (same workspace, Tags view focused).
+
+`/` redirects to `/library`, and authenticated `/login` and `/signup` visits
+redirect to `/library`. Opening a note or transcript navigates (App Router
+push) rather than rendering a side pane.
+
+**Disabled in v1 (visible but inert):** the sidebar **Recents** entry (ships in
+a later release) and **Ask Lumen** (ships in v2). Both carry an explanatory
+`title` and are not clickable.
+
+**Sign-up confirmation:** new accounts confirm via a six-digit email OTP. See
+[SECURITY.md](../SECURITY.md) for the production email/SMTP requirement.
+
 ## M2 shape
 
 - The library reads through one unified snapshot: folders, documents, files,
