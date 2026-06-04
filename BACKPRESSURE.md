@@ -13,8 +13,9 @@ bun run check
 runs, in order:
 
 1. **Biome** (`biome check .`) — lint **and** format check in one tool.
-2. **`tsc --noEmit`** — full TypeScript typecheck (Biome does not typecheck).
-3. **Vitest** (`vitest run`) — unit/component tests.
+2. **Turbo typecheck** (`turbo run typecheck`) — package TypeScript checks
+   such as `tsc --noEmit` (Biome does not typecheck).
+3. **Turbo test** (`turbo run test`) — package test suites such as Vitest.
 
 Run it after **every** patch, in **every** iteration. Do not write the next
 patch until it is green.
@@ -31,12 +32,13 @@ patch until it is green.
 
 - Strict TypeScript (`strict: true`). Make impossible states impossible.
 - No `any` without a one-line comment justifying it.
-- Generated types (`src/server/db/database.types.ts`) are checked in and never
-  hand-edited — regenerate with `bun run db:types`.
+- Generated types (`apps/web/src/server/db/database.types.ts`) are checked in
+  and never hand-edited — regenerate with `cd apps/web && bun run db:types`.
 
 ## Docs are backpressure too
 
-- `docs/generated/db-schema.md` is regenerable with `bun run docs:db-schema`.
+- `docs/generated/db-schema.md` is regenerable with
+  `cd apps/web && bun run docs:db-schema`.
 - The docs tree must stay link-clean (see `AGENTS.md` for the map).
 
 ## Per-milestone rhythm

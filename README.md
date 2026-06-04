@@ -2,7 +2,8 @@
 
 A multi-tenant **study workspace**: keep a nested library of folders, write
 rich-text notes, upload lectures/seminars, transcribe them locally on CPU, and
-search across everything. Built all-TypeScript on Next.js + Supabase.
+search across everything. Built all-TypeScript on Next.js + Supabase in a Bun
+workspace.
 
 > v1 builds the product foundation and the automated harness. The AI/MCP layer
 > (assistant, semantic search) comes in v2+ behind clean seams — see
@@ -22,6 +23,7 @@ search across everything. Built all-TypeScript on Next.js + Supabase.
 bun install
 
 # Boot the local Supabase stack (Docker), then copy its keys into .env.local
+cd apps/web
 bunx supabase start
 bunx supabase status            # shows the URL + publishable/secret keys
 cp .env.example .env.local      # then paste the values from `status`
@@ -36,14 +38,16 @@ Sign up at `/signup`, and you land in the protected workspace shell.
 
 | Command | Purpose |
 | --- | --- |
-| `bun run dev` | Next dev server |
-| `bun run build` / `bun run start` | production build / serve |
-| `bun run check` | **the gate:** Biome + `tsc --noEmit` + Vitest |
-| `bun run lint` / `bun run format` | Biome lint / autofix |
-| `bun run typecheck` | `tsc --noEmit` |
-| `bun run test` / `bun run test:e2e` | Vitest / Playwright |
-| `bun run db:types` | regenerate `src/server/db/database.types.ts` |
-| `bun run docs:db-schema` | regenerate `docs/generated/db-schema.md` |
+| `bun run check` | root gate: Biome + Turbo typecheck/test |
+| `bun run lint` / `bun run format` | root Biome lint / autofix |
+| `bun run typecheck` / `bun run test` | Turbo package tasks |
+| `cd apps/web && bun run dev` | app Next dev server (port 3000) |
+| `cd apps/marketing && bun run dev` | marketing site Next dev server (port 3001) |
+| `cd apps/web && bun run build` / `bun run start` | app production build / serve |
+| `cd apps/web && bun run test:e2e` | app Playwright |
+| `cd apps/web && bun run db:types` | regenerate `apps/web/src/server/db/database.types.ts` |
+| `cd apps/web && bun run docs:db-schema` | regenerate `docs/generated/db-schema.md` |
+| `cd apps/web && bun run worker:transcribe` | run the transcription worker |
 
 Run `bun run check` after every change — a pre-commit hook (lefthook) and CI
 both enforce it. See [BACKPRESSURE.md](BACKPRESSURE.md).
@@ -56,6 +60,12 @@ Full overview and the v2+ seams: [ARCHITECTURE.md](ARCHITECTURE.md). Security
 model (auth, RLS, the service-role worker caveat): [docs/SECURITY.md](docs/SECURITY.md).
 
 The agent-facing map of the whole repo is [AGENTS.md](AGENTS.md).
+
+## Workspace Layout
+
+- `apps/web` — the authenticated study workspace app (port 3000).
+- `apps/marketing` — the public marketing site (port 3001).
+- `packages/ui` — shared CSS design tokens, exported as `@lumen/ui/tokens.css`.
 
 ## Roadmap
 

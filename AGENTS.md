@@ -18,53 +18,66 @@ repo, it doesn't exist.
 ## Commands
 
 ```bash
-bun install                 # install deps
-bun run dev                 # Next dev server
-bun run check               # GATE: biome + tsc --noEmit + vitest (run after every patch)
-bun run lint                # biome lint
-bun run format              # biome check --write (autofix)
-bun run typecheck           # tsc --noEmit
-bun run test                # vitest run
-bun run test:e2e            # playwright
-bun run db:types            # regenerate src/server/db/database.types.ts (never hand-edit)
-bun run docs:db-schema      # regenerate docs/generated/db-schema.md (never hand-edit)
+bun install                       # install workspace deps from repo root
+bun run check                     # GATE: root Biome + Turbo typecheck/test
+bun run lint                      # root Biome lint
+bun run format                    # root Biome check --write (autofix)
+bun run typecheck                 # Turbo typecheck across packages
+bun run test                      # Turbo test across packages
 
-bunx supabase start         # local Postgres + Auth + Storage (Docker)
-bunx supabase status        # local URL + keys
-bunx supabase db reset      # re-apply migrations
+cd apps/web && bun run dev        # app Next dev server (port 3000)
+cd apps/web && bun run build      # app production build
+cd apps/web && bun run test:e2e   # app Playwright
+cd apps/marketing && bun run dev  # marketing site Next dev server (port 3001)
+cd apps/web && bun run db:types   # regenerate src/server/db/database.types.ts (never hand-edit)
+cd apps/web && bun run docs:db-schema  # regenerate docs/generated/db-schema.md (never hand-edit)
+cd apps/web && bun run worker:transcribe
+
+cd apps/web && bunx supabase start     # local Postgres + Auth + Storage (Docker)
+cd apps/web && bunx supabase status    # local URL + keys
+cd apps/web && bunx supabase db reset  # re-apply migrations
 ```
 
 ## Stack (exact)
 
-Bun · Next.js 16 App Router (`src/`) + React 19 + TypeScript strict · Biome ·
-Vitest + Playwright · Supabase (Postgres/Auth/Storage/RLS, local via CLI) ·
-`@supabase/ssr` · Tailwind v4 + shadcn/ui · TanStack Query · zod · pg-boss +
-`nodejs-whisper` (M4) · TipTap (M3) · lefthook · GitHub Actions.
+Bun workspaces + Turborepo · Next.js 16 App Router (`apps/web/src/`) + React
+19 + TypeScript strict · Biome · Vitest + Playwright · Supabase
+(Postgres/Auth/Storage/RLS, local via CLI) · `@supabase/ssr` · Tailwind v4 +
+shadcn/ui · TanStack Query · zod · pg-boss + `nodejs-whisper` (M4) · TipTap
+(M3) · lefthook · GitHub Actions.
 
 > Next 16 note: the `middleware` convention is renamed to **`proxy`** — see
-> `src/proxy.ts`.
+> `apps/web/src/proxy.ts`.
 
 ## Code layout
 
 ```
-src/app/        routes, Server Components, server actions, route handlers (thin)
-src/components/  UI (ui/ = shadcn), providers, forms
-src/server/      services/ (M2, domain logic) · db/ (supabase client + types) ·
-                 config/env.ts (single zod env point) · auth/ (actions)
-src/proxy.ts     session refresh + protected-route guard
-supabase/        config.toml + migrations/ (schema source of truth)
-scripts/         gen-db-schema.ts
-worker/          transcription worker (M4)
+apps/web/src/app/        routes, Server Components, server actions, route handlers (thin)
+apps/web/src/components/ UI (ui/ = shadcn), providers, forms
+apps/web/src/server/     services/ (M2, domain logic) · db/ (supabase client + types) ·
+                         config/env.ts (single zod env point) · auth/ (actions)
+apps/web/src/proxy.ts    session refresh + protected-route guard
+apps/web/supabase/       config.toml + migrations/ (schema source of truth)
+apps/web/scripts/        gen-db-schema.ts
+apps/web/worker/         transcription worker (M4)
+apps/marketing/src/app/  public landing page: page + static metadata, robots, sitemap (port 3001)
+packages/ui/             shared CSS design tokens (`@lumen/ui/tokens.css`)
+turbo.json               workspace task pipeline
 ```
 
 ## Architecture seams (do not violate)
 
-- **Service layer** (`server/services/*`, from M2): framework-agnostic, takes an
-  authenticated context (user id + user-scoped client), enforces per-user
-  scoping. v2 MCP exposes these same services.
+- **Service layer** (`apps/web/src/server/services/*`, from M2):
+  framework-agnostic, takes an authenticated context (user id + user-scoped
+  client), enforces per-user scoping. v2 MCP exposes these same services.
 - **`TranscriptionProvider`** / **`StorageProvider`** interfaces (M4).
 - Worker runs with the **service role → bypasses RLS → must scope every query by
   `user_id`** (security-critical).
+- `packages/ui` is design-token only. App packages may import it; shared
+  packages must not import `apps/web`.
+- `apps/marketing` is a public, static, unauthenticated site: no Supabase
+  client, no service layer, no user data. Keep it dependency-light; it links
+  out to the app (`NEXT_PUBLIC_APP_URL`) rather than importing it.
 - Not in v1: MCP server, AI assistant, vector/semantic search, embeddings,
   streaming/live transcription, diarization, realtime collab. Seams, not stubs.
 

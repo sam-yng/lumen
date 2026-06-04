@@ -16,7 +16,15 @@ import { fileURLToPath } from "node:url";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(SCRIPT_DIR, "..", "supabase", "migrations");
-const OUTPUT = join(SCRIPT_DIR, "..", "docs", "generated", "db-schema.md");
+const OUTPUT = join(
+  SCRIPT_DIR,
+  "..",
+  "..",
+  "..",
+  "docs",
+  "generated",
+  "db-schema.md",
+);
 
 type Column = { name: string; definition: string };
 type Table = {
@@ -124,7 +132,7 @@ function applyRlsAndPolicies(sql: string, tables: Map<string, Table>): void {
 
 function render(tables: Map<string, Table>): string {
   const lines: string[] = [
-    "<!-- GENERATED from supabase/migrations/ by scripts/gen-db-schema.ts — do not edit. -->",
+    "<!-- GENERATED from apps/web/supabase/migrations/ by apps/web/scripts/gen-db-schema.ts — do not edit. -->",
     "<!-- Regenerate with `bun run docs:db-schema`. -->",
     "",
     "# Database schema",

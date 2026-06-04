@@ -1,4 +1,4 @@
-<!-- GENERATED from supabase/migrations/ by scripts/gen-db-schema.ts — do not edit. -->
+<!-- GENERATED from apps/web/supabase/migrations/ by apps/web/scripts/gen-db-schema.ts — do not edit. -->
 <!-- Regenerate with `bun run docs:db-schema`. -->
 
 # Database schema

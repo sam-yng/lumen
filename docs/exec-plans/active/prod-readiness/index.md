@@ -6,6 +6,13 @@
 > intentionally NOT updated** (another agent owns it right now) — whoever lands
 > the first of these should add a row there.
 
+> **Path note after the monorepo migration:** these plans were written before
+> the app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
+> `worker/`, `scripts/`, and `next.config.ts` as relative to `apps/web/`.
+> App-local commands such as `bun run dev`, `bun run db:types`, and
+> `bunx supabase ...` should run from `apps/web`; the root `bun run check`
+> remains the workspace gate.
+
 Goal: get Lumen from "v1 feature-complete" to "safe to put in front of the
 public," covering only the **codebase** work. Codebase-external setup (Railway,
 Supabase prod project, SMTP, DNS, Sentry account, etc.) is tracked separately —
