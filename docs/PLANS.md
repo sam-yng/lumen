@@ -35,15 +35,12 @@ same rule when it gains content.
 ## Queued
 
 - **v2** — AI & MCP
-  - [index.md](exec-plans/queued/v2/index.md)
   - [in-app-assistant.md](exec-plans/queued/v2/in-app-assistant.md)
 
 ## Active
 
-- **v2** — AI & MCP
+- **v2** — AI & MCP (2 of 3 children shipped; in-app assistant remains)
   - [index.md](exec-plans/active/v2/index.md)
-  - [semantic-search.md](exec-plans/active/v2/semantic-search.md)
-  - [mcp-server-auth.md](exec-plans/active/v2/mcp-server-auth.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
@@ -73,6 +70,15 @@ same rule when it gains content.
 - [planning-system-cleanup.md](exec-plans/completed/post-v1/planning-system-cleanup.md)
 - [pre-v2-cleanup.md](exec-plans/completed/post-v1/pre-v2-cleanup.md)
 
+### v2 shipped
+
+- [semantic-search.md](exec-plans/completed/v2/semantic-search.md) (PR #19)
+- [task-2-chunking-embedding-provider.md](exec-plans/completed/v2/task-2-chunking-embedding-provider.md)
+- [task-3-semantic-indexing-service.md](exec-plans/completed/v2/task-3-semantic-indexing-service.md)
+- [task-4-hybrid-search-service.md](exec-plans/completed/v2/task-4-hybrid-search-service.md)
+- [mcp-server-auth.md](exec-plans/completed/v2/mcp-server-auth.md) (PR #21)
+
 ## Archive
 
-No archived plans yet.
+- **v2** — [index.md](exec-plans/archive/v2/index.md) — original queued v2 group
+  snapshot, superseded by [active/v2/index.md](exec-plans/active/v2/index.md).

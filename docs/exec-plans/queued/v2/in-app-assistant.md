@@ -4,7 +4,7 @@
 > **Version:** v2
 > **Area:** assistant, MCP client, product UI
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/queued/v2/mcp-server-auth.md`
+> **Depends on:** `docs/exec-plans/completed/v2/mcp-server-auth.md` (shipped)
 > **Supersedes:** none
 
 ## Goal

@@ -1,5 +1,8 @@
 # Task 3 Semantic Indexing Service Implementation Plan
 
+> **Status: COMPLETED (2026-06-05).** Shipped in PR #19 as part of the semantic
+> search foundation. See `apps/web/src/server/services/semantic-index.ts`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:test-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add service-layer semantic indexing functions that replace owned document or transcript chunks.

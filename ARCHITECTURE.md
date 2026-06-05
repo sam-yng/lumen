@@ -62,9 +62,17 @@ These boundaries exist so later milestones plug in cleanly:
 3. **`StorageProvider` interface** *(M4)*. Supabase Storage is the v1
    implementation; the backend can be swapped without touching callers.
 
-**Not built in v1** (clean boundaries, not placeholders): the MCP server, the
-in-app assistant, vector/semantic search, embeddings, streaming/live
-transcription, diarization, realtime collaboration.
+**Shipped in v2** (the seams above held — no rewrite): vector/semantic search +
+local embeddings (`semantic_search_chunks` + pgvector, hybrid FTS+semantic
+retrieval in `search.ts`), and the MCP server (`apps/web/src/app/api/mcp/`)
+exposing the v1 service layer over Streamable HTTP with bearer-JWT auth. The
+service-layer client gained `.rpc()` and `.in()` (`services/context.ts`) — test
+fakes must implement both. The proxy treats `/api/mcp` as a public prefix
+(bearer-authenticated by the route, not the cookie session); see
+[docs/SECURITY.md](docs/SECURITY.md).
+
+**Still not built** (clean boundaries, not placeholders): the in-app assistant,
+streaming/live transcription, diarization, realtime collaboration.
 
 ## Security
 

@@ -1,12 +1,13 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** active
+> **Status:** active — 2 of 3 child plans shipped (semantic search PR #19, MCP
+> server + auth PR #21); in-app assistant is the remaining queued work.
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
 > **Activated:** 2026-06-04
 > **Depends on:** `docs/exec-plans/completed/post-v1/pre-v2-cleanup.md`
-> **Supersedes:** `docs/exec-plans/queued/v2/index.md`
+> **Supersedes:** `docs/exec-plans/archive/v2/index.md`
 
 ## Goal
 
@@ -26,12 +27,13 @@ external MCP hosts.
 
 Implement these as separate plans so each can ship and be reviewed on its own:
 
-1. [semantic-search.md](semantic-search.md) - active: pgvector, local
-   embeddings, chunking, hybrid search, and worker indexing.
-2. [mcp-server-auth.md](mcp-server-auth.md) - active:
-   TypeScript MCP server, Streamable HTTP transport, Supabase JWT validation,
-   OAuth 2.1 posture, and user isolation tests.
-3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued:
+1. [semantic-search.md](../../completed/v2/semantic-search.md) - **completed**
+   (PR #19): pgvector, local embeddings, chunking, hybrid search, and worker
+   indexing.
+2. [mcp-server-auth.md](../../completed/v2/mcp-server-auth.md) - **completed**
+   (PR #21): TypeScript MCP server, Streamable HTTP transport, Supabase JWT
+   validation, OAuth 2.1 posture, and user isolation tests.
+3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued (next):
    MCP client, Claude agent loop, chat panel, tool-call UX, and demo docs.
 
 ## Sequencing

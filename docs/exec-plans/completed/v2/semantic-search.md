@@ -5,12 +5,19 @@
 > superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-> **Status:** active
+> **Status: COMPLETED (2026-06-05).** Shipped in PR #19. Local CPU embeddings,
+> the `semantic_search_chunks` table + pgvector RPC, service-layer indexing
+> scoped by `user_id`, and hybrid (FTS + title + semantic) retrieval all landed
+> with `bun run check` green. Tasks 2–4 carry the per-step detail. The public
+> search route stays FTS-only; the semantic merge is service-layer opt-in (a
+> trusted caller supplies a local embedding).
+>
 > **Version:** v2
 > **Area:** semantic search
 > **Created:** 2026-06-04
 > **Activated:** 2026-06-04
-> **Depends on:** `docs/exec-plans/active/v2/index.md`
+> **Completed:** 2026-06-05
+> **Depends on:** `docs/exec-plans/completed/post-v1/pre-v2-cleanup.md`
 > **Supersedes:** `docs/exec-plans/queued/v2/semantic-search.md`
 
 **Goal:** Add local embeddings and pgvector-backed hybrid search so notes and

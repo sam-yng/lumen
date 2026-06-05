@@ -78,8 +78,14 @@ turbo.json               workspace task pipeline
 - `apps/marketing` is a public, static, unauthenticated site: no Supabase
   client, no service layer, no user data. Keep it dependency-light; it links
   out to the app (`NEXT_PUBLIC_APP_URL`) rather than importing it.
-- Not in v1: MCP server, AI assistant, vector/semantic search, embeddings,
-  streaming/live transcription, diarization, realtime collab. Seams, not stubs.
+- Shipped in v2 (do not re-stub): vector/semantic search + local embeddings
+  (`semantic_search_chunks`, pgvector, hybrid retrieval in
+  `server/services/search.ts`) and the MCP server (`app/api/mcp/`, bearer-JWT
+  auth, `/api/mcp` is a proxy public prefix). The service-layer client now has
+  `.rpc()` + `.in()` (`server/services/context.ts`) — test fakes must implement
+  both. See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/SECURITY.md](docs/SECURITY.md).
+- Still not built: in-app AI assistant, streaming/live transcription,
+  diarization, realtime collab. Seams, not stubs.
 
 ## Docs
 

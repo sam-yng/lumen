@@ -1,10 +1,18 @@
 # MCP Server And Auth Plan
 
-> **Status:** active
+> **Status: COMPLETED (2026-06-05).** Shipped in PR #21. TypeScript MCP server
+> at `apps/web/src/app/api/mcp/route.ts` (Streamable HTTP), Supabase **bearer
+> JWT** auth via `getMcpServiceContext`, tools/resources/prompts over the v1
+> service layer, and user-isolation tests, all `bun run check` green. The proxy
+> treats `/api/mcp` as a public prefix (the route enforces its own bearer auth;
+> see `docs/SECURITY.md` → "MCP server auth and tenant isolation"). Follow-ups
+> in `main`: proxy public-prefix exact/segment match hardening + regression test.
+>
 > **Version:** v2
 > **Area:** MCP, auth, external integration
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/active/v2/semantic-search.md`
+> **Completed:** 2026-06-05
+> **Depends on:** `docs/exec-plans/completed/v2/semantic-search.md`
 > **Supersedes:** none
 
 ## Goal

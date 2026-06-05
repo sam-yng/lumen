@@ -1,6 +1,12 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** queued
+> **ARCHIVED (2026-06-05).** Superseded by the live group index at
+> [`active/v2/index.md`](../../active/v2/index.md). This is the original queued
+> snapshot; do not use it to guide current implementation. Semantic search and
+> MCP server + auth have since shipped (see `completed/v2/`); the in-app
+> assistant remains queued.
+
+> **Status:** queued (historical)
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
@@ -25,13 +31,13 @@ external MCP hosts.
 
 Implement these as separate plans so each can ship and be reviewed on its own:
 
-1. [semantic-search.md](../../active/v2/semantic-search.md) - active:
+1. [semantic-search.md](../../completed/v2/semantic-search.md) - completed:
    pgvector, local embeddings, chunking, hybrid search, and worker indexing.
-2. [mcp-server-auth.md](mcp-server-auth.md) - TypeScript MCP server,
-   Streamable HTTP transport, Supabase JWT validation, OAuth 2.1 posture, and
-   user isolation tests.
-3. [in-app-assistant.md](in-app-assistant.md) - MCP client, Claude agent loop,
-   chat panel, tool-call UX, and demo docs.
+2. [mcp-server-auth.md](../../completed/v2/mcp-server-auth.md) - completed:
+   TypeScript MCP server, Streamable HTTP transport, Supabase JWT validation,
+   OAuth 2.1 posture, and user isolation tests.
+3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued: MCP
+   client, Claude agent loop, chat panel, tool-call UX, and demo docs.
 
 ## Sequencing
 

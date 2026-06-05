@@ -1,5 +1,8 @@
 # Task 4 Hybrid Search Service Implementation Plan
 
+> **Status: COMPLETED (2026-06-05).** Shipped in PR #19 as part of the semantic
+> search foundation. See `apps/web/src/server/services/search.ts`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:test-driven-development to implement this task red-green-refactor.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
