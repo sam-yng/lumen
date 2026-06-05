@@ -559,7 +559,7 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
 - Modify: `docs/SECURITY.md`
 - Modify: `docs/exec-plans/active/v2-ai-mcp/semantic-search.md`
 
-- [ ] **Step 1: Document semantic-search behavior**
+- [x] **Step 1: Document semantic-search behavior**
 
   Update product/security docs with:
 
@@ -569,7 +569,7 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
   - Search remains FTS-only unless a local embedding provider is supplied to the
     service.
 
-- [ ] **Step 2: Run generated docs**
+- [x] **Step 2: Run generated docs**
 
   Run:
 
@@ -577,7 +577,7 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
   cd apps/web && bun run docs:db-schema
   ```
 
-- [ ] **Step 3: Run final gate**
+- [x] **Step 3: Run final gate**
 
   Run:
 
@@ -585,7 +585,7 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
   bun run check
   ```
 
-- [ ] **Step 4: Manual search smoke test**
+- [x] **Step 4: Manual search smoke test**
 
   Start the app and smoke test the current search happy path in a browser:
 
@@ -604,6 +604,24 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
 - `cd apps/web && bun run docs:db-schema`
 - Service tests proving user A cannot retrieve user B chunks.
 - Manual search smoke test in the browser after implementation.
+
+## Implementation Notes
+
+- Task 1 added `semantic_search_chunks`, pgvector, owner-enforcing composite
+  foreign keys, RLS policies, and `match_semantic_search_chunks`.
+- Task 2 added deterministic chunking plus the local/free embedding provider
+  seam used in tests and smoke paths.
+- Task 3 added user-scoped semantic chunk replacement services for documents
+  and transcripts.
+- Task 4 added optional hybrid retrieval to `searchLibrary`; route handlers
+  remain FTS-only unless a provider is supplied.
+- Task 5 wired optional indexing provider injection through document writes,
+  transcript writes, and the transcription worker dependency object. Existing
+  callers remain default-free.
+- Task 6 verification: `cd apps/web && bun run docs:db-schema` regenerated the
+  schema reference, `bun run check` passed with 81 tests, and a browser smoke
+  created a note, found it through library search, and opened the result back
+  into the note editor.
 
 ## Self-Review
 
