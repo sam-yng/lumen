@@ -62,11 +62,10 @@
     animation-delay: calc(var(--i, 0) * 90ms);
   }
 
-  /* Aurora: slow-drifting blurred blobs behind the hero / final CTA. */
+  /* Aurora: slow-drifting light field behind the hero / final CTA. */
   .l-aurora {
     position: absolute;
-    inset: -20% 0 auto 0;
-    height: 70vh;
+    inset: -12% 0 -18% 0;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
@@ -79,21 +78,21 @@
     filter: blur(80px);
   }
   .l-aurora::before {
-    left: 8%;
-    top: -12%;
-    width: 50vw;
-    height: 50vw;
-    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+    left: 4%;
+    top: -10%;
+    width: min(760px, 58vw);
+    height: min(760px, 58vw);
+    background: radial-gradient(circle, var(--accent-glow), transparent 68%);
     animation: l-drift-a 24s ease-in-out infinite;
   }
   .l-aurora::after {
-    right: 4%;
-    top: 4%;
-    width: 40vw;
-    height: 40vw;
+    right: -3%;
+    top: 14%;
+    width: min(660px, 52vw);
+    height: min(660px, 52vw);
     background: radial-gradient(
       circle,
-      oklch(0.74 0.13 244 / 22%),
+      color-mix(in oklch, var(--busy), transparent 76%),
       transparent 70%
     );
     animation: l-drift-b 30s ease-in-out infinite;
@@ -110,11 +109,81 @@
     );
     background-size: 28px 28px;
     mask-image: radial-gradient(
-      ellipse 70% 60% at 50% 0%,
-      #000 40%,
-      transparent 75%
+      ellipse 82% 78% at 50% 16%,
+      #000 34%,
+      transparent 82%
     );
     z-index: 0;
+  }
+
+  .l-product-frame {
+    position: relative;
+    transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
+  }
+  .l-product-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 36%,
+      oklch(1 0 0 / 5%) 46%,
+      transparent 58%,
+      transparent 100%
+    );
+    transform: translateX(-120%);
+    animation: l-sheen 7s var(--ease) infinite;
+  }
+  .l-product-frame--compact {
+    transform: perspective(1200px) rotateX(2deg) rotateY(-4deg);
+  }
+  .l-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ok);
+    box-shadow: 0 0 0 0 var(--ok-soft);
+    animation: l-ping 2.4s ease-out infinite;
+  }
+  .l-progress {
+    width: 72%;
+    transform-origin: left;
+    animation: l-progress 3.8s var(--ease) infinite;
+  }
+  .l-wave {
+    height: var(--h, 20px);
+    animation: l-wave 1.7s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 52ms);
+  }
+  .l-type-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .l-type-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--accent-text), transparent 72%),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: l-scan 3.4s var(--ease) infinite;
+  }
+  .l-transcript-line {
+    animation: l-highlight 5.2s var(--ease) infinite;
+    animation-delay: calc(var(--i, 0) * 520ms);
+  }
+  .l-caret {
+    animation: l-blink 1.1s steps(2, jump-none) infinite;
+  }
+  .l-mini-demo {
+    min-width: 72px;
+    height: 42px;
   }
 
   /* SVG line that draws itself when its container becomes visible. */
@@ -159,6 +228,82 @@
   }
 }
 
+@keyframes l-sheen {
+  0%,
+  48% {
+    transform: translateX(-120%);
+  }
+  72%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes l-ping {
+  0% {
+    box-shadow: 0 0 0 0 var(--ok-soft);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px oklch(0.76 0.14 158 / 0%);
+  }
+}
+
+@keyframes l-progress {
+  0%,
+  100% {
+    transform: scaleX(0.45);
+  }
+  55% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes l-wave {
+  0%,
+  100% {
+    transform: scaleY(0.58);
+    opacity: 0.58;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes l-scan {
+  0%,
+  45% {
+    transform: translateX(-100%);
+  }
+  80%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes l-highlight {
+  0%,
+  100% {
+    background: transparent;
+  }
+  22%,
+  38% {
+    background: var(--accent-soft);
+  }
+}
+
+@keyframes l-blink {
+  0%,
+  44% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .l-rise {
@@ -168,7 +313,14 @@
     transition: none;
   }
   .l-aurora::before,
-  .l-aurora::after {
+  .l-aurora::after,
+  .l-product-frame::after,
+  .l-live-dot,
+  .l-progress,
+  .l-wave,
+  .l-type-line::after,
+  .l-transcript-line,
+  .l-caret {
     animation: none;
   }
   .l-draw {

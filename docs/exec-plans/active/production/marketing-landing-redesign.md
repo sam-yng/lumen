@@ -1021,3 +1021,58 @@ git commit -m "feat(marketing): compose redesigned landing page"
 - **Type consistency:** `<Reveal>` props `{children, className}` used identically everywhere; `CSSProperties` cast pattern used for every `--i`/`--len`; `features`/`steps`/`trustBadges` shapes match their consumers.
 - **No placeholders:** every step has full file contents or exact commands.
 ```
+
+---
+
+## Task 12: Hero Composition + Product Demo Motion Pass
+
+**Context:** User review on 2026-06-05 found the hero background visually ends above the primary buttons, and requested a stronger "wow" pass plus brief product-demo animations. Baseline screenshots were captured with the in-app browser at desktop and mobile widths.
+
+**Files:**
+- Modify: `apps/marketing/src/components/hero.tsx`
+- Modify: `apps/marketing/src/components/app-mock.tsx`
+- Modify: `apps/marketing/src/components/how-it-works.tsx`
+- Modify: `apps/marketing/src/app/globals.css`
+
+- [x] **Step 1: Recompose the hero**
+
+Move the product mock into the hero section on desktop so the first viewport has a clear product signal. Extend the aurora/grid mask lower through the CTA row and add a small proof strip below the buttons. Keep the mobile hero single-column and compact.
+
+- [x] **Step 2: Upgrade the mock into an animated demo**
+
+Turn `AppMock` into a reusable component with a `variant` prop:
+- `hero`: compact, animated, no outer section wrapper.
+- `section`: full-width section with intro copy and a mini demo timeline.
+
+Use CSS-only motion for recording bars, transcript line highlights, search/result pulses, and upload/progress affordances. All motion must stop under `prefers-reduced-motion: reduce`.
+
+- [x] **Step 3: Make the workflow section feel like a product tour**
+
+Replace the purely descriptive three-step row with cards that include tiny animated UI artifacts for capture, transcription, and search. Do not imply unbuilt AI/MCP features.
+
+- [x] **Step 4: Modern CSS and accessibility polish**
+
+Use modern CSS selectively: `text-wrap: balance` / `pretty`, `color-mix()`, masks, `svh`, and responsive `min()` layout values. Keep animations transform/opacity/background-position oriented, keep mock text `aria-hidden`, and ensure reduced-motion users get static visible content.
+
+- [x] **Step 5: Verify**
+
+Run:
+
+```bash
+bun run check
+cd apps/marketing && bun run build
+```
+
+Then use the in-app browser at `http://localhost:3001` to capture desktop and mobile screenshots. Confirm:
+- Hero background continues below the CTA row and visually frames the product mock.
+- First viewport has an immediate product signal on desktop.
+- Mobile layout has no horizontal overflow or text/button overlap.
+- Demo animations are visible but subtle.
+- Reduced-motion CSS disables movement while keeping content visible.
+
+## Task 12 Self-review notes
+
+- **Spec coverage:** The task addresses the reported hero background issue, adds current-product demo motion, and applies Chrome Modern Web Guidance themes: modern CSS, performance-minded animation, accessibility, and responsive layout.
+- **Scope control:** No new dependencies, no Supabase/app imports, no fake AI assistant or v2 functionality.
+- **Verification requirement:** Must include screenshot evidence in the completion note because the user explicitly requested screenshots.
+- **Verification completed:** `bun run check` passed, `cd apps/marketing && bun run build` passed, browser console had no errors, and mobile viewport reported no horizontal overflow.
