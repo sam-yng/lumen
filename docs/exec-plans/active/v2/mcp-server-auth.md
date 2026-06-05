@@ -1,6 +1,6 @@
 # MCP Server And Auth Plan
 
-> **Status:** queued
+> **Status:** active
 > **Version:** v2
 > **Area:** MCP, auth, external integration
 > **Created:** 2026-06-04

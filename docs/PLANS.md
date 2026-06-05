@@ -36,7 +36,6 @@ same rule when it gains content.
 
 - **v2** — AI & MCP
   - [index.md](exec-plans/queued/v2/index.md)
-  - [mcp-server-auth.md](exec-plans/queued/v2/mcp-server-auth.md)
   - [in-app-assistant.md](exec-plans/queued/v2/in-app-assistant.md)
 
 ## Active
@@ -44,6 +43,7 @@ same rule when it gains content.
 - **v2** — AI & MCP
   - [index.md](exec-plans/active/v2/index.md)
   - [semantic-search.md](exec-plans/active/v2/semantic-search.md)
+  - [mcp-server-auth.md](exec-plans/active/v2/mcp-server-auth.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
