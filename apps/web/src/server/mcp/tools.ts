@@ -62,8 +62,19 @@ export function runListByTag(ctx: ServiceContext, args: { tagId: string }) {
   );
 }
 
+// Zod v4 + MCP SDK type instantiation is excessively deep when registerTool is
+// called directly (TS2589); cast the registration function but keep each
+// callback's args parameter explicitly typed via the generic.
+type RegisterToolFn = <Args>(
+  name: string,
+  config: { title?: string; description?: string; inputSchema?: unknown },
+  cb: (args: Args) => CallToolResult | Promise<CallToolResult>,
+) => unknown;
+
 export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
-  server.registerTool(
+  const rt = server.registerTool.bind(server) as unknown as RegisterToolFn;
+
+  rt<{ query: string }>(
     "search_notes",
     {
       title: "Search notes",
@@ -73,7 +84,7 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     (args) => runSearchNotes(ctx, args),
   );
 
-  server.registerTool(
+  rt<{ id: string }>(
     "get_document",
     {
       title: "Get document",
@@ -83,7 +94,7 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     (args) => runGetDocument(ctx, args),
   );
 
-  server.registerTool(
+  rt<{ recordingId: string }>(
     "get_transcript",
     {
       title: "Get transcript",
@@ -93,7 +104,7 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     (args) => runGetTranscript(ctx, args),
   );
 
-  server.registerTool(
+  rt<{ title: string; folderId: string | null }>(
     "create_note",
     {
       title: "Create note",
@@ -106,7 +117,7 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     (args) => runCreateNote(ctx, args),
   );
 
-  server.registerTool(
+  rt<{ tagId: string }>(
     "list_by_tag",
     {
       title: "List documents by tag",

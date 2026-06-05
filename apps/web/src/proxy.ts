@@ -11,8 +11,11 @@ import { getPublicEnv } from "@/server/config/env";
  * (defense in depth), per the Next.js data-security guidance.
  */
 
-// Paths reachable without a session.
-const PUBLIC_PREFIXES = ["/login", "/signup", "/auth"];
+// Paths reachable without a cookie session. `/api/mcp` authenticates external
+// MCP hosts with a bearer Supabase JWT (not the cookie session), so the proxy
+// must not redirect it to /login — the route handler enforces its own auth and
+// returns 401 on a missing/invalid token.
+const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/api/mcp"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
