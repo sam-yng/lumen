@@ -184,17 +184,18 @@ export async function listDocumentsByTag(
     .filter((link) => link.target_type === "document")
     .map((link) => link.target_id);
 
-  const documents = await Promise.all(
-    documentIds.map(async (id) => {
-      const { data } = await ctx.supabase
-        .from<Document>("documents")
-        .select("*")
-        .eq("id", id)
-        .eq("user_id", ctx.userId)
-        .maybeSingle();
-      return data;
-    }),
-  );
+  if (documentIds.length === 0) return [];
 
-  return documents.filter((doc): doc is Document => doc !== null);
+  const { data: documents, error: documentsError } = await ctx.supabase
+    .from<Document>("documents")
+    .select("*")
+    .in("id", documentIds)
+    .eq("user_id", ctx.userId);
+
+  assertNoDatabaseError(documentsError, "Could not load documents");
+
+  const orderById = new Map(documentIds.map((id, index) => [id, index]));
+  return [...documents].sort(
+    (a, b) => (orderById.get(a.id) ?? 0) - (orderById.get(b.id) ?? 0),
+  );
 }
