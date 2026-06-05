@@ -1,11 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
-import {
-  createDocument,
-  getDocumentDetail,
-} from "@/server/services/documents";
+import { z } from "zod/v3";
 import type { ServiceContext } from "@/server/services/context";
+import { createDocument, getDocumentDetail } from "@/server/services/documents";
 import { ServiceError } from "@/server/services/errors";
 import { searchLibrary } from "@/server/services/search";
 import { listDocumentsByTag } from "@/server/services/tags";
@@ -20,7 +17,9 @@ function fail(message: string): CallToolResult {
 }
 
 /** Wrap a runner so ServiceError surfaces as an MCP error result, not a throw. */
-async function guard(run: () => Promise<CallToolResult>): Promise<CallToolResult> {
+async function guard(
+  run: () => Promise<CallToolResult>,
+): Promise<CallToolResult> {
   try {
     return await run();
   } catch (error) {
@@ -51,12 +50,16 @@ export function runCreateNote(
   args: { title: string; folderId: string | null },
 ) {
   return guard(async () =>
-    ok(await createDocument(ctx, { title: args.title, folderId: args.folderId })),
+    ok(
+      await createDocument(ctx, { title: args.title, folderId: args.folderId }),
+    ),
   );
 }
 
 export function runListByTag(ctx: ServiceContext, args: { tagId: string }) {
-  return guard(async () => ok(await listDocumentsByTag(ctx, { tagId: args.tagId })));
+  return guard(async () =>
+    ok(await listDocumentsByTag(ctx, { tagId: args.tagId })),
+  );
 }
 
 export function registerMcpTools(server: McpServer, ctx: ServiceContext) {

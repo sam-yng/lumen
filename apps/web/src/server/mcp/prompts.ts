@@ -1,16 +1,16 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import { z } from "zod/v3";
 import type { ServiceContext } from "@/server/services/context";
 import { getTranscriptDetail } from "@/server/services/transcripts";
+
+const recordingIdSchema = { recordingId: z.string().uuid() } as const;
 
 function userMessage(text: string): GetPromptResult {
   return { messages: [{ role: "user", content: { type: "text", text } }] };
 }
 
-function transcriptText(
-  segments: { text: string }[],
-): string {
+function transcriptText(segments: { text: string }[]): string {
   return segments.map((segment) => segment.text).join(" ");
 }
 
@@ -40,24 +40,33 @@ export async function buildMakeFlashcardsPrompt(
   );
 }
 
+type AnyRegisterPrompt = (
+  name: string,
+  config: { title?: string; description?: string; argsSchema?: unknown },
+  cb: (args: unknown) => GetPromptResult | Promise<GetPromptResult>,
+) => unknown;
+
 export function registerMcpPrompts(server: McpServer, ctx: ServiceContext) {
-  server.registerPrompt(
+  const rp = server.registerPrompt.bind(server) as AnyRegisterPrompt;
+
+  rp(
     "summarize-recording",
     {
       title: "Summarize recording",
       description: "Summarize a recording transcript into study notes.",
-      argsSchema: { recordingId: z.string().uuid() },
+      argsSchema: recordingIdSchema,
     },
-    (args) => buildSummarizeRecordingPrompt(ctx, args),
+    (args) =>
+      buildSummarizeRecordingPrompt(ctx, args as { recordingId: string }),
   );
 
-  server.registerPrompt(
+  rp(
     "make-flashcards",
     {
       title: "Make flashcards",
       description: "Generate Q&A flashcards from a recording transcript.",
-      argsSchema: { recordingId: z.string().uuid() },
+      argsSchema: recordingIdSchema,
     },
-    (args) => buildMakeFlashcardsPrompt(ctx, args),
+    (args) => buildMakeFlashcardsPrompt(ctx, args as { recordingId: string }),
   );
 }

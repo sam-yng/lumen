@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createContext } from "@/server/services/__tests__/fake-supabase";
 import { buildMcpServer } from "@/server/mcp/server";
+import { createContext } from "@/server/services/__tests__/fake-supabase";
 
 describe("buildMcpServer", () => {
   it("registers the expected tools", async () => {
@@ -12,7 +12,13 @@ describe("buildMcpServer", () => {
         ._registeredTools,
     );
     expect(names.sort()).toEqual(
-      ["create_note", "get_document", "get_transcript", "list_by_tag", "search_notes"].sort(),
+      [
+        "create_note",
+        "get_document",
+        "get_transcript",
+        "list_by_tag",
+        "search_notes",
+      ].sort(),
     );
   });
 });

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createContext } from "@/server/services/__tests__/fake-supabase";
 import {
   runCreateNote,
   runGetDocument,
   runSearchNotes,
 } from "@/server/mcp/tools";
+import { createContext } from "@/server/services/__tests__/fake-supabase";
 
 const doc = {
   id: "d1",
@@ -23,14 +23,18 @@ describe("runGetDocument", () => {
     const ctx = createContext({ documents: [{ ...doc }] });
     const result = await runGetDocument(ctx, { id: "d1" });
     expect(result.content[0]).toMatchObject({ type: "text" });
-    expect(String(result.content[0].text)).toContain("Bio");
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      "Bio",
+    );
   });
 
   it("reports not-found as an error result, not a throw", async () => {
     const ctx = createContext({ documents: [] });
     const result = await runGetDocument(ctx, { id: "missing" });
     expect(result.isError).toBe(true);
-    expect(String(result.content[0].text)).toContain("not found");
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      "not found",
+    );
   });
 });
 
@@ -50,6 +54,8 @@ describe("runCreateNote", () => {
   it("creates a document and returns its id", async () => {
     const ctx = createContext({ documents: [], folders: [] });
     const result = await runCreateNote(ctx, { title: "New", folderId: null });
-    expect(String(result.content[0].text)).toContain("New");
+    expect(String((result.content[0] as { text: string }).text)).toContain(
+      "New",
+    );
   });
 });

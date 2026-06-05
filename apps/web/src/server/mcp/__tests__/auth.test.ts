@@ -13,9 +13,12 @@ describe("getMcpServiceContext", () => {
 
   it("returns null when the scheme is not Bearer", async () => {
     const resolveUser = vi.fn();
-    const ctx = await getMcpServiceContext(req({ Authorization: "Basic abc" }), {
-      resolveUser,
-    });
+    const ctx = await getMcpServiceContext(
+      req({ Authorization: "Basic abc" }),
+      {
+        resolveUser,
+      },
+    );
     expect(ctx).toBeNull();
     expect(resolveUser).not.toHaveBeenCalled();
   });

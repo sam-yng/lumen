@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createContext } from "@/server/services/__tests__/fake-supabase";
 import { readDocumentResource } from "@/server/mcp/resources";
+import { createContext } from "@/server/services/__tests__/fake-supabase";
 
 const doc = {
   id: "d1",
@@ -18,7 +18,7 @@ describe("readDocumentResource", () => {
   it("returns document contents for an owned id", async () => {
     const ctx = createContext({ documents: [{ ...doc }] });
     const result = await readDocumentResource(ctx, "d1");
-    expect(result.contents[0].text).toContain("Bio");
+    expect((result.contents[0] as { text: string }).text).toContain("Bio");
     expect(result.contents[0].uri).toBe("lumen://document/d1");
   });
 });
