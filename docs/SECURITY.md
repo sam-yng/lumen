@@ -77,6 +77,18 @@ V2 semantic-search notes:
   route stays FTS-only unless a trusted caller supplies a local embedding
   provider.
 
+## MCP server auth and tenant isolation
+
+The MCP server (`apps/web/src/app/api/mcp/route.ts`) authenticates external
+hosts with a **bearer Supabase JWT** (not the cookie session the web app uses).
+`getMcpServiceContext` validates the token with `supabase.auth.getUser(token)`
+and builds a `ServiceContext` whose Supabase client carries that JWT against the
+**publishable (anon) key**. Every tool, resource, and prompt query therefore runs
+under the user's **RLS policies** — the same guarantee as the web app, with no
+service-role key and no manual `user_id` scoping. A missing or invalid token is
+rejected with 401 before any service runs. Cross-user isolation is covered by
+`apps/web/src/server/mcp/__tests__/isolation.test.ts`.
+
 ## Secrets
 
 - `SUPABASE_SECRET_KEY` is server-only and never imported into client code. All
