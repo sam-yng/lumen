@@ -10,6 +10,7 @@ import {
   transcriptionJobPayloadSchema,
 } from "@/server/queue/transcription-jobs";
 import type { ServiceSupabaseClient } from "@/server/services/context";
+import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import {
   type StorageProvider,
   SupabaseStorageProvider,
@@ -39,6 +40,7 @@ export type ProcessTranscriptionJobDeps = {
   supabase: WorkerSupabaseClient;
   storage: StorageProvider;
   provider: TranscriptionProvider;
+  embeddingProvider?: EmbeddingProvider;
   tempDir: string;
 };
 
@@ -144,6 +146,7 @@ export async function processTranscriptionJob(
         fullText: transcript.fullText,
         language: transcript.language,
         segments: transcript.segments,
+        embeddingProvider: deps.embeddingProvider,
       },
     );
 

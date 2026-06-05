@@ -158,4 +158,4 @@ Rationale: get `bun run check` green first so every subsequent change is gated.
 
 **Deferred (seams, not stubs):** service-role/worker client → M4; OAuth → M-later (seam comment in auth form); Playwright e2e specs → M6 (config + browser installed now).
 
-**Carried debt:** FFmpeg not installed locally (host dep, needed M4) — tracked in [tech-debt-tracker.md](../tech-debt-tracker.md). CI workflow is wired but not yet exercised on the remote (branch not pushed).
+**Carried debt:** FFmpeg not installed locally (host dep, needed M4) — tracked in [tech-debt-tracker.md](../../tech-debt-tracker.md). CI workflow is wired but not yet exercised on the remote (branch not pushed).

@@ -1,7 +1,9 @@
 import type { Json, Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import { extractTipTapText } from "@/server/services/editor-content";
+import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
+import { indexDocumentSearchChunks } from "@/server/services/semantic-index";
 
 type Document = Tables<"documents">;
 type Folder = Tables<"folders">;
@@ -27,7 +29,11 @@ function cleanTitle(title: string) {
 
 export async function createDocument(
   ctx: ServiceContext,
-  input: { title: string; folderId: string | null },
+  input: {
+    title: string;
+    folderId: string | null;
+    embeddingProvider?: EmbeddingProvider;
+  },
 ) {
   await assertFolderOwned(ctx, input.folderId);
 
@@ -45,6 +51,12 @@ export async function createDocument(
 
   assertNoDatabaseError(error, "Could not create document");
   assertFound(data, "Document not found.");
+  if (input.embeddingProvider) {
+    await indexDocumentSearchChunks(ctx, {
+      document: data,
+      provider: input.embeddingProvider,
+    });
+  }
   return data;
 }
 
@@ -55,6 +67,7 @@ export async function updateDocument(
     title?: string;
     folderId?: string | null;
     contentJson?: Json | null;
+    embeddingProvider?: EmbeddingProvider;
   },
 ) {
   if ("folderId" in input) await assertFolderOwned(ctx, input.folderId ?? null);
@@ -77,6 +90,12 @@ export async function updateDocument(
 
   assertNoDatabaseError(error, "Could not update document");
   assertFound(data, "Document not found.");
+  if (input.embeddingProvider) {
+    await indexDocumentSearchChunks(ctx, {
+      document: data,
+      provider: input.embeddingProvider,
+    });
+  }
   return data;
 }
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16, Bun, TypeScript strict, `@modelcontextprotocol/sdk` ^1.29.0, `@supabase/ssr`, zod, Vitest.
 
-**Design:** `docs/superpowers/specs/2026-06-05-v2-mcp-server-auth-design.md`
+**Design:** [docs/superpowers/specs/2026-06-05-v2-mcp-server-auth-design.md](../specs/2026-06-05-v2-mcp-server-auth-design.md)
 
 ---
 

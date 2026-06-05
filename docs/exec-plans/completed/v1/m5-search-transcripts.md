@@ -1650,7 +1650,7 @@ Status: M5 implemented.
 In `docs/product-specs/index.md`, add under the existing bullet:
 
 ```markdown
-- [search-and-transcripts.md](../../product-specs/search-and-transcripts.md) — full-text search and
+- [search-and-transcripts.md](../../../product-specs/search-and-transcripts.md) — full-text search and
   the read-only transcript viewer (M5).
 ```
 

@@ -1,11 +1,12 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** queued
+> **Status:** active
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
+> **Activated:** 2026-06-04
 > **Depends on:** `docs/exec-plans/completed/post-v1/pre-v2-cleanup.md`
-> **Supersedes:** none
+> **Supersedes:** `docs/exec-plans/queued/v2/index.md`
 
 ## Goal
 
@@ -25,13 +26,13 @@ external MCP hosts.
 
 Implement these as separate plans so each can ship and be reviewed on its own:
 
-1. [semantic-search.md](../../active/v2/semantic-search.md) - active:
-   pgvector, local embeddings, chunking, hybrid search, and worker indexing.
-2. [mcp-server-auth.md](mcp-server-auth.md) - TypeScript MCP server,
-   Streamable HTTP transport, Supabase JWT validation, OAuth 2.1 posture, and
-   user isolation tests.
-3. [in-app-assistant.md](in-app-assistant.md) - MCP client, Claude agent loop,
-   chat panel, tool-call UX, and demo docs.
+1. [semantic-search.md](semantic-search.md) - active: pgvector, local
+   embeddings, chunking, hybrid search, and worker indexing.
+2. [mcp-server-auth.md](../../queued/v2/mcp-server-auth.md) - queued:
+   TypeScript MCP server, Streamable HTTP transport, Supabase JWT validation,
+   OAuth 2.1 posture, and user isolation tests.
+3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued:
+   MCP client, Claude agent loop, chat panel, tool-call UX, and demo docs.
 
 ## Sequencing
 
@@ -50,8 +51,3 @@ Implement these as separate plans so each can ship and be reviewed on its own:
 - Embeddings are local/free to run; do not add a per-embedding API cost.
 - v2 does not include realtime transcription, diarization, collaboration, or
   production deployment hardening beyond what each child plan explicitly needs.
-
-## Promotion Rule
-
-Move a child plan from `queued/` to `active/` only when implementation begins.
-Update `docs/PLANS.md` in the same change so the index remains trustworthy.

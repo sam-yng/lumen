@@ -62,6 +62,21 @@ M4 implementation notes:
   and `transcripts` include `eq("user_id", userId)`; segment inserts use the
   transcript id created by that user-scoped transcript insert.
 
+V2 semantic-search notes:
+
+- Semantic chunks are stored in `semantic_search_chunks`, which is directly
+  user-owned and protected by RLS policies keyed on `auth.uid() = user_id`.
+- The schema also enforces parent ownership with composite foreign keys so a
+  chunk row cannot claim one `user_id` while pointing at another user's
+  document, transcript, or recording.
+- Worker/service-role indexing paths must still scope chunk replacement by
+  `user_id`. The semantic indexing service validates source rows before
+  embedding and deletes with explicit `user_id`, `source_type`, and source-id
+  filters before inserting replacement chunks.
+- Hybrid semantic retrieval remains service-layer opt-in: the public search
+  route stays FTS-only unless a trusted caller supplies a local embedding
+  provider.
+
 ## Secrets
 
 - `SUPABASE_SECRET_KEY` is server-only and never imported into client code. All

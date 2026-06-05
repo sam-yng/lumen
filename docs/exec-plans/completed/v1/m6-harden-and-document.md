@@ -47,7 +47,7 @@
 In `docs/exec-plans/completed/m5-search-transcripts.md`, replace the stale inline Markdown link that points to `search-and-transcripts.md` from the completed-plan directory with a repo-correct relative link:
 
 ```markdown
-[search-and-transcripts.md](../../product-specs/search-and-transcripts.md)
+[search-and-transcripts.md](../../../product-specs/search-and-transcripts.md)
 ```
 
 - [x] **Step 2: Fix the broken completed-plan self-link**

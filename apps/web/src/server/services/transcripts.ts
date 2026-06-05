@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
+import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
+import { indexTranscriptSearchChunks } from "@/server/services/semantic-index";
 
 type FileRow = Tables<"files">;
 type RecordingRow = Tables<"recordings">;
@@ -52,6 +54,7 @@ export async function writeRecordingTranscript(
     fullText: string;
     language: string | null;
     segments: TranscriptSegmentInput[];
+    embeddingProvider?: EmbeddingProvider;
   },
 ) {
   const recording = await getOwnedRecording(ctx, input.recordingId);
@@ -78,24 +81,32 @@ export async function writeRecordingTranscript(
   assertFound(transcript, "Transcript not found.");
 
   const segments = orderedSegments(input.segments);
+  const segmentRows: SegmentRow[] = segments.map((segment) => ({
+    id: randomUUID(),
+    transcript_id: transcript.id,
+    start_ms: segment.startMs,
+    end_ms: segment.endMs,
+    text: segment.text,
+    speaker: segment.speaker,
+  }));
+
   if (segments.length > 0) {
     const { error: segmentsError } = await ctx.supabase
       .from<SegmentRow>("transcript_segments")
-      .insert(
-        segments.map((segment) => ({
-          id: randomUUID(),
-          transcript_id: transcript.id,
-          start_ms: segment.startMs,
-          end_ms: segment.endMs,
-          text: segment.text,
-          speaker: segment.speaker,
-        })),
-      );
+      .insert(segmentRows);
 
     assertNoDatabaseError(
       segmentsError,
       "Could not create transcript segments",
     );
+  }
+
+  if (input.embeddingProvider) {
+    await indexTranscriptSearchChunks(ctx, {
+      transcript,
+      segments: segmentRows,
+      provider: input.embeddingProvider,
+    });
   }
 
   const durationSec =

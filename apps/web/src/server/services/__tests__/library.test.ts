@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   createContext,
   otherUserId,
+  type Row,
   userId,
 } from "@/server/services/__tests__/fake-supabase";
 import { createDocument, updateDocument } from "@/server/services/documents";
 import { extractTipTapText } from "@/server/services/editor-content";
+import {
+  EMBEDDING_DIMENSIONS,
+  type EmbeddingProvider,
+} from "@/server/services/embedding-provider";
 import { createFileMetadata } from "@/server/services/files";
 import {
   createFolder,
@@ -43,6 +48,32 @@ class FakeStorage implements StorageProvider {
   async remove(input: { bucket: string; key: string }) {
     this.removed.push(input);
   }
+}
+
+function vector(value: number) {
+  return Array.from({ length: EMBEDDING_DIMENSIONS }, (_, index) =>
+    index === 0 ? value : 0,
+  );
+}
+
+function embeddingProvider(vectors: number[][]) {
+  const calls: string[][] = [];
+  const provider: EmbeddingProvider = {
+    async embed(texts: string[]) {
+      calls.push(texts);
+      return vectors.slice(0, texts.length);
+    },
+  };
+
+  return { calls, provider };
+}
+
+function tablesFor(ctx: ReturnType<typeof createContext>) {
+  return (
+    ctx.supabase as unknown as {
+      tables: Record<string, Row[]>;
+    }
+  ).tables;
 }
 
 describe("library services", () => {
@@ -254,6 +285,81 @@ describe("library services", () => {
       id: "doc-a",
       content_json: contentJson,
       content_text: "Saved from TipTap",
+    });
+  });
+
+  it("refreshes semantic chunks when document content is updated with a provider", async () => {
+    const ctx = createContext({
+      documents: [
+        {
+          id: "doc-a",
+          user_id: userId,
+          title: "Lecture",
+          folder_id: null,
+          content_json: null,
+          content_text: null,
+        },
+      ],
+      semantic_search_chunks: [
+        {
+          id: "owned-stale",
+          user_id: userId,
+          source_type: "document",
+          document_id: "doc-a",
+          transcript_id: null,
+          recording_id: null,
+          start_ms: null,
+          end_ms: null,
+          chunk_index: 0,
+          content: "stale",
+          embedding: "[0]",
+        },
+        {
+          id: "other-user-stale",
+          user_id: otherUserId,
+          source_type: "document",
+          document_id: "doc-a",
+          transcript_id: null,
+          recording_id: null,
+          start_ms: null,
+          end_ms: null,
+          chunk_index: 0,
+          content: "private",
+          embedding: "[0]",
+        },
+      ],
+    });
+    const { calls, provider } = embeddingProvider([vector(0.5)]);
+    const contentJson = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Indexed from TipTap" }],
+        },
+      ],
+    };
+
+    await updateDocument(ctx, {
+      id: "doc-a",
+      contentJson,
+      embeddingProvider: provider,
+    });
+
+    expect(calls).toEqual([["Indexed from TipTap"]]);
+    const tables = tablesFor(ctx);
+    expect(tables.semantic_search_chunks.map((row) => row.id)).toContain(
+      "other-user-stale",
+    );
+    expect(tables.semantic_search_chunks.map((row) => row.id)).not.toContain(
+      "owned-stale",
+    );
+    expect(tables.semantic_search_chunks.at(-1)).toMatchObject({
+      user_id: userId,
+      source_type: "document",
+      document_id: "doc-a",
+      content: "Indexed from TipTap",
+      embedding: `[${vector(0.5).join(",")}]`,
     });
   });
 
@@ -513,6 +619,48 @@ describe("library services", () => {
           },
         ],
       },
+    });
+  });
+
+  it("refreshes semantic chunks after writing transcript segments", async () => {
+    const ctx = createContext({
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "processing",
+          error: null,
+        },
+      ],
+      transcripts: [],
+      transcript_segments: [],
+      semantic_search_chunks: [],
+    });
+    const { calls, provider } = embeddingProvider([vector(0.75)]);
+
+    const result = await writeRecordingTranscript(ctx, {
+      recordingId: "recording-a",
+      fullText: "Hello world",
+      language: "en",
+      segments: [
+        { startMs: 0, endMs: 1000, text: "Hello world", speaker: null },
+      ],
+      embeddingProvider: provider,
+    });
+
+    expect(calls).toEqual([["Hello world"]]);
+    const tables = tablesFor(ctx);
+    expect(tables.semantic_search_chunks).toHaveLength(1);
+    expect(tables.semantic_search_chunks[0]).toMatchObject({
+      user_id: userId,
+      source_type: "transcript",
+      transcript_id: result.transcript.id,
+      recording_id: "recording-a",
+      start_ms: 0,
+      end_ms: 1000,
+      content: "Hello world",
+      embedding: `[${vector(0.75).join(",")}]`,
     });
   });
 
