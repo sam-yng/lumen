@@ -12,7 +12,7 @@
 
 ## Source Material
 
-- Approved spec: `docs/superpowers/specs/2026-06-04-v2-planning-exec-plans-design.md`
+- Approved spec: [docs/superpowers/specs/2026-06-04-v2-planning-exec-plans-design.md](../../../superpowers/specs/2026-06-04-v2-planning-exec-plans-design.md)
 - External roadmap handoff: `/Users/samy/Downloads/files/study-app-roadmap-v2-v4.md`
 - Current index: `docs/PLANS.md`
 - Agent map: `AGENTS.md`

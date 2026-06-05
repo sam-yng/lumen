@@ -10,8 +10,8 @@
 > **Area:** semantic search
 > **Created:** 2026-06-04
 > **Activated:** 2026-06-04
-> **Depends on:** `docs/exec-plans/active/v2-ai-mcp/index.md`
-> **Supersedes:** `docs/exec-plans/queued/v2-ai-mcp/semantic-search.md`
+> **Depends on:** `docs/exec-plans/active/v2/index.md`
+> **Supersedes:** `docs/exec-plans/queued/v2/semantic-search.md`
 
 **Goal:** Add local embeddings and pgvector-backed hybrid search so notes and
 transcript chunks can be retrieved semantically without per-embedding API cost.
@@ -557,7 +557,7 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
 
 - Modify: `docs/product-specs/search-and-transcripts.md`
 - Modify: `docs/SECURITY.md`
-- Modify: `docs/exec-plans/active/v2-ai-mcp/semantic-search.md`
+- Modify: `docs/exec-plans/active/v2/semantic-search.md`
 
 - [x] **Step 1: Document semantic-search behavior**
 
@@ -610,11 +610,14 @@ pgvector, TypeScript strict, Vitest, Biome, local CPU embeddings.
 - Task 1 added `semantic_search_chunks`, pgvector, owner-enforcing composite
   foreign keys, RLS policies, and `match_semantic_search_chunks`.
 - Task 2 added deterministic chunking plus the local/free embedding provider
-  seam used in tests and smoke paths.
+  seam used in tests and smoke paths. See
+  [task-2-chunking-embedding-provider.md](task-2-chunking-embedding-provider.md).
 - Task 3 added user-scoped semantic chunk replacement services for documents
-  and transcripts.
+  and transcripts. See
+  [task-3-semantic-indexing-service.md](task-3-semantic-indexing-service.md).
 - Task 4 added optional hybrid retrieval to `searchLibrary`; route handlers
-  remain FTS-only unless a provider is supplied.
+  remain FTS-only unless a provider is supplied. See
+  [task-4-hybrid-search-service.md](task-4-hybrid-search-service.md).
 - Task 5 wired optional indexing provider injection through document writes,
   transcript writes, and the transcription worker dependency object. Existing
   callers remain default-free.

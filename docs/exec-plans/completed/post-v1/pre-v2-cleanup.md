@@ -22,6 +22,8 @@
 > App-local commands such as `bun run dev`, `bun run db:types`, and
 > `bunx supabase ...` should run from `apps/web`; the root `bun run check`
 > remains the workspace gate.
+>
+> **Design spec:** [docs/superpowers/specs/2026-06-04-pre-v2-cleanup-design.md](../../../superpowers/specs/2026-06-04-pre-v2-cleanup-design.md)
 
 > **Task 1 already shipped (2026-06-04):** the auth OTP + confirm-password work
 > landed in `c7bd793 feat(auth): require signup email code` (now in `main`).

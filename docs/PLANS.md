@@ -1,8 +1,9 @@
 # Plans
 
-Execution plans live under [exec-plans/](exec-plans/). The folder is organized
-by lifecycle, not by release number, because post-MVP work can overlap across
-product, production, AI/MCP, retrieval, and docs.
+Execution plans live under [exec-plans/](exec-plans/). The top level is
+organized by **lifecycle** (status), and within each lifecycle folder plans are
+grouped into **version/phase buckets** so the tree stays legible as releases
+accumulate.
 
 ## Lifecycle
 
@@ -17,46 +18,60 @@ product, production, AI/MCP, retrieval, and docs.
 - **[tech-debt-tracker.md](exec-plans/tech-debt-tracker.md)** - known shortcuts
   and follow-ups that cut across statuses and versions.
 
+## Bucket rule
+
+Inside every lifecycle folder, plans live in a **version/phase bucket** — never
+loose at the lifecycle root. Bucket names come from the plan `Version` field:
+`v1`, `post-v1`, `v2`, `v3`, `v4`, `production`, `cross-cutting`. A bucket holds
+either loose plan files (e.g. `completed/v1/m0-…md`) or a grouped initiative
+(`index.md` + child plans, e.g. `queued/v2/index.md`).
+
+When a plan changes lifecycle (queued → active → completed), move it into the
+**same-named bucket** under the new folder and update this index in the same
+change (see the Promotion Rule in each group `index.md`). The bucket name
+travels with the plan; only the lifecycle folder changes. `archive/` follows the
+same rule when it gains content.
+
 ## Queued
 
-- **v2 AI & MCP**
-  - [index.md](exec-plans/queued/v2-ai-mcp/index.md)
-  - [mcp-server-auth.md](exec-plans/queued/v2-ai-mcp/mcp-server-auth.md)
-  - [in-app-assistant.md](exec-plans/queued/v2-ai-mcp/in-app-assistant.md)
+- **v2** — AI & MCP
+  - [index.md](exec-plans/queued/v2/index.md)
+  - [mcp-server-auth.md](exec-plans/queued/v2/mcp-server-auth.md)
+  - [in-app-assistant.md](exec-plans/queued/v2/in-app-assistant.md)
 
 ## Active
 
-- **v2 AI & MCP**
-  - [index.md](exec-plans/active/v2-ai-mcp/index.md)
-  - [semantic-search.md](exec-plans/active/v2-ai-mcp/semantic-search.md)
-- **Production readiness**
-  - [index.md](exec-plans/active/prod-readiness/index.md)
-  - [prod-env-and-deploy.md](exec-plans/active/prod-readiness/prod-env-and-deploy.md)
-  - [prod-auth.md](exec-plans/active/prod-readiness/prod-auth.md)
-  - [prod-sentry.md](exec-plans/active/prod-readiness/prod-sentry.md)
-  - [prod-legal-pages.md](exec-plans/active/prod-readiness/prod-legal-pages.md)
-- **Marketing landing redesign**
-  - [marketing-landing-redesign.md](exec-plans/active/marketing-landing-redesign.md)
+- **v2** — AI & MCP
+  - [index.md](exec-plans/active/v2/index.md)
+  - [semantic-search.md](exec-plans/active/v2/semantic-search.md)
+- **production** — Production readiness
+  - [index.md](exec-plans/active/production/prod-readiness/index.md)
+  - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
+  - [prod-auth.md](exec-plans/active/production/prod-readiness/prod-auth.md)
+  - [prod-sentry.md](exec-plans/active/production/prod-readiness/prod-sentry.md)
+  - [prod-legal-pages.md](exec-plans/active/production/prod-readiness/prod-legal-pages.md)
+- **production** — Marketing landing redesign
+  - [marketing-landing-redesign.md](exec-plans/active/production/marketing-landing-redesign.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md))
 
 ## Completed
 
 ### v1 completed milestones
 
-- [m0-harness-and-scaffold.md](exec-plans/completed/m0-harness-and-scaffold.md)
-- [m1-schema-and-rls.md](exec-plans/completed/m1-schema-and-rls.md)
-- [m2-library.md](exec-plans/completed/m2-library.md)
-- [m3-editor.md](exec-plans/completed/m3-editor.md)
-- [m4-transcription.md](exec-plans/completed/m4-transcription.md)
-- [m5-search-transcripts.md](exec-plans/completed/m5-search-transcripts.md)
-- [m6-harden-and-document.md](exec-plans/completed/m6-harden-and-document.md)
+- [m0-harness-and-scaffold.md](exec-plans/completed/v1/m0-harness-and-scaffold.md)
+- [m1-schema-and-rls.md](exec-plans/completed/v1/m1-schema-and-rls.md)
+- [m2-library.md](exec-plans/completed/v1/m2-library.md)
+- [m3-editor.md](exec-plans/completed/v1/m3-editor.md)
+- [m4-transcription.md](exec-plans/completed/v1/m4-transcription.md)
+- [m5-search-transcripts.md](exec-plans/completed/v1/m5-search-transcripts.md)
+- [m6-harden-and-document.md](exec-plans/completed/v1/m6-harden-and-document.md)
 
 ### Post-v1 cleanup and foundation
 
-- [design-implementation-pass.md](exec-plans/completed/design-implementation-pass.md)
-- [monorepo-migration.md](exec-plans/completed/monorepo-migration.md)
-- [planning-system-cleanup.md](exec-plans/completed/planning-system-cleanup.md)
-- [pre-v2-cleanup.md](exec-plans/completed/pre-v2-cleanup.md)
+- [design-implementation-pass.md](exec-plans/completed/post-v1/design-implementation-pass.md)
+- [monorepo-migration.md](exec-plans/completed/post-v1/monorepo-migration.md)
+- [planning-system-cleanup.md](exec-plans/completed/post-v1/planning-system-cleanup.md)
+- [pre-v2-cleanup.md](exec-plans/completed/post-v1/pre-v2-cleanup.md)
 
 ## Archive
 

@@ -73,7 +73,7 @@
   Inspect `git diff`, ensure the public exports match the task exactly, keep changes scoped to the four requested code/test files plus this plan, then commit:
 
   ```bash
-  git add docs/exec-plans/active/v2-ai-mcp/task-2-chunking-embedding-provider.md apps/web/src/server/services/semantic-chunking.ts apps/web/src/server/services/embedding-provider.ts apps/web/src/server/services/__tests__/semantic-chunking.test.ts apps/web/src/server/services/__tests__/embedding-provider.test.ts
+  git add docs/exec-plans/active/v2/task-2-chunking-embedding-provider.md apps/web/src/server/services/semantic-chunking.ts apps/web/src/server/services/embedding-provider.ts apps/web/src/server/services/__tests__/semantic-chunking.test.ts apps/web/src/server/services/__tests__/embedding-provider.test.ts
   git commit -m "feat: add semantic chunking and embeddings"
   ```
 

@@ -4,7 +4,7 @@
 > **Version:** v2
 > **Area:** MCP, auth, external integration
 > **Created:** 2026-06-04
-> **Depends on:** `docs/exec-plans/queued/v2-ai-mcp/semantic-search.md`
+> **Depends on:** `docs/exec-plans/active/v2/semantic-search.md`
 > **Supersedes:** none
 
 ## Goal
@@ -26,6 +26,11 @@ Supabase Auth to scope every tool, resource, and prompt to the current user.
 - Route all business operations through `apps/web/src/server/services/`.
 - Add isolation tests that prove user A cannot access user B data through MCP.
 - Update `docs/SECURITY.md` with the auth and tenant-isolation model.
+
+## Detailed Plan
+
+- [Implementation plan](../../../superpowers/plans/2026-06-05-v2-mcp-server-auth.md)
+- [Design spec](../../../superpowers/specs/2026-06-05-v2-mcp-server-auth-design.md)
 
 ## Out Of Scope
 
