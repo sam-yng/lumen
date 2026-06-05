@@ -50,6 +50,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# agent scratch artifacts (throwaway QA screenshots, etc.)
+.codex/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
