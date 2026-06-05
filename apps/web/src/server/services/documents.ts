@@ -115,3 +115,19 @@ export async function deleteDocument(
   assertFound(data, "Document not found.");
   return data;
 }
+
+export async function getDocumentDetail(
+  ctx: ServiceContext,
+  input: { id: string },
+) {
+  const { data, error } = await ctx.supabase
+    .from<Document>("documents")
+    .select("*")
+    .eq("id", input.id)
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+
+  assertNoDatabaseError(error, "Could not load document");
+  assertFound(data, "Document not found.");
+  return data;
+}
