@@ -1,4 +1,5 @@
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getPublicEnv } from "@/server/config/env";
 import type { Database } from "@/server/db/database.types";
@@ -11,6 +12,27 @@ import type { Database } from "@/server/db/database.types";
  * client — which bypasses RLS and must scope by user_id manually — is NOT built
  * here: it belongs to the transcription worker (M4). See SECURITY.md.
  */
+
+/**
+ * Bearer-token-bound client for non-cookie callers (the MCP server).
+ *
+ * Uses the PUBLISHABLE (anon) key plus the caller's Supabase JWT, so every
+ * query runs under that user's RLS policies — the same guarantee as the
+ * cookie clients, with NO service-role key and NO manual user_id scoping.
+ */
+export function createTokenSupabase(accessToken: string) {
+  const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY } =
+    getPublicEnv();
+
+  return createClient<Database>(
+    NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    {
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    },
+  );
+}
 
 /** Client component / browser usage. */
 export function createBrowserSupabase() {

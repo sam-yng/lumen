@@ -7,6 +7,7 @@ flagged as orphans. Mapped from [AGENTS.md](../../AGENTS.md).
 - [tiptap-llms.txt](tiptap-llms.txt) — TipTap editor (M3).
 - [biome-llms.txt](biome-llms.txt) — Biome lint/format.
 - [bun-llms.txt](bun-llms.txt) — Bun package manager / runner.
+- [mcp-connect.md](mcp-connect.md) — How to connect an MCP host to Lumen (endpoint, bearer auth, example config).
 
 <a id="design-handoff"></a>
 > **Design handoff (`design_handoff_lumen_v1`):** the high-fidelity dark-theme

@@ -164,3 +164,38 @@ export async function unlinkTag(
   assertFound(data, "Tag link not found.");
   return data;
 }
+
+type Document = Tables<"documents">;
+
+export async function listDocumentsByTag(
+  ctx: ServiceContext,
+  input: { tagId: string },
+): Promise<Document[]> {
+  await assertTagOwned(ctx, input.tagId);
+
+  const { data: links, error } = await ctx.supabase
+    .from<TagLink>("tag_links")
+    .select("*")
+    .eq("tag_id", input.tagId);
+
+  assertNoDatabaseError(error, "Could not load tag links");
+
+  const documentIds = links
+    .filter((link) => link.target_type === "document")
+    .map((link) => link.target_id);
+
+  if (documentIds.length === 0) return [];
+
+  const { data: documents, error: documentsError } = await ctx.supabase
+    .from<Document>("documents")
+    .select("*")
+    .in("id", documentIds)
+    .eq("user_id", ctx.userId);
+
+  assertNoDatabaseError(documentsError, "Could not load documents");
+
+  const orderById = new Map(documentIds.map((id, index) => [id, index]));
+  return [...documents].sort(
+    (a, b) => (orderById.get(a.id) ?? 0) - (orderById.get(b.id) ?? 0),
+  );
+}

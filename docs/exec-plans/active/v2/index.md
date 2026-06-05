@@ -28,7 +28,7 @@ Implement these as separate plans so each can ship and be reviewed on its own:
 
 1. [semantic-search.md](semantic-search.md) - active: pgvector, local
    embeddings, chunking, hybrid search, and worker indexing.
-2. [mcp-server-auth.md](../../queued/v2/mcp-server-auth.md) - queued:
+2. [mcp-server-auth.md](mcp-server-auth.md) - active:
    TypeScript MCP server, Streamable HTTP transport, Supabase JWT validation,
    OAuth 2.1 posture, and user isolation tests.
 3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued:
