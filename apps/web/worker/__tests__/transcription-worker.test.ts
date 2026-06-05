@@ -2,6 +2,10 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import {
+  EMBEDDING_DIMENSIONS,
+  type EmbeddingProvider,
+} from "@/server/services/embedding-provider";
 import type { TranscriptionProvider } from "../transcription-provider";
 import {
   processTranscriptionJob,
@@ -76,8 +80,14 @@ class TrackingQuery {
       | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ) {
+    const matchingRows = this.applyFilters(this.rows);
+    if (this.pendingUpdate) {
+      for (const row of matchingRows) Object.assign(row, this.pendingUpdate);
+    }
+    if (this.pendingDelete) this.deleteRows(matchingRows);
+
     return Promise.resolve({
-      data: this.applyFilters(this.rows),
+      data: matchingRows,
       error: null,
     }).then(onfulfilled, onrejected);
   }
@@ -116,6 +126,24 @@ class TrackingSupabase {
   }
 }
 
+function vector(value: number) {
+  return Array.from({ length: EMBEDDING_DIMENSIONS }, (_, index) =>
+    index === 0 ? value : 0,
+  );
+}
+
+function embeddingProvider(vectors: number[][]) {
+  const calls: string[][] = [];
+  const provider: EmbeddingProvider = {
+    async embed(texts: string[]) {
+      calls.push(texts);
+      return vectors.slice(0, texts.length);
+    },
+  };
+
+  return { calls, provider };
+}
+
 const tempDirs: string[] = [];
 
 afterEach(async () => {
@@ -149,6 +177,7 @@ describe("processTranscriptionJob", () => {
       ],
       transcripts: [],
       transcript_segments: [],
+      semantic_search_chunks: [],
     });
     const provider: TranscriptionProvider = {
       async transcribe(audioPath) {
@@ -163,6 +192,8 @@ describe("processTranscriptionJob", () => {
         };
       },
     };
+    const { calls: embeddingCalls, provider: semanticProvider } =
+      embeddingProvider([vector(0.5)]);
 
     await processTranscriptionJob(
       {
@@ -190,6 +221,7 @@ describe("processTranscriptionJob", () => {
           async remove() {},
         },
         provider,
+        embeddingProvider: semanticProvider,
         tempDir,
       },
     );
@@ -225,5 +257,33 @@ describe("processTranscriptionJob", () => {
     expect(supabase.tables.transcript_segments[0]).toMatchObject({
       transcript_id: supabase.tables.transcripts[0]?.id,
     });
+    expect(embeddingCalls).toEqual([["Hello world"]]);
+    expect(supabase.tables.semantic_search_chunks[0]).toMatchObject({
+      user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
+      source_type: "transcript",
+      transcript_id: supabase.tables.transcripts[0]?.id,
+      recording_id: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
+      start_ms: 0,
+      end_ms: 900,
+      content: "Hello world",
+      embedding: `[${vector(0.5).join(",")}]`,
+    });
+    const chunkDelete = supabase.queries.find(
+      (query) =>
+        query.table === "semantic_search_chunks" && query.inserted.length === 0,
+    );
+    expect(chunkDelete?.filters).toEqual(
+      expect.arrayContaining([
+        {
+          column: "user_id",
+          value: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
+        },
+        { column: "source_type", value: "transcript" },
+        {
+          column: "transcript_id",
+          value: supabase.tables.transcripts[0]?.id,
+        },
+      ]),
+    );
   });
 });
