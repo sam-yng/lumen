@@ -51,7 +51,11 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+  // Exact-or-segment match so a prefix can't leak to a sibling route
+  // (e.g. "/api/mcp" must not make a hypothetical "/api/mcp-public" public).
+  const isPublic = PUBLIC_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
