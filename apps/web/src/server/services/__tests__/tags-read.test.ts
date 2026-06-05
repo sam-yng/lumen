@@ -22,7 +22,6 @@ describe("listDocumentsByTag", () => {
       tag_links: [
         {
           id: "l1",
-          user_id: "user-1",
           tag_id: "t1",
           target_type: "document",
           target_id: "d1",

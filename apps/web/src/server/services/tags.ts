@@ -176,8 +176,7 @@ export async function listDocumentsByTag(
   const { data: links, error } = await ctx.supabase
     .from<TagLink>("tag_links")
     .select("*")
-    .eq("tag_id", input.tagId)
-    .eq("user_id", ctx.userId);
+    .eq("tag_id", input.tagId);
 
   assertNoDatabaseError(error, "Could not load tag links");
 

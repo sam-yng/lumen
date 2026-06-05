@@ -40,14 +40,18 @@ export async function buildMakeFlashcardsPrompt(
   );
 }
 
-type AnyRegisterPrompt = (
+type RegisterPromptFn = (
   name: string,
   config: { title?: string; description?: string; argsSchema?: unknown },
-  cb: (args: unknown) => GetPromptResult | Promise<GetPromptResult>,
+  // Zod v4 + MCP SDK type instantiation is excessively deep when called directly;
+  // cast the registration function but keep the callback parameter explicitly typed.
+  cb: (args: {
+    recordingId: string;
+  }) => GetPromptResult | Promise<GetPromptResult>,
 ) => unknown;
 
 export function registerMcpPrompts(server: McpServer, ctx: ServiceContext) {
-  const rp = server.registerPrompt.bind(server) as AnyRegisterPrompt;
+  const rp = server.registerPrompt.bind(server) as unknown as RegisterPromptFn;
 
   rp(
     "summarize-recording",
@@ -56,8 +60,7 @@ export function registerMcpPrompts(server: McpServer, ctx: ServiceContext) {
       description: "Summarize a recording transcript into study notes.",
       argsSchema: recordingIdSchema,
     },
-    (args) =>
-      buildSummarizeRecordingPrompt(ctx, args as { recordingId: string }),
+    (args) => buildSummarizeRecordingPrompt(ctx, args),
   );
 
   rp(
@@ -67,6 +70,6 @@ export function registerMcpPrompts(server: McpServer, ctx: ServiceContext) {
       description: "Generate Q&A flashcards from a recording transcript.",
       argsSchema: recordingIdSchema,
     },
-    (args) => buildMakeFlashcardsPrompt(ctx, args as { recordingId: string }),
+    (args) => buildMakeFlashcardsPrompt(ctx, args),
   );
 }
