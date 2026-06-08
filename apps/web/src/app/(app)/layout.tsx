@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { createServerSupabase } from "@/server/db/client";
 
 export default async function AppLayout({
@@ -14,5 +15,10 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return <main className="flex min-h-dvh bg-background">{children}</main>;
+  return (
+    <main className="flex min-h-dvh bg-background">
+      <div className="flex-1">{children}</div>
+      <AssistantPanel />
+    </main>
+  );
 }
