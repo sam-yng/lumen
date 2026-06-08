@@ -11,12 +11,14 @@ import {
   runAssistant,
 } from "@/server/services/assistant";
 
+// The client sends plain string turns; bound both turn count and per-turn size
+// so a request can't carry an unbounded payload (parseJsonBody has no size cap).
 const bodySchema = z.object({
   messages: z
     .array(
       z.object({
         role: z.enum(["user", "assistant"]),
-        content: z.unknown(),
+        content: z.string().max(10_000),
       }),
     )
     .min(1)

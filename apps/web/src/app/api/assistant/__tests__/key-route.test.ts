@@ -12,9 +12,13 @@ vi.mock("@/server/services/ai-credentials", () => ({
   deleteApiKey: vi.fn(),
 }));
 
-import { GET, PUT } from "@/app/api/assistant/key/route";
+import { DELETE, GET, PUT } from "@/app/api/assistant/key/route";
 import { getRouteServiceContext } from "@/app/api/library/http";
-import { hasApiKey, saveApiKey } from "@/server/services/ai-credentials";
+import {
+  deleteApiKey,
+  hasApiKey,
+  saveApiKey,
+} from "@/server/services/ai-credentials";
 
 const ctx = { userId: "user-1", supabase: {} } as never;
 
@@ -54,5 +58,18 @@ describe("assistant key route", () => {
     );
     expect(res.status).toBe(200);
     expect(saveApiKey).toHaveBeenCalledWith(ctx, "sk-ant-abc");
+  });
+
+  it("DELETE returns 401 when unauthenticated", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(null);
+    expect((await DELETE()).status).toBe(401);
+  });
+
+  it("DELETE removes the key", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
+    vi.mocked(deleteApiKey).mockResolvedValue();
+    const res = await DELETE();
+    expect(res.status).toBe(200);
+    expect(deleteApiKey).toHaveBeenCalledWith(ctx);
   });
 });

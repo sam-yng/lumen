@@ -72,4 +72,34 @@ describe("assistant route", () => {
     );
     expect(await res.json()).toEqual({ state: "invalid_key" });
   });
+
+  it("maps a rate limit to rate_limited", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
+    vi.mocked(getDecryptedApiKey).mockResolvedValue("sk-ant-1");
+    vi.mocked(runAssistant).mockRejectedValue(
+      Object.assign(new Error("rate"), { status: 429 }),
+    );
+    const res = await POST(
+      req({ messages: [{ role: "user", content: "hi" }] }),
+    );
+    expect(await res.json()).toEqual({ state: "rate_limited" });
+  });
+
+  it("maps an unexpected failure to error", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
+    vi.mocked(getDecryptedApiKey).mockResolvedValue("sk-ant-1");
+    vi.mocked(runAssistant).mockRejectedValue(new Error("boom"));
+    const res = await POST(
+      req({ messages: [{ role: "user", content: "hi" }] }),
+    );
+    expect(await res.json()).toEqual({ state: "error" });
+  });
+
+  it("rejects an over-long message body", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
+    const res = await POST(
+      req({ messages: [{ role: "user", content: "x".repeat(10_001) }] }),
+    );
+    expect(res.status).toBe(400);
+  });
 });
