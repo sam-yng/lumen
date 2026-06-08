@@ -2,6 +2,9 @@
 
 import { useMutation } from "@tanstack/react-query";
 
+// Turns are plain text. Prior assistant turns are re-sent as strings, so the
+// model sees a coherent transcript but not earlier tool_use/tool_result blocks
+// — a deliberate v2 tradeoff (no tool context carried across turns).
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 export type AssistantResponse =
   | {
