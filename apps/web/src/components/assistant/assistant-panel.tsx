@@ -15,6 +15,9 @@ export function AssistantPanel() {
   const assistant = useAssistant();
 
   function send() {
+    // Guard both the click and Enter paths against double-submit while a
+    // request is in flight (the button's disabled covers only the click).
+    if (assistant.isPending) return;
     const text = draft.trim();
     if (text.length === 0) return;
     const next: ChatTurn[] = [...turns, { role: "user", content: text }];
@@ -106,6 +109,7 @@ export function AssistantPanel() {
 
       <div className="mt-3 flex gap-2">
         <Input
+          aria-label="Ask the assistant"
           placeholder="Ask…"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

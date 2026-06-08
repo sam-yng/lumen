@@ -28,9 +28,15 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
   }
 
   async function remove() {
-    await fetch("/api/assistant/key", { method: "DELETE" });
-    setKeySet(false);
-    setStatus("idle");
+    setStatus("saving");
+    const res = await fetch("/api/assistant/key", { method: "DELETE" });
+    if (res.ok) {
+      setKeySet(false);
+      setValue("");
+      setStatus("idle");
+    } else {
+      setStatus("error");
+    }
   }
 
   return (
@@ -44,6 +50,7 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
       )}
       <Input
         type="password"
+        aria-label="Claude API key"
         placeholder="sk-ant-..."
         value={value}
         onChange={(event) => setValue(event.target.value)}
@@ -57,7 +64,11 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
           {keySet ? "Replace key" : "Save key"}
         </Button>
         {keySet ? (
-          <Button variant="outline" onClick={remove}>
+          <Button
+            variant="outline"
+            onClick={remove}
+            disabled={status === "saving"}
+          >
             Remove
           </Button>
         ) : null}
