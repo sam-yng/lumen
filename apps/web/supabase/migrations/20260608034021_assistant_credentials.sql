@@ -57,9 +57,11 @@ begin
 end;
 $$;
 
--- Return the caller's decrypted Claude API key, or null if unset.
+-- Return the caller's decrypted Claude API key as a single-row table (or an
+-- empty set if unset). Table-returning (not scalar) so the supabase-js client
+-- yields `data` as a row array, matching the service layer's RpcResult<Row>.
 create or replace function public.get_ai_api_key()
-returns text
+returns table (api_key text)
 language plpgsql
 security definer
 set search_path = ''
@@ -67,7 +69,6 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_secret_id uuid;
-  v_key text;
 begin
   if v_uid is null then
     raise exception 'not authenticated';
@@ -76,12 +77,12 @@ begin
   select vault_secret_id into v_secret_id
   from public.user_ai_credentials where user_id = v_uid;
   if v_secret_id is null then
-    return null;
+    return;
   end if;
 
-  select decrypted_secret into v_key
-  from vault.decrypted_secrets where id = v_secret_id;
-  return v_key;
+  return query
+  select ds.decrypted_secret::text
+  from vault.decrypted_secrets ds where ds.id = v_secret_id;
 end;
 $$;
 

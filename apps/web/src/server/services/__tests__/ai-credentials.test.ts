@@ -38,7 +38,7 @@ describe("ai-credentials", () => {
   it("getDecryptedApiKey returns the key from get_ai_api_key", async () => {
     const ctx = createContext(
       {},
-      { get_ai_api_key: [{ get_ai_api_key: "sk-ant-xyz" }] },
+      { get_ai_api_key: [{ api_key: "sk-ant-xyz" }] },
     );
     expect(await getDecryptedApiKey(ctx)).toBe("sk-ant-xyz");
   });

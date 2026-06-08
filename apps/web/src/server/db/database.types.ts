@@ -446,7 +446,12 @@ export type Database = {
     }
     Functions: {
       delete_ai_api_key: { Args: never; Returns: undefined }
-      get_ai_api_key: { Args: never; Returns: string }
+      get_ai_api_key: {
+        Args: never
+        Returns: {
+          api_key: string
+        }[]
+      }
       match_semantic_search_chunks: {
         Args: {
           match_count?: number

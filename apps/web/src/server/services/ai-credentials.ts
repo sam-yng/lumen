@@ -3,7 +3,7 @@ import type { ServiceContext } from "@/server/services/context";
 import { assertNoDatabaseError } from "@/server/services/errors";
 
 type AiCredential = Tables<"user_ai_credentials">;
-type GetApiKeyRow = { get_ai_api_key: string | null };
+type GetApiKeyRow = { api_key: string | null };
 
 /** Save (insert or replace) the caller's Claude API key in Vault. */
 export async function saveApiKey(
@@ -36,7 +36,7 @@ export async function getDecryptedApiKey(
   );
 
   assertNoDatabaseError(error, "Could not load API key");
-  return data[0]?.get_ai_api_key ?? null;
+  return data[0]?.api_key ?? null;
 }
 
 /** Delete the caller's key (row + Vault secret). */
