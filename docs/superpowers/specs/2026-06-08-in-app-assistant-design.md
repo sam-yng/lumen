@@ -49,7 +49,7 @@ Browser (chat panel, settings)
   ▼
 POST /api/assistant ──▶ assistant service (server)
   │                        │
-  │                        ├─ ai-credentials service ─▶ Supabase Vault (decrypt key, service-role, user-scoped)
+  │                        ├─ ai-credentials service ─▶ get_ai_api_key() RPC ─▶ Supabase Vault (SECURITY DEFINER, auth.uid()-scoped)
   │                        │
   │                        └─ Anthropic SDK (user key, claude-opus-4-8, adaptive thinking)
   │                              │  manual tool-use loop
@@ -62,12 +62,16 @@ final message + tool-call trace
 ### Components
 
 **`server/services/ai-credentials.ts`** (new)
-- `saveApiKey(ctx, key)` — `vault.create_secret` / `vault.update_secret`; upsert
-  the `user_ai_credentials` row with the returned secret id.
-- `hasApiKey(ctx)` — boolean; never returns key material.
-- `getDecryptedApiKey(ctx)` — server-only; reads `vault.decrypted_secrets`
-  scoped by `user_id`. Used solely inside the agent loop.
-- `deleteApiKey(ctx)` — remove the row + Vault secret.
+
+All key access goes through `SECURITY DEFINER` RPCs scoped to `auth.uid()` —
+the service never touches the `vault` schema directly, and never needs the
+service role for key material.
+- `saveApiKey(ctx, key)` — calls `set_ai_api_key(p_key)` (inserts/replaces the
+  Vault secret + upserts the `user_ai_credentials` row).
+- `hasApiKey(ctx)` — boolean from the user-scoped row; never returns key material.
+- `getDecryptedApiKey(ctx)` — server-only; calls `get_ai_api_key()` (which reads
+  `vault.decrypted_secrets` scoped by `auth.uid()`). Used solely inside the loop.
+- `deleteApiKey(ctx)` — calls `delete_ai_api_key()` (row + Vault secret).
 - Framework-agnostic, takes `ServiceContext` (`server/services/context.ts`).
 
 **`server/services/assistant.ts`** (new)
