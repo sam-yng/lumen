@@ -1,7 +1,8 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** active — 2 of 3 child plans shipped (semantic search PR #19, MCP
-> server + auth PR #21); in-app assistant is the remaining queued work.
+> **Status:** complete — 3 of 3 child plans shipped (semantic search PR #19,
+> MCP server + auth PR #21, in-app assistant 2026-06-08). Pending human sign-off
+> on the manual browser happy-path before this group moves to completed/.
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
@@ -33,8 +34,9 @@ Implement these as separate plans so each can ship and be reviewed on its own:
 2. [mcp-server-auth.md](../../completed/v2/mcp-server-auth.md) - **completed**
    (PR #21): TypeScript MCP server, Streamable HTTP transport, Supabase JWT
    validation, OAuth 2.1 posture, and user isolation tests.
-3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued (next):
-   MCP client, Claude agent loop, chat panel, tool-call UX, and demo docs.
+3. [in-app-assistant.md](../../completed/v2/in-app-assistant.md) - **completed**
+   (2026-06-08): BYO-key MCP client, Claude agent loop, key storage via Vault,
+   chat panel, tool-call UX, and demo docs.
 
 ## Sequencing
 
