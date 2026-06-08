@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { buildMcpServer } from "@/server/mcp/server";
@@ -71,4 +72,126 @@ export async function connectMcpBridge(
     },
     close,
   };
+}
+
+export const ASSISTANT_MODEL = "claude-opus-4-8";
+const DEFAULT_MAX_ITERATIONS = 8;
+
+const SYSTEM_PROMPT = [
+  "You are Lumen's study assistant. You help the user reason over their own",
+  "notes, transcripts, and documents using the provided tools.",
+  "Only act on what the tools return. When you generate or summarize content,",
+  "remind the user to verify it. Be concise.",
+].join(" ");
+
+export type AnthropicLike = {
+  messages: {
+    create(params: Record<string, unknown>): Promise<{
+      stop_reason: string;
+      content: Array<Record<string, unknown>>;
+    }>;
+  };
+};
+
+export type AssistantMessage = { role: "user" | "assistant"; content: unknown };
+export type ToolCallTrace = { name: string; ok: boolean };
+export type AssistantResult = {
+  message: string;
+  toolCalls: ToolCallTrace[];
+  stoppedAtCap: boolean;
+};
+
+export async function runAssistant(
+  ctx: ServiceContext,
+  input: {
+    anthropic: AnthropicLike;
+    messages: AssistantMessage[];
+    maxIterations?: number;
+  },
+): Promise<AssistantResult> {
+  const maxIterations = input.maxIterations ?? DEFAULT_MAX_ITERATIONS;
+  const bridge = await connectMcpBridge(ctx);
+  const toolCalls: ToolCallTrace[] = [];
+  const messages: AssistantMessage[] = [...input.messages];
+  // Most recent assistant text, surfaced if we stop at the iteration cap so the
+  // caller never gets a blank turn.
+  let lastText = "";
+
+  try {
+    for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+      const response = await input.anthropic.messages.create({
+        model: ASSISTANT_MODEL,
+        max_tokens: 4096,
+        thinking: { type: "adaptive" },
+        system: SYSTEM_PROMPT,
+        tools: bridge.tools,
+        messages,
+      });
+
+      messages.push({ role: "assistant", content: response.content });
+      lastText = extractText(response.content) || lastText;
+
+      // Server-side tools (none today, but the seam is open) can pause a turn
+      // mid-flight; re-send to resume rather than treating it as final.
+      if (response.stop_reason === "pause_turn") {
+        continue;
+      }
+
+      if (response.stop_reason !== "tool_use") {
+        return { message: lastText, toolCalls, stoppedAtCap: false };
+      }
+
+      const toolUses = response.content.filter(
+        (
+          block,
+        ): block is {
+          type: "tool_use";
+          id: string;
+          name: string;
+          input: Record<string, unknown>;
+        } => block.type === "tool_use",
+      );
+
+      const results: unknown[] = [];
+      for (const use of toolUses) {
+        try {
+          const text = await bridge.callTool(use.name, use.input);
+          toolCalls.push({ name: use.name, ok: true });
+          results.push({
+            type: "tool_result",
+            tool_use_id: use.id,
+            content: text,
+          });
+        } catch (error) {
+          toolCalls.push({ name: use.name, ok: false });
+          results.push({
+            type: "tool_result",
+            tool_use_id: use.id,
+            content: error instanceof Error ? error.message : "Tool failed.",
+            is_error: true,
+          });
+        }
+      }
+      messages.push({ role: "user", content: results });
+    }
+
+    return { message: lastText, toolCalls, stoppedAtCap: true };
+  } finally {
+    await bridge.close();
+  }
+}
+
+function extractText(content: Array<Record<string, unknown>>): string {
+  return content
+    .filter(
+      (block): block is { type: "text"; text: string } => block.type === "text",
+    )
+    .map((block) => block.text)
+    .join("\n")
+    .trim();
+}
+
+/** Build a production Anthropic client bound to the user's key. */
+export function anthropicForKey(apiKey: string): AnthropicLike {
+  return new Anthropic({ apiKey }) as unknown as AnthropicLike;
 }
