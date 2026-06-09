@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assignCitationLabels,
+  chooseBestTranscriptSegment,
   type GroundedCandidate,
 } from "@/server/services/grounded-retrieval";
 
@@ -31,5 +32,48 @@ describe("assignCitationLabels", () => {
 
   it("returns an empty array for no candidates", () => {
     expect(assignCitationLabels([])).toEqual([]);
+  });
+});
+
+describe("chooseBestTranscriptSegment", () => {
+  const segments = [
+    { id: "seg-a", startMs: 0, endMs: 1000 },
+    { id: "seg-b", startMs: 900, endMs: 2000 },
+    { id: "seg-c", startMs: 5000, endMs: 6000 },
+  ];
+
+  it("chooses the segment with the largest overlap", () => {
+    // chunk 800..1900 overlaps seg-a by 200, seg-b by 1000 -> seg-b
+    expect(
+      chooseBestTranscriptSegment({ startMs: 800, endMs: 1900 }, segments),
+    ).toBe("seg-b");
+  });
+
+  it("breaks ties by earliest start_ms", () => {
+    const tied = [
+      { id: "late", startMs: 100, endMs: 200 },
+      { id: "early", startMs: 0, endMs: 100 },
+    ];
+    // chunk 0..200 overlaps each by 100; earliest start wins
+    expect(chooseBestTranscriptSegment({ startMs: 0, endMs: 200 }, tied)).toBe(
+      "early",
+    );
+  });
+
+  it("counts a touching boundary as an overlap when nothing better exists", () => {
+    // chunk 1000..1000 only touches seg-a's end (overlap 0) -> still resolves
+    expect(
+      chooseBestTranscriptSegment({ startMs: 1000, endMs: 1000 }, [segments[0]]),
+    ).toBe("seg-a");
+  });
+
+  it("returns null when no segment overlaps", () => {
+    expect(
+      chooseBestTranscriptSegment({ startMs: 3000, endMs: 4000 }, segments),
+    ).toBeNull();
+  });
+
+  it("returns null for an empty segment list", () => {
+    expect(chooseBestTranscriptSegment({ startMs: 0, endMs: 10 }, [])).toBeNull();
   });
 });

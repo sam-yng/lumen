@@ -36,3 +36,40 @@ export function assignCitationLabels(
     ...candidate,
   }));
 }
+
+export type SegmentOverlapInput = {
+  id: string;
+  startMs: number;
+  endMs: number;
+};
+
+/**
+ * Pick the transcript segment that best covers a chunk's [startMs, endMs] span.
+ * Overlap predicate: segment.startMs <= chunk.endMs && segment.endMs >= chunk.startMs.
+ * Ranking: largest overlap; ties broken by earliest startMs. No overlap -> null.
+ */
+export function chooseBestTranscriptSegment(
+  chunk: { startMs: number; endMs: number },
+  segments: SegmentOverlapInput[],
+): string | null {
+  let best: { id: string; overlap: number; startMs: number } | null = null;
+
+  for (const segment of segments) {
+    if (segment.startMs > chunk.endMs || segment.endMs < chunk.startMs) {
+      continue;
+    }
+    const overlap =
+      Math.min(chunk.endMs, segment.endMs) -
+      Math.max(chunk.startMs, segment.startMs);
+
+    if (
+      best === null ||
+      overlap > best.overlap ||
+      (overlap === best.overlap && segment.startMs < best.startMs)
+    ) {
+      best = { id: segment.id, overlap, startMs: segment.startMs };
+    }
+  }
+
+  return best?.id ?? null;
+}
