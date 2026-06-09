@@ -34,12 +34,12 @@ same rule when it gains content.
 
 ## Queued
 
-- **v2** — AI & MCP
-  - [in-app-assistant.md](exec-plans/queued/v2/in-app-assistant.md)
+_(none)_
 
 ## Active
 
-- **v2** — AI & MCP (2 of 3 children shipped; in-app assistant remains)
+- **v2** — AI & MCP (3 of 3 children shipped; pending human sign-off on the
+  manual happy-path)
   - [index.md](exec-plans/active/v2/index.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
@@ -77,6 +77,7 @@ same rule when it gains content.
 - [task-3-semantic-indexing-service.md](exec-plans/completed/v2/task-3-semantic-indexing-service.md)
 - [task-4-hybrid-search-service.md](exec-plans/completed/v2/task-4-hybrid-search-service.md)
 - [mcp-server-auth.md](exec-plans/completed/v2/mcp-server-auth.md) (PR #21)
+- [in-app-assistant.md](exec-plans/completed/v2/in-app-assistant.md) (2026-06-08)
 
 ## Archive
 
