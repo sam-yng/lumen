@@ -77,11 +77,16 @@ export async function connectMcpBridge(
 export const ASSISTANT_MODEL = "claude-opus-4-8";
 const DEFAULT_MAX_ITERATIONS = 8;
 
-const SYSTEM_PROMPT = [
+export const SYSTEM_PROMPT = [
   "You are Lumen's study assistant. You help the user reason over their own",
   "notes, transcripts, and documents using the provided tools.",
-  "Only act on what the tools return. When you generate or summarize content,",
-  "remind the user to verify it. Be concise.",
+  "For any factual claim about the user's workspace, use only sources returned",
+  "by the tools. Each search_notes source has a citationId such as S1; cite every",
+  "supported claim with the matching label in square brackets, for example [S1].",
+  "If the returned sources are insufficient to answer, say what is missing",
+  "instead of guessing.",
+  "When you generate or summarize content, remind the user to verify it.",
+  "Be concise.",
 ].join(" ");
 
 export type AnthropicLike = {
