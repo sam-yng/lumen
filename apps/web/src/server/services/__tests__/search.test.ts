@@ -517,3 +517,17 @@ describe("searchLibrary", () => {
     expect((ctx.supabase as FakeSupabase).rpcLog).toEqual([]);
   });
 });
+
+describe("searchLibrary regression (unchanged by grounded retrieval)", () => {
+  it("still returns the legacy SearchResult[] shape with kind/tier and no citationId", async () => {
+    const ctx = createContext({
+      documents: [doc({ id: "d1", user_id: userId })],
+      transcripts: [],
+      files: [],
+    });
+    const results = await searchLibrary(ctx, "cell");
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ kind: "document", id: "d1", tier: 0 });
+    expect(results[0]).not.toHaveProperty("citationId");
+  });
+});
