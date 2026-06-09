@@ -73,6 +73,18 @@ describe("assistant route", () => {
     expect(await res.json()).toEqual({ state: "invalid_key" });
   });
 
+  it("maps a forbidden key to invalid_key", async () => {
+    vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
+    vi.mocked(getDecryptedApiKey).mockResolvedValue("sk-bad");
+    vi.mocked(runAssistant).mockRejectedValue(
+      Object.assign(new Error("forbidden"), { status: 403 }),
+    );
+    const res = await POST(
+      req({ messages: [{ role: "user", content: "hi" }] }),
+    );
+    expect(await res.json()).toEqual({ state: "invalid_key" });
+  });
+
   it("maps a rate limit to rate_limited", async () => {
     vi.mocked(getRouteServiceContext).mockResolvedValue(ctx);
     vi.mocked(getDecryptedApiKey).mockResolvedValue("sk-ant-1");
