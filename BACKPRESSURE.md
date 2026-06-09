@@ -24,9 +24,13 @@ patch until it is green.
 
 - **Pre-commit:** `lefthook.yml` runs `bun run check`; a dirty tree cannot be
   committed.
-- **CI:** `.github/workflows/ci.yml` runs `bun run check` on every push to
-  `main` and every pull request. CI is deliberately DB-free so it runs without a
+- **CI quality gate:** `.github/workflows/ci.yml` runs `bun run check` on every
+  push to `main` and every opened, reopened, ready-for-review, or freshly
+  updated pull request. This job is deliberately DB-free so it runs without a
   live Supabase stack.
+- **CI E2E smoke:** the same workflow then boots the local Supabase stack and
+  runs `bun run test:e2e` against the seeded demo user. This proves the real
+  authenticated browser path still works before a PR is merged.
 
 ## Types are backpressure
 
@@ -46,5 +50,6 @@ patch until it is green.
 1. Write a lightweight plan to `docs/exec-plans/active/`.
 2. Self-review it against the brief.
 3. Implement, running `bun run check` after each patch.
-4. Run the manual happy path in a browser.
+4. Run the manual happy path in a browser, or `bun run test:e2e` when the
+   happy path is covered by the smoke suite.
 5. Pause at the milestone boundary for human review.

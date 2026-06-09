@@ -1,19 +1,29 @@
 name: CI
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 jobs:
-  check:
+  quality-gate:
+    name: Lint, typecheck, and Vitest
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.13
+          bun-version: 1.3.14
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -22,3 +32,57 @@ jobs:
       # Deliberately DB-free so it runs without a live Supabase stack.
       - name: Check
         run: bun run check
+
+  e2e-smoke:
+    name: Supabase-backed Playwright smoke
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      DO_NOT_TRACK: "1"
+      SUPABASE_TELEMETRY_DISABLED: "1"
+      TRANSCRIPTION_STORAGE_BUCKET: library-files
+      WHISPER_MODEL: base.en
+      TRANSCRIPTION_TMP_DIR: /tmp/lumen-transcription
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Start local Supabase
+        working-directory: apps/web
+        run: |
+          bunx supabase start
+          bunx supabase db reset
+          bunx supabase status -o env > supabase.env
+          sed -n \
+            -e 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p' \
+            -e 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=/p' \
+            -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SECRET_KEY=/p' \
+            -e 's/^DB_URL=/PG_BOSS_DATABASE_URL=/p' \
+            supabase.env >> "$GITHUB_ENV"
+
+      - name: Install Playwright browser
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run E2E smoke tests
+        run: bun run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

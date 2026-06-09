@@ -39,6 +39,8 @@ same rule when it gains content.
 
 ## Active
 
+- **cross-cutting** — CI/CD hardening
+  - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
 - **v2** — AI & MCP (2 of 3 children shipped; in-app assistant remains)
   - [index.md](exec-plans/active/v2/index.md)
 - **production** — Production readiness

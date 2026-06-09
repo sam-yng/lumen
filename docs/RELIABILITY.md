@@ -3,7 +3,8 @@
 How Lumen stays correct under failure.
 
 - **Backpressure:** `bun run check` gates every patch; pre-commit + CI enforce.
-  See [BACKPRESSURE.md](../BACKPRESSURE.md).
+  PR CI also runs the Supabase-backed Playwright smoke suite after the fast
+  gate. See [BACKPRESSURE.md](../BACKPRESSURE.md).
 - **Transcription pipeline (M4):** pg-boss jobs are retryable; a `recordings`
   row tracks `status` (`pending`/`processing`/`done`/`failed`) and stores the
   error on failure so the UI can offer retry.
@@ -11,6 +12,18 @@ How Lumen stays correct under failure.
   just routing.
 
 ## Transcription pipeline
+
+## CI pipeline
+
+Pull requests run two checks:
+
+1. `quality-gate` installs dependencies with Bun 1.3.14 and runs
+   `bun run check`. This covers Biome, TypeScript, unit tests, and
+   integration-style Vitest tests without a live database.
+2. `e2e-smoke` starts the local Supabase stack from `apps/web`, resets the DB
+   to migrations plus seed data, installs Chromium, and runs
+   `bun run test:e2e`. This covers the seeded authenticated library route,
+   upload picker, and tag smoke paths in Chromium.
 
 Audio upload creates a `files` row, a `recordings` row in `pending`, and one
 pg-boss job on `transcribe-recording`. The worker marks the recording
