@@ -1,8 +1,10 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** complete — 3 of 3 child plans shipped (semantic search PR #19,
-> MCP server + auth PR #21, in-app assistant 2026-06-08). Pending human sign-off
-> on the manual browser happy-path before this group moves to completed/.
+> **Status:** implementation complete — 3 of 3 child plans shipped (semantic
+> search PR #19, MCP server + auth PR #21, in-app assistant PR #22, 2026-06-08).
+> **Backlogged:** the in-app assistant's manual browser happy-path needs a real
+> Claude key to verify (deferred — see tech-debt-tracker.md). This group moves
+> to completed/ once that sign-off lands.
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
