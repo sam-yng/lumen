@@ -1,14 +1,19 @@
 # v2 AI & MCP Planning Group
 
-> **Status:** implementation complete — 3 of 3 child plans shipped (semantic
-> search PR #19, MCP server + auth PR #21, in-app assistant PR #22, 2026-06-08).
-> **Backlogged:** the in-app assistant's manual browser happy-path needs a real
-> Claude key to verify (deferred — see tech-debt-tracker.md). This group moves
-> to completed/ once that sign-off lands.
+> **Status:** completed — 3 of 3 child plans shipped (semantic search PR #19,
+> MCP server + auth PR #21, in-app assistant PR #22) and accepted on human
+> review.
+> **One open gate (does not block completion of the build):** the in-app
+> assistant's manual browser happy-path needs a real Claude key — an
+> environmental/launch blocker, not unfinished build work. Carried forward to the
+> consolidated
+> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> (production-readiness).
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant
 > **Created:** 2026-06-04
 > **Activated:** 2026-06-04
+> **Completed:** 2026-06-09
 > **Depends on:** `docs/exec-plans/completed/post-v1/pre-v2-cleanup.md`
 > **Supersedes:** `docs/exec-plans/archive/v2/index.md`
 
@@ -30,13 +35,13 @@ external MCP hosts.
 
 Implement these as separate plans so each can ship and be reviewed on its own:
 
-1. [semantic-search.md](../../completed/v2/semantic-search.md) - **completed**
+1. [semantic-search.md](semantic-search.md) - **completed**
    (PR #19): pgvector, local embeddings, chunking, hybrid search, and worker
    indexing.
-2. [mcp-server-auth.md](../../completed/v2/mcp-server-auth.md) - **completed**
+2. [mcp-server-auth.md](mcp-server-auth.md) - **completed**
    (PR #21): TypeScript MCP server, Streamable HTTP transport, Supabase JWT
    validation, OAuth 2.1 posture, and user isolation tests.
-3. [in-app-assistant.md](../../completed/v2/in-app-assistant.md) - **completed**
+3. [in-app-assistant.md](in-app-assistant.md) - **completed**
    (2026-06-08): BYO-key MCP client, Claude agent loop, key storage via Vault,
    chat panel, tool-call UX, and demo docs.
 

@@ -1,7 +1,7 @@
 # v2 AI & MCP Planning Group
 
-> **ARCHIVED (2026-06-05).** Superseded by the live group index at
-> [`active/v2/index.md`](../../active/v2/index.md). This is the original queued
+> **ARCHIVED (2026-06-05).** Superseded by the v2 group index at
+> [`completed/v2/index.md`](../../completed/v2/index.md). This is the original queued
 > snapshot; do not use it to guide current implementation. Semantic search,
 > MCP server + auth, and the in-app assistant have since shipped (see
 > `completed/v2/`).

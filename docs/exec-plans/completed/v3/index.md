@@ -1,13 +1,19 @@
 # v3 Cited Retrieval & Grounding Planning Group
 
-> **Status:** active — milestone 1 (cited retrieval) shipped in PR #23
-> (`feat/v3-execution`); manual assistant happy-path pending a real Claude key
-> (same blocker as the v2 in-app assistant — see tech-debt-tracker.md). Further
-> v3 milestones are not yet scoped.
+> **Status:** completed — milestone 1 (cited retrieval) shipped in PR #23
+> (`feat/v3-execution`) and accepted on human review. It was the only scoped v3
+> milestone; no further v3 work is in scope, so the group is complete.
+> **One open gate (does not block completion of the build):** the manual
+> assistant happy-path is unverified pending a real Claude key — an
+> environmental/launch blocker, not an m1 build task. Carried forward to the
+> consolidated
+> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> (production-readiness; same gate as the v2 in-app assistant).
 > **Version:** v3
 > **Area:** retrieval, citations, MCP, in-app assistant
 > **Created:** 2026-06-09
 > **Activated:** 2026-06-09
+> **Completed:** 2026-06-09
 > **Depends on:** [`completed/v2/semantic-search.md`](../../completed/v2/semantic-search.md),
 > [`completed/v2/mcp-server-auth.md`](../../completed/v2/mcp-server-auth.md),
 > [`completed/v2/in-app-assistant.md`](../../completed/v2/in-app-assistant.md)
@@ -29,8 +35,8 @@ semantic-search + MCP + assistant seams without reshaping them.
 
 ## Child Plans
 
-1. [cited-retrieval.md](../../completed/v3/cited-retrieval.md) — **milestone 1,
-   completed** (PR #23, 2026-06-09): citation-aware `retrieveGroundedSources`
+1. [cited-retrieval.md](cited-retrieval.md) — **milestone 1, completed**
+   (PR #23, 2026-06-09): citation-aware `retrieveGroundedSources`
    contract; `search_notes` returns `{ query, sources }` with stable `[S#]`
    labels; transcript citations resolve the best overlapping
    `transcript_segments` row; assistant prompt requires source-grounded
@@ -57,8 +63,13 @@ semantic-search + MCP + assistant seams without reshaping them.
 - No paid embedding/LLM calls added; the model still composes answers — Lumen
   supplies cited sources and prompt rules.
 
-## Promotion Rule
+## Completion Note
 
-When milestone 1's manual happy-path is signed off and no further v3 milestone is
-active, move this group to `completed/v3/index.md` (bucket name `v3` travels with
-it) and update [`PLANS.md`](../../../PLANS.md) in the same change.
+Completed 2026-06-09: m1 was the only scoped v3 milestone and its build is
+accepted, so this group moved `active/v3/ → completed/v3/` with
+[`PLANS.md`](../../../PLANS.md) updated in the same change. If a future v3
+milestone is scoped (see "Future milestones" above), open a fresh plan under
+`active/v3/` rather than reopening this group. The one carried-forward item — the
+manual assistant happy-path — lives in the consolidated
+[assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md),
+not unfinished m1 work.

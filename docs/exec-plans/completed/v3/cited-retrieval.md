@@ -42,14 +42,14 @@ the best-overlapping `transcript_segments` id.
   semantic + lexical paths, cross-user isolation), MCP `tools` (the
   `{ query, sources }` shape with citation labels), `assistant` (system-prompt
   citation rules + tool loop), and the `searchLibrary` regression guard.
-- **Pending human sign-off (working rule 3) — production-readiness blocker:**
-  the manual assistant browser happy-path — asking a question over a real
-  transcript and confirming `[S#]` citations resolve to returned sources — needs
-  a real Claude key, the same blocker tracked for the v2 in-app assistant. This
-  **must be completed before Lumen goes to production**; it is recorded in
-  [`tech-debt-tracker.md`](../../tech-debt-tracker.md) and gates the
-  production-readiness work in
-  [`active/production/prod-readiness/index.md`](../../active/production/prod-readiness/index.md).
+- **Manual happy-path — production-readiness gate (does not reopen m1):** the
+  manual assistant browser happy-path — asking a question over a real transcript
+  and confirming `[S#]` citations resolve to returned sources — needs a real
+  Claude key. The build is accepted; this verification is carried forward to the
+  consolidated
+  [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+  (same gate as the v2 in-app assistant) and **must pass before Lumen goes to
+  production**.
 
 ## Goal
 

@@ -42,18 +42,14 @@ _(none)_
   - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
 - **cross-cutting** — Planning lifecycle enforcement (implemented; pending review)
   - [planning-lifecycle-enforcement.md](exec-plans/active/cross-cutting/planning-lifecycle-enforcement.md)
-- **v2** — AI & MCP (3 of 3 children shipped; pending human sign-off on the
-  manual happy-path)
-  - [index.md](exec-plans/active/v2/index.md)
-- **v3** — Cited retrieval & grounding (milestone 1 shipped; manual
-  assistant happy-path pending a Claude key)
-  - [index.md](exec-plans/active/v3/index.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
   - [prod-auth.md](exec-plans/active/production/prod-readiness/prod-auth.md)
   - [prod-sentry.md](exec-plans/active/production/prod-readiness/prod-sentry.md)
   - [prod-legal-pages.md](exec-plans/active/production/prod-readiness/prod-legal-pages.md)
+  - [prod-assistant-verification.md](exec-plans/active/production/prod-readiness/prod-assistant-verification.md)
+    — Claude-key launch gate for the v2 assistant + v3 cited retrieval
 - **production** — Marketing landing redesign
   - [marketing-landing-redesign.md](exec-plans/active/production/marketing-landing-redesign.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md))
@@ -79,6 +75,8 @@ _(none)_
 
 ### v2 shipped
 
+- [index.md](exec-plans/completed/v2/index.md) — AI & MCP group (3 of 3 children
+  shipped; assistant happy-path carried to the production verification gate)
 - [semantic-search.md](exec-plans/completed/v2/semantic-search.md) (PR #19)
 - [task-2-chunking-embedding-provider.md](exec-plans/completed/v2/task-2-chunking-embedding-provider.md)
 - [task-3-semantic-indexing-service.md](exec-plans/completed/v2/task-3-semantic-indexing-service.md)
@@ -88,10 +86,13 @@ _(none)_
 
 ### v3 shipped
 
+- [index.md](exec-plans/completed/v3/index.md) — Cited retrieval & grounding
+  group (m1 was the only scoped milestone; group complete)
 - [cited-retrieval.md](exec-plans/completed/v3/cited-retrieval.md) (PR #23,
   2026-06-09) — milestone 1; manual assistant happy-path pending a Claude key
+  (production-readiness blocker)
 
 ## Archive
 
 - **v2** — [index.md](exec-plans/archive/v2/index.md) — original queued v2 group
-  snapshot, superseded by [active/v2/index.md](exec-plans/active/v2/index.md).
+  snapshot, superseded by [completed/v2/index.md](exec-plans/completed/v2/index.md).

@@ -37,6 +37,22 @@ Hosting decision (locked): **app → Vercel, worker → Railway.**
 
 Each plan is independently shippable and leaves `bun run check` green.
 
+## Launch verification gates (not codebase work)
+
+Some launch blockers are **verification**, not code — the build is done and
+accepted, but a manual check needs prod-only inputs (an API key, an external
+account). These live here so a build-complete milestone can move to `completed/`
+instead of being pinned in `active/` for the whole dev cycle.
+
+- **[prod-assistant-verification.md](prod-assistant-verification.md)** — the
+  Claude-key-dependent manual happy-paths for the v2 in-app assistant and v3
+  cited retrieval. Both builds shipped; this gate is the single place the
+  outstanding verification is tracked. **Lumen must not ship until it passes.**
+
+> **Lifecycle rule:** when a milestone's only remaining item is an
+> environmental/launch blocker, complete the milestone on build acceptance and
+> record the blocker here — do not hold the milestone group open in `active/`.
+
 ## Nice-to-have recommendations (not yet planned)
 
 Captured here so they aren't lost. Promote to a real plan when prioritised.
