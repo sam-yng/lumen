@@ -370,3 +370,112 @@ describe("retrieveGroundedSources (semantic)", () => {
     expect(askedTranscriptIds).not.toContain("t-theirs");
   });
 });
+
+describe("retrieveGroundedSources (lexical fallback)", () => {
+  it("returns lexical document and transcript citations without an RPC call", async () => {
+    const ctx = createContext({
+      documents: [
+        docRow({
+          id: "d1",
+          title: "Cell notes",
+          content_text: "The mitochondria is the powerhouse of the cell.",
+        }),
+      ],
+      transcripts: [
+        {
+          id: "t1",
+          user_id: userId,
+          recording_id: "r1",
+          full_text: "today the lecture covers mitochondria in depth",
+          full_text_tsv: null as unknown,
+          language: "en",
+          created_at: "2026-01-02T00:00:00Z",
+        },
+      ],
+      recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+      files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+      transcript_segments: [
+        { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 500, text: "intro words", speaker: null },
+        { id: "seg-2", transcript_id: "t1", start_ms: 500, end_ms: 1500, text: "mitochondria explained", speaker: null },
+      ],
+    });
+
+    const sources = await retrieveGroundedSources(ctx, "mitochondria");
+
+    expect((ctx.supabase as FakeSupabase).rpcLog).toEqual([]);
+    const kinds = sources.map((s) => s.kind).sort();
+    expect(kinds).toEqual(["document", "transcript"]);
+
+    const doc = sources.find((s) => s.kind === "document");
+    expect(doc).toMatchObject({
+      title: "Cell notes",
+      score: null,
+      source: { documentId: "d1" },
+    });
+
+    const transcript = sources.find((s) => s.kind === "transcript");
+    // first segment whose text contains the first query term ("mitochondria") -> seg-2
+    expect(transcript).toMatchObject({
+      title: "lecture.m4a",
+      score: null,
+      source: {
+        transcriptId: "t1",
+        recordingId: "r1",
+        segmentId: "seg-2",
+        startMs: 500,
+        endMs: 1500,
+      },
+    });
+  });
+
+  it("cites a transcript with null timing when no segment matches the query term", async () => {
+    const ctx = createContext({
+      documents: [],
+      transcripts: [
+        {
+          id: "t1",
+          user_id: userId,
+          recording_id: "r1",
+          full_text: "mitochondria appears only in full_text",
+          full_text_tsv: null as unknown,
+          language: "en",
+          created_at: "2026-01-02T00:00:00Z",
+        },
+      ],
+      recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+      files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+      transcript_segments: [
+        { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 500, text: "no matching term here", speaker: null },
+      ],
+    });
+
+    const sources = await retrieveGroundedSources(ctx, "mitochondria");
+
+    expect(sources[0]?.source).toEqual({
+      transcriptId: "t1",
+      recordingId: "r1",
+      segmentId: null,
+      startMs: null,
+      endMs: null,
+    });
+  });
+
+  it("scopes lexical hits to the current user", async () => {
+    const ctx = createContext({
+      documents: [
+        docRow({ id: "mine", user_id: userId, title: "Mine" }),
+        docRow({ id: "theirs", user_id: otherUserId, title: "Theirs" }),
+      ],
+      transcripts: [],
+      recordings: [],
+      files: [],
+      transcript_segments: [],
+    });
+
+    const sources = await retrieveGroundedSources(ctx, "mitochondria");
+
+    expect(
+      sources.map((s) => (s.source as { documentId: string }).documentId),
+    ).toEqual(["mine"]);
+  });
+});

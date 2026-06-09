@@ -3,6 +3,7 @@ import type { ServiceContext } from "@/server/services/context";
 import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertEmbedding } from "@/server/services/embedding-provider";
 import { assertNoDatabaseError, ServiceError } from "@/server/services/errors";
+import { buildSnippet } from "@/server/services/search";
 import { serializeEmbedding } from "@/server/services/semantic-index";
 
 export type GroundedDocumentSource = {
@@ -180,9 +181,81 @@ export async function retrieveGroundedSources(
 
   const candidates = options.embeddingProvider
     ? await collectSemanticCandidates(ctx, query, options.embeddingProvider)
-    : []; // lexical branch added in Task 5
+    : await collectLexicalCandidates(ctx, query);
 
   return hydrateGroundedSources(ctx, query, candidates);
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+async function collectLexicalCandidates(
+  ctx: ServiceContext,
+  query: string,
+): Promise<RawCandidate[]> {
+  const pattern = `%${escapeLikePattern(query)}%`;
+
+  const [documentBody, documentTitle, transcripts] = await Promise.all([
+    ctx.supabase
+      .from<Tables<"documents">>("documents")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .textSearch("content_tsv", query, { type: "websearch" }),
+    ctx.supabase
+      .from<Tables<"documents">>("documents")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .ilike("title", pattern),
+    ctx.supabase
+      .from<Tables<"transcripts">>("transcripts")
+      .select("*")
+      .eq("user_id", ctx.userId)
+      .textSearch("full_text_tsv", query, { type: "websearch" }),
+  ]);
+
+  assertNoDatabaseError(documentBody.error, "Could not search documents");
+  assertNoDatabaseError(
+    documentTitle.error,
+    "Could not search document titles",
+  );
+  assertNoDatabaseError(transcripts.error, "Could not search transcripts");
+
+  // Dedupe documents by id; a body hit's snippet beats a title-only hit.
+  const documentCandidates = new Map<string, RawCandidate>();
+  for (const row of documentBody.data) {
+    documentCandidates.set(row.id, {
+      kind: "document",
+      snippet: buildSnippet(row.content_text, query),
+      score: null,
+      documentId: row.id,
+    });
+  }
+  for (const row of documentTitle.data) {
+    if (documentCandidates.has(row.id)) continue;
+    documentCandidates.set(row.id, {
+      kind: "document",
+      snippet: "",
+      score: null,
+      documentId: row.id,
+    });
+  }
+
+  const transcriptCandidates = transcripts.data.map(
+    (row): RawCandidate => ({
+      kind: "transcript",
+      snippet: buildSnippet(row.full_text, query),
+      score: null,
+      transcript: {
+        transcriptId: row.id,
+        recordingId: row.recording_id,
+        startMs: null,
+        endMs: null,
+      },
+    }),
+  );
+
+  return [...documentCandidates.values(), ...transcriptCandidates];
 }
 
 async function collectSemanticCandidates(
