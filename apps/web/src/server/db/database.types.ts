@@ -419,11 +419,39 @@ export type Database = {
           },
         ]
       }
+      user_ai_credentials: {
+        Row: {
+          created_at: string
+          updated_at: string
+          user_id: string
+          vault_secret_id: string
+        }
+        Insert: {
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          vault_secret_id: string
+        }
+        Update: {
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          vault_secret_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      delete_ai_api_key: { Args: never; Returns: undefined }
+      get_ai_api_key: {
+        Args: never
+        Returns: {
+          api_key: string
+        }[]
+      }
       match_semantic_search_chunks: {
         Args: {
           match_count?: number
@@ -442,6 +470,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      set_ai_api_key: { Args: { p_key: string }; Returns: undefined }
     }
     Enums: {
       file_kind: "audio" | "other"

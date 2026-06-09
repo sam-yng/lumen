@@ -17,6 +17,7 @@
     "worker:transcribe": "bun run worker/transcription-worker.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
     "@lumen/ui": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/ssr": "^0.10.3",

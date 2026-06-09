@@ -165,3 +165,16 @@ RLS: enabled
 
 Policies: `transcripts_select_own`, `transcripts_insert_own`, `transcripts_update_own`, `transcripts_delete_own`
 
+### user_ai_credentials
+
+RLS: enabled
+
+| Column | Definition |
+| --- | --- |
+| `user_id` | uuid primary key references auth.users (id) on delete cascade |
+| `vault_secret_id` | uuid not null |
+| `created_at` | timestamptz not null default now() |
+| `updated_at` | timestamptz not null default now() |
+
+Policies: `own credentials`
+
