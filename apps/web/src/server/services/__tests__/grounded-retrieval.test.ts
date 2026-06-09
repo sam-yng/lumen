@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-  assignCitationLabels,
-  chooseBestTranscriptSegment,
-  type GroundedCandidate,
-  parseGroundedSemanticRows,
-  retrieveGroundedSources,
-} from "@/server/services/grounded-retrieval";
-import {
   createContext,
   type FakeSupabase,
   otherUserId,
   userId,
 } from "@/server/services/__tests__/fake-supabase";
 import type { EmbeddingProvider } from "@/server/services/embedding-provider";
+import {
+  assignCitationLabels,
+  chooseBestTranscriptSegment,
+  type GroundedCandidate,
+  parseGroundedSemanticRows,
+  retrieveGroundedSources,
+} from "@/server/services/grounded-retrieval";
 
 const queryEmbedding = Array.from({ length: 384 }, () => 0.01);
 const embeddingProvider: EmbeddingProvider = {
@@ -37,7 +37,9 @@ function docRow(over: Record<string, unknown> = {}) {
   };
 }
 
-function docCandidate(over: Partial<GroundedCandidate> = {}): GroundedCandidate {
+function docCandidate(
+  over: Partial<GroundedCandidate> = {},
+): GroundedCandidate {
   return {
     kind: "document",
     title: "Biology notes",
@@ -95,7 +97,9 @@ describe("chooseBestTranscriptSegment", () => {
   it("counts a touching boundary as an overlap when nothing better exists", () => {
     // chunk 1000..1000 only touches seg-a's end (overlap 0) -> still resolves
     expect(
-      chooseBestTranscriptSegment({ startMs: 1000, endMs: 1000 }, [segments[0]]),
+      chooseBestTranscriptSegment({ startMs: 1000, endMs: 1000 }, [
+        segments[0],
+      ]),
     ).toBe("seg-a");
   });
 
@@ -106,7 +110,9 @@ describe("chooseBestTranscriptSegment", () => {
   });
 
   it("returns null for an empty segment list", () => {
-    expect(chooseBestTranscriptSegment({ startMs: 0, endMs: 10 }, [])).toBeNull();
+    expect(
+      chooseBestTranscriptSegment({ startMs: 0, endMs: 10 }, []),
+    ).toBeNull();
   });
 });
 
@@ -193,8 +199,22 @@ describe("retrieveGroundedSources (semantic)", () => {
         recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
         files: [{ id: "f1", user_id: userId, name: "seminar-week-4.m4a" }],
         transcript_segments: [
-          { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 850, text: "intro", speaker: null },
-          { id: "seg-2", transcript_id: "t1", start_ms: 800, end_ms: 2000, text: "oxidative phosphorylation", speaker: null },
+          {
+            id: "seg-1",
+            transcript_id: "t1",
+            start_ms: 0,
+            end_ms: 850,
+            text: "intro",
+            speaker: null,
+          },
+          {
+            id: "seg-2",
+            transcript_id: "t1",
+            start_ms: 800,
+            end_ms: 2000,
+            text: "oxidative phosphorylation",
+            speaker: null,
+          },
         ],
       },
       {
@@ -203,7 +223,12 @@ describe("retrieveGroundedSources (semantic)", () => {
             id: "chunk-1",
             user_id: userId,
             source_type: "transcript",
-            source: { transcriptId: "t1", recordingId: "r1", startMs: 812, endMs: 1900 },
+            source: {
+              transcriptId: "t1",
+              recordingId: "r1",
+              startMs: 812,
+              endMs: 1900,
+            },
             chunk_index: 0,
             content: "The tutor defines oxidative phosphorylation",
             similarity: 0.88,
@@ -243,7 +268,14 @@ describe("retrieveGroundedSources (semantic)", () => {
         recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
         files: [{ id: "f1", user_id: userId, name: "rec.m4a" }],
         transcript_segments: [
-          { id: "seg-far", transcript_id: "t1", start_ms: 9000, end_ms: 9500, text: "later", speaker: null },
+          {
+            id: "seg-far",
+            transcript_id: "t1",
+            start_ms: 9000,
+            end_ms: 9500,
+            text: "later",
+            speaker: null,
+          },
         ],
       },
       {
@@ -252,7 +284,12 @@ describe("retrieveGroundedSources (semantic)", () => {
             id: "chunk-1",
             user_id: userId,
             source_type: "transcript",
-            source: { transcriptId: "t1", recordingId: "r1", startMs: 100, endMs: 200 },
+            source: {
+              transcriptId: "t1",
+              recordingId: "r1",
+              startMs: 100,
+              endMs: 200,
+            },
             chunk_index: 0,
             content: "early passage",
             similarity: 0.7,
@@ -290,7 +327,12 @@ describe("retrieveGroundedSources (semantic)", () => {
             id: "c-transcript",
             user_id: userId,
             source_type: "transcript",
-            source: { transcriptId: "t1", recordingId: "r1", startMs: 0, endMs: 100 },
+            source: {
+              transcriptId: "t1",
+              recordingId: "r1",
+              startMs: 0,
+              endMs: 100,
+            },
             chunk_index: 0,
             content: "transcript passage",
             similarity: 0.95,
@@ -328,7 +370,14 @@ describe("retrieveGroundedSources (semantic)", () => {
         recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
         files: [{ id: "f1", user_id: userId, name: "mine.m4a" }],
         transcript_segments: [
-          { id: "seg-theirs", transcript_id: "t-theirs", start_ms: 0, end_ms: 100, text: "secret", speaker: null },
+          {
+            id: "seg-theirs",
+            transcript_id: "t-theirs",
+            start_ms: 0,
+            end_ms: 100,
+            text: "secret",
+            speaker: null,
+          },
         ],
       },
       {
@@ -337,7 +386,12 @@ describe("retrieveGroundedSources (semantic)", () => {
             id: "mine",
             user_id: userId,
             source_type: "transcript",
-            source: { transcriptId: "t1", recordingId: "r1", startMs: 0, endMs: 100 },
+            source: {
+              transcriptId: "t1",
+              recordingId: "r1",
+              startMs: 0,
+              endMs: 100,
+            },
             chunk_index: 0,
             content: "my passage",
             similarity: 0.9,
@@ -347,7 +401,12 @@ describe("retrieveGroundedSources (semantic)", () => {
             id: "theirs",
             user_id: otherUserId,
             source_type: "transcript",
-            source: { transcriptId: "t-theirs", recordingId: "r-theirs", startMs: 0, endMs: 100 },
+            source: {
+              transcriptId: "t-theirs",
+              recordingId: "r-theirs",
+              startMs: 0,
+              endMs: 100,
+            },
             chunk_index: 0,
             content: "their passage",
             similarity: 0.99,
@@ -395,8 +454,22 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
       recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
       files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
       transcript_segments: [
-        { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 500, text: "intro words", speaker: null },
-        { id: "seg-2", transcript_id: "t1", start_ms: 500, end_ms: 1500, text: "mitochondria explained", speaker: null },
+        {
+          id: "seg-1",
+          transcript_id: "t1",
+          start_ms: 0,
+          end_ms: 500,
+          text: "intro words",
+          speaker: null,
+        },
+        {
+          id: "seg-2",
+          transcript_id: "t1",
+          start_ms: 500,
+          end_ms: 1500,
+          text: "mitochondria explained",
+          speaker: null,
+        },
       ],
     });
 
@@ -445,7 +518,14 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
       recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
       files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
       transcript_segments: [
-        { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 500, text: "no matching term here", speaker: null },
+        {
+          id: "seg-1",
+          transcript_id: "t1",
+          start_ms: 0,
+          end_ms: 500,
+          text: "no matching term here",
+          speaker: null,
+        },
       ],
     });
 

@@ -324,7 +324,9 @@ async function hydrateGroundedSources(
     candidates.map((c) => c.documentId).filter(isString),
   );
   const transcriptIds = uniqueStrings(
-    candidates.flatMap((c) => (c.transcript ? [c.transcript.transcriptId] : [])),
+    candidates.flatMap((c) =>
+      c.transcript ? [c.transcript.transcriptId] : [],
+    ),
   );
   const recordingIds = uniqueStrings(
     candidates.flatMap((c) => (c.transcript ? [c.transcript.recordingId] : [])),
