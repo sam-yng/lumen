@@ -4,7 +4,22 @@ import {
   type AnthropicLike,
   connectMcpBridge,
   runAssistant,
+  SYSTEM_PROMPT,
 } from "@/server/services/assistant";
+
+describe("SYSTEM_PROMPT", () => {
+  it("instructs the model to cite tool-returned sources with [S#] labels", () => {
+    expect(SYSTEM_PROMPT).toMatch(/\[S1\]|\[S#\]/);
+    expect(SYSTEM_PROMPT.toLowerCase()).toContain("sources");
+    expect(SYSTEM_PROMPT.toLowerCase()).toContain("cite");
+  });
+
+  it("tells the model to say when sources are insufficient", () => {
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(
+      /insufficient|do not support|missing|not enough/,
+    );
+  });
+});
 
 describe("connectMcpBridge", () => {
   it("lists the MCP tools as Anthropic tool defs", async () => {
