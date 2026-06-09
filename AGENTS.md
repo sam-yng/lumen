@@ -24,6 +24,7 @@ bun run lint                      # root Biome lint
 bun run format                    # root Biome check --write (autofix)
 bun run typecheck                 # Turbo typecheck across packages
 bun run test                      # Turbo test across packages
+bun run test:e2e                  # app Playwright smoke tests via workspace filter
 
 cd apps/web && bun run dev        # app Next dev server (port 3000)
 cd apps/web && bun run build      # app production build
@@ -110,3 +111,6 @@ turbo.json               workspace task pipeline
 3. Run the manual happy path in a browser before declaring a milestone done.
 4. Pause at each milestone boundary for human review.
 5. Conventional commits; each commit leaves `bun run check` green.
+6. We do not make dinner in a dirty kitchen: if a pre-existing failure appears,
+   pause the current work, stash or otherwise isolate your changes, fix the
+   baseline failure first, then resume. Do not wave it away as unrelated.
