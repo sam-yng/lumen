@@ -4,7 +4,7 @@ import { z } from "zod/v3";
 import type { ServiceContext } from "@/server/services/context";
 import { createDocument, getDocumentDetail } from "@/server/services/documents";
 import { ServiceError } from "@/server/services/errors";
-import { searchLibrary } from "@/server/services/search";
+import { retrieveGroundedSources } from "@/server/services/grounded-retrieval";
 import { listDocumentsByTag } from "@/server/services/tags";
 import { getTranscriptDetail } from "@/server/services/transcripts";
 
@@ -29,7 +29,12 @@ async function guard(
 }
 
 export function runSearchNotes(ctx: ServiceContext, args: { query: string }) {
-  return guard(async () => ok(await searchLibrary(ctx, args.query)));
+  return guard(async () =>
+    ok({
+      query: args.query,
+      sources: await retrieveGroundedSources(ctx, args.query),
+    }),
+  );
 }
 
 export function runGetDocument(ctx: ServiceContext, args: { id: string }) {
@@ -78,7 +83,9 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     "search_notes",
     {
       title: "Search notes",
-      description: "Full-text search across documents, transcripts, and files.",
+      description:
+        "Search the user's documents and transcripts and return citation-ready sources. " +
+        "Each source has a stable citationId (S1, S2, …); cite claims only with those labels.",
       inputSchema: { query: z.string().min(1).max(200) },
     },
     (args) => runSearchNotes(ctx, args),
