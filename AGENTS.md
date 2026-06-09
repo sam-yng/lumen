@@ -104,6 +104,15 @@ turbo.json               workspace task pipeline
   [docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md) ·
   [docs/RELIABILITY.md](docs/RELIABILITY.md)
 
+## Agent skills
+
+Portable skills are vendored in-repo at [`.agent/skills/`](.agent/skills/README.md)
+so every machine/tool shares the same versions. Claude Code does **not**
+auto-load `.agent/skills/` — read a skill's `SKILL.md` and follow it. Includes
+`docs-sanity-check`, `finishing-a-development-branch`, and the superpowers
+skills referenced by `docs/exec-plans/**` (`executing-plans`,
+`subagent-driven-development`, `test-driven-development`).
+
 ## Working rules
 
 1. **Plan before build.** A design spec (e.g. a `superpowers` spec/plan) may be the design input, but before building you MUST have an exec plan in `docs/exec-plans/queued/` or `docs/exec-plans/active/`, self-reviewed and indexed in `docs/PLANS.md`. The exec plan links back to any informing spec rather than copying it. No `superpowers` spec/plan may exist without an exec plan referencing it — `bun run check` enforces this (see [BACKPRESSURE.md](BACKPRESSURE.md)).
@@ -114,3 +123,8 @@ turbo.json               workspace task pipeline
 6. We do not make dinner in a dirty kitchen: if a pre-existing failure appears,
    pause the current work, stash or otherwise isolate your changes, fix the
    baseline failure first, then resume. Do not wave it away as unrelated.
+7. **Closing a branch** (impl complete, `bun run check` green): run
+   [`docs-sanity-check`](.agent/skills/docs-sanity-check/SKILL.md) (fix
+   `BROKEN`/`DRIFT`, triage the rest), then
+   [`finishing-a-development-branch`](.agent/skills/finishing-a-development-branch/SKILL.md)
+   to merge/PR/cleanup.
