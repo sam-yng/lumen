@@ -11,7 +11,7 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "bun run scripts/validate-e2e-env.ts && playwright test",
     "db:types": "supabase gen types typescript --local > src/server/db/database.types.ts",
     "docs:db-schema": "bun run scripts/gen-db-schema.ts",
     "worker:transcribe": "bun run worker/transcription-worker.ts"

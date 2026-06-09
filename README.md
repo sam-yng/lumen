@@ -41,6 +41,7 @@ Sign up at `/signup`, and you land in the protected workspace shell.
 | `bun run check` | root gate: Biome + Turbo typecheck/test |
 | `bun run lint` / `bun run format` | root Biome lint / autofix |
 | `bun run typecheck` / `bun run test` | Turbo package tasks |
+| `bun run test:e2e` | app Playwright smoke tests via workspace filter |
 | `cd apps/web && bun run dev` | app Next dev server (port 3000) |
 | `cd apps/marketing && bun run dev` | marketing site Next dev server (port 3001) |
 | `cd apps/web && bun run build` / `bun run start` | app production build / serve |
@@ -50,7 +51,8 @@ Sign up at `/signup`, and you land in the protected workspace shell.
 | `cd apps/web && bun run worker:transcribe` | run the transcription worker |
 
 Run `bun run check` after every change — a pre-commit hook (lefthook) and CI
-both enforce it. See [BACKPRESSURE.md](BACKPRESSURE.md).
+both enforce it. Pull request CI also runs the Supabase-backed Playwright smoke
+suite with `bun run test:e2e`. See [BACKPRESSURE.md](BACKPRESSURE.md).
 
 ## Architecture
 

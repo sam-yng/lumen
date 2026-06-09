@@ -38,6 +38,8 @@ _(none)_
 
 ## Active
 
+- **cross-cutting** — CI/CD hardening
+  - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
 - **v2** — AI & MCP (3 of 3 children shipped; pending human sign-off on the
   manual happy-path)
   - [index.md](exec-plans/active/v2/index.md)
