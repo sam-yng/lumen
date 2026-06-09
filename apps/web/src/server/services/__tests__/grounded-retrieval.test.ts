@@ -4,7 +4,38 @@ import {
   chooseBestTranscriptSegment,
   type GroundedCandidate,
   parseGroundedSemanticRows,
+  retrieveGroundedSources,
 } from "@/server/services/grounded-retrieval";
+import {
+  createContext,
+  type FakeSupabase,
+  otherUserId,
+  userId,
+} from "@/server/services/__tests__/fake-supabase";
+import type { EmbeddingProvider } from "@/server/services/embedding-provider";
+
+const queryEmbedding = Array.from({ length: 384 }, () => 0.01);
+const embeddingProvider: EmbeddingProvider = {
+  async embed(texts: string[]) {
+    expect(texts).toEqual(["mito"]);
+    return [queryEmbedding];
+  },
+};
+
+function docRow(over: Record<string, unknown> = {}) {
+  return {
+    id: "d1",
+    user_id: userId,
+    folder_id: null,
+    title: "Biology notes",
+    content_json: null,
+    content_text: "The mitochondria is the powerhouse of the cell.",
+    content_tsv: null as unknown,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    ...over,
+  };
+}
 
 function docCandidate(over: Partial<GroundedCandidate> = {}): GroundedCandidate {
   return {
@@ -142,5 +173,200 @@ describe("parseGroundedSemanticRows", () => {
         similarity: 0.8,
       },
     ]);
+  });
+});
+
+describe("retrieveGroundedSources (semantic)", () => {
+  it("returns [] for an empty or whitespace query without calling the RPC", async () => {
+    const ctx = createContext({ documents: [docRow()] });
+    expect(
+      await retrieveGroundedSources(ctx, "   ", { embeddingProvider }),
+    ).toEqual([]);
+    expect((ctx.supabase as FakeSupabase).rpcLog).toEqual([]);
+  });
+
+  it("labels a transcript chunk and resolves the best overlapping segment", async () => {
+    const ctx = createContext(
+      {
+        documents: [],
+        transcripts: [],
+        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+        files: [{ id: "f1", user_id: userId, name: "seminar-week-4.m4a" }],
+        transcript_segments: [
+          { id: "seg-1", transcript_id: "t1", start_ms: 0, end_ms: 850, text: "intro", speaker: null },
+          { id: "seg-2", transcript_id: "t1", start_ms: 800, end_ms: 2000, text: "oxidative phosphorylation", speaker: null },
+        ],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "chunk-1",
+            user_id: userId,
+            source_type: "transcript",
+            source: { transcriptId: "t1", recordingId: "r1", startMs: 812, endMs: 1900 },
+            chunk_index: 0,
+            content: "The tutor defines oxidative phosphorylation",
+            similarity: 0.88,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const sources = await retrieveGroundedSources(ctx, "mito", {
+      embeddingProvider,
+    });
+
+    expect(sources).toEqual([
+      {
+        citationId: "S1",
+        kind: "transcript",
+        title: "seminar-week-4.m4a",
+        snippet: "The tutor defines oxidative phosphorylation",
+        score: 0.88,
+        source: {
+          transcriptId: "t1",
+          recordingId: "r1",
+          segmentId: "seg-2",
+          startMs: 812,
+          endMs: 1900,
+        },
+      },
+    ]);
+  });
+
+  it("keeps the timestamp span and null segmentId when no segment overlaps", async () => {
+    const ctx = createContext(
+      {
+        documents: [],
+        transcripts: [],
+        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+        files: [{ id: "f1", user_id: userId, name: "rec.m4a" }],
+        transcript_segments: [
+          { id: "seg-far", transcript_id: "t1", start_ms: 9000, end_ms: 9500, text: "later", speaker: null },
+        ],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "chunk-1",
+            user_id: userId,
+            source_type: "transcript",
+            source: { transcriptId: "t1", recordingId: "r1", startMs: 100, endMs: 200 },
+            chunk_index: 0,
+            content: "early passage",
+            similarity: 0.7,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const sources = await retrieveGroundedSources(ctx, "mito", {
+      embeddingProvider,
+    });
+
+    expect(sources[0]?.source).toEqual({
+      transcriptId: "t1",
+      recordingId: "r1",
+      segmentId: null,
+      startMs: 100,
+      endMs: 200,
+    });
+  });
+
+  it("ranks document and transcript hits by score and labels them S1, S2", async () => {
+    const ctx = createContext(
+      {
+        documents: [docRow({ id: "d1", title: "Cell biology" })],
+        transcripts: [],
+        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+        files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+        transcript_segments: [],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "c-transcript",
+            user_id: userId,
+            source_type: "transcript",
+            source: { transcriptId: "t1", recordingId: "r1", startMs: 0, endMs: 100 },
+            chunk_index: 0,
+            content: "transcript passage",
+            similarity: 0.95,
+            text_rank: 0,
+          },
+          {
+            id: "c-doc",
+            user_id: userId,
+            source_type: "document",
+            source: { documentId: "d1" },
+            chunk_index: 0,
+            content: "document passage",
+            similarity: 0.6,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const sources = await retrieveGroundedSources(ctx, "mito", {
+      embeddingProvider,
+    });
+
+    expect(sources.map((s) => [s.citationId, s.kind, s.title])).toEqual([
+      ["S1", "transcript", "lecture.m4a"],
+      ["S2", "document", "Cell biology"],
+    ]);
+  });
+
+  it("does not return cross-user semantic rows or cross-user segments", async () => {
+    const ctx = createContext(
+      {
+        documents: [],
+        transcripts: [],
+        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
+        files: [{ id: "f1", user_id: userId, name: "mine.m4a" }],
+        transcript_segments: [
+          { id: "seg-theirs", transcript_id: "t-theirs", start_ms: 0, end_ms: 100, text: "secret", speaker: null },
+        ],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "mine",
+            user_id: userId,
+            source_type: "transcript",
+            source: { transcriptId: "t1", recordingId: "r1", startMs: 0, endMs: 100 },
+            chunk_index: 0,
+            content: "my passage",
+            similarity: 0.9,
+            text_rank: 0,
+          },
+          {
+            id: "theirs",
+            user_id: otherUserId,
+            source_type: "transcript",
+            source: { transcriptId: "t-theirs", recordingId: "r-theirs", startMs: 0, endMs: 100 },
+            chunk_index: 0,
+            content: "their passage",
+            similarity: 0.99,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const sources = await retrieveGroundedSources(ctx, "mito", {
+      embeddingProvider,
+    });
+
+    expect(sources.map((s) => s.snippet)).toEqual(["my passage"]);
+    const askedTranscriptIds = (ctx.supabase as FakeSupabase).queryLog
+      .filter((e) => e.table === "transcript_segments")
+      .flatMap((e) => e.filters)
+      .filter((f) => f.column === "transcript_id")
+      .flatMap((f) => (Array.isArray(f.value) ? f.value : [f.value]));
+    expect(askedTranscriptIds).not.toContain("t-theirs");
   });
 });
