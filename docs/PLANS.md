@@ -40,9 +40,14 @@ _(none)_
 
 - **cross-cutting** — CI/CD hardening
   - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
+- **cross-cutting** — Planning lifecycle enforcement (implemented; pending review)
+  - [planning-lifecycle-enforcement.md](exec-plans/active/cross-cutting/planning-lifecycle-enforcement.md)
 - **v2** — AI & MCP (3 of 3 children shipped; pending human sign-off on the
   manual happy-path)
   - [index.md](exec-plans/active/v2/index.md)
+- **v3** — Cited retrieval & grounding (milestone 1 shipped; manual
+  assistant happy-path pending a Claude key)
+  - [index.md](exec-plans/active/v3/index.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
@@ -80,6 +85,11 @@ _(none)_
 - [task-4-hybrid-search-service.md](exec-plans/completed/v2/task-4-hybrid-search-service.md)
 - [mcp-server-auth.md](exec-plans/completed/v2/mcp-server-auth.md) (PR #21)
 - [in-app-assistant.md](exec-plans/completed/v2/in-app-assistant.md) (2026-06-08)
+
+### v3 shipped
+
+- [cited-retrieval.md](exec-plans/completed/v3/cited-retrieval.md) (PR #23,
+  2026-06-09) — milestone 1; manual assistant happy-path pending a Claude key
 
 ## Archive
 

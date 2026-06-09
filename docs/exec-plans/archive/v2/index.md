@@ -2,9 +2,9 @@
 
 > **ARCHIVED (2026-06-05).** Superseded by the live group index at
 > [`active/v2/index.md`](../../active/v2/index.md). This is the original queued
-> snapshot; do not use it to guide current implementation. Semantic search and
-> MCP server + auth have since shipped (see `completed/v2/`); the in-app
-> assistant remains queued.
+> snapshot; do not use it to guide current implementation. Semantic search,
+> MCP server + auth, and the in-app assistant have since shipped (see
+> `completed/v2/`).
 
 > **Status:** queued (historical)
 > **Version:** v2
@@ -36,7 +36,7 @@ Implement these as separate plans so each can ship and be reviewed on its own:
 2. [mcp-server-auth.md](../../completed/v2/mcp-server-auth.md) - completed:
    TypeScript MCP server, Streamable HTTP transport, Supabase JWT validation,
    OAuth 2.1 posture, and user isolation tests.
-3. [in-app-assistant.md](../../queued/v2/in-app-assistant.md) - queued: MCP
+3. [in-app-assistant.md](../../completed/v2/in-app-assistant.md) - completed: MCP
    client, Claude agent loop, chat panel, tool-call UX, and demo docs.
 
 ## Sequencing

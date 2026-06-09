@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "check": "biome check . && turbo run typecheck test",
+    "check": "biome check . && bun run check:plans && turbo run typecheck test",
+    "check:plans": "bun run scripts/check-plan-lifecycle.ts",
     "lint": "biome lint .",
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck",

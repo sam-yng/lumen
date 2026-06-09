@@ -1,0 +1,3 @@
+# Keeps the `queued/` lifecycle folder tracked even when empty, so the
+# docs/PLANS.md lifecycle link resolves. Queued plans live in version/phase
+# buckets here (e.g. queued/v3/…), never loose at this root.

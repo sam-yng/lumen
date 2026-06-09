@@ -45,9 +45,24 @@ patch until it is green.
   `cd apps/web && bun run docs:db-schema`.
 - The docs tree must stay link-clean (see `AGENTS.md` for the map).
 
+## Planning is backpressure too
+
+The planning lifecycle is gated by the machine, not by memory, so every release
+is held to the same standard. `bun run check` runs `check:plans`
+(`scripts/check-plan-lifecycle.ts`), which fails when:
+
+- a `docs/superpowers/{plans,specs}/*.md` design artifact is **orphaned** — not
+  referenced from any exec plan under `docs/exec-plans/` (working rule #1: a spec
+  must inform an exec plan before a build), or
+- a version/initiative **bucket** under `docs/exec-plans/{queued,active,completed,archive}/*`
+  is missing from `docs/PLANS.md`.
+
+This is what kept v2 honest by hand; the check makes it impossible to skip.
+
 ## Per-milestone rhythm
 
-1. Write a lightweight plan to `docs/exec-plans/active/`.
+1. Write/locate the design input (a `superpowers` spec is optional), then write
+   a lightweight exec plan to `docs/exec-plans/active/` that links back to it.
 2. Self-review it against the brief.
 3. Implement, running `bun run check` after each patch.
 4. Run the manual happy path in a browser, or `bun run test:e2e` when the

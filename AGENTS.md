@@ -106,7 +106,7 @@ turbo.json               workspace task pipeline
 
 ## Working rules
 
-1. Write an exec plan to `docs/exec-plans/queued/` or `docs/exec-plans/active/`, self-review, then build.
+1. **Plan before build.** A design spec (e.g. a `superpowers` spec/plan) may be the design input, but before building you MUST have an exec plan in `docs/exec-plans/queued/` or `docs/exec-plans/active/`, self-reviewed and indexed in `docs/PLANS.md`. The exec plan links back to any informing spec rather than copying it. No `superpowers` spec/plan may exist without an exec plan referencing it — `bun run check` enforces this (see [BACKPRESSURE.md](BACKPRESSURE.md)).
 2. Run `bun run check` after every patch; keep it green.
 3. Run the manual happy path in a browser before declaring a milestone done.
 4. Pause at each milestone boundary for human review.
