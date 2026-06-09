@@ -73,3 +73,76 @@ export function chooseBestTranscriptSegment(
 
   return best?.id ?? null;
 }
+
+export type GroundedSemanticRow = {
+  id: string;
+  user_id: string;
+  source_type: "document" | "transcript";
+  source: unknown;
+  chunk_index: number;
+  content: string;
+  similarity: number;
+  text_rank: number;
+};
+
+export type GroundedSemanticDoc = {
+  documentId: string;
+  content: string;
+  similarity: number;
+};
+
+export type GroundedSemanticTranscript = {
+  transcriptId: string;
+  recordingId: string;
+  startMs: number;
+  endMs: number;
+  content: string;
+  similarity: number;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function parseGroundedSemanticRows(rows: GroundedSemanticRow[]): {
+  documents: GroundedSemanticDoc[];
+  transcripts: GroundedSemanticTranscript[];
+} {
+  const documents: GroundedSemanticDoc[] = [];
+  const transcripts: GroundedSemanticTranscript[] = [];
+
+  for (const row of rows) {
+    if (!isRecord(row.source)) continue;
+
+    if (row.source_type === "document") {
+      const documentId = row.source.documentId;
+      if (typeof documentId !== "string") continue;
+      documents.push({
+        documentId,
+        content: row.content,
+        similarity: row.similarity,
+      });
+      continue;
+    }
+
+    const { transcriptId, recordingId, startMs, endMs } = row.source;
+    if (
+      typeof transcriptId !== "string" ||
+      typeof recordingId !== "string" ||
+      typeof startMs !== "number" ||
+      typeof endMs !== "number"
+    ) {
+      continue;
+    }
+    transcripts.push({
+      transcriptId,
+      recordingId,
+      startMs,
+      endMs,
+      content: row.content,
+      similarity: row.similarity,
+    });
+  }
+
+  return { documents, transcripts };
+}

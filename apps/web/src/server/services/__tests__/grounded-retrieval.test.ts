@@ -3,6 +3,7 @@ import {
   assignCitationLabels,
   chooseBestTranscriptSegment,
   type GroundedCandidate,
+  parseGroundedSemanticRows,
 } from "@/server/services/grounded-retrieval";
 
 function docCandidate(over: Partial<GroundedCandidate> = {}): GroundedCandidate {
@@ -75,5 +76,71 @@ describe("chooseBestTranscriptSegment", () => {
 
   it("returns null for an empty segment list", () => {
     expect(chooseBestTranscriptSegment({ startMs: 0, endMs: 10 }, [])).toBeNull();
+  });
+});
+
+describe("parseGroundedSemanticRows", () => {
+  it("keeps document and transcript metadata, dropping malformed rows", () => {
+    const parsed = parseGroundedSemanticRows([
+      {
+        id: "c1",
+        user_id: "user-1",
+        source_type: "document",
+        source: { documentId: "d1" },
+        chunk_index: 0,
+        content: "doc chunk",
+        similarity: 0.9,
+        text_rank: 0,
+      },
+      {
+        id: "c2",
+        user_id: "user-1",
+        source_type: "transcript",
+        source: {
+          transcriptId: "t1",
+          recordingId: "r1",
+          startMs: 100,
+          endMs: 200,
+        },
+        chunk_index: 0,
+        content: "transcript chunk",
+        similarity: 0.8,
+        text_rank: 0,
+      },
+      {
+        id: "bad-doc",
+        user_id: "user-1",
+        source_type: "document",
+        source: { documentId: 123 },
+        chunk_index: 0,
+        content: "bad",
+        similarity: 0.7,
+        text_rank: 0,
+      },
+      {
+        id: "bad-transcript",
+        user_id: "user-1",
+        source_type: "transcript",
+        source: { transcriptId: "t2" },
+        chunk_index: 0,
+        content: "bad",
+        similarity: 0.7,
+        text_rank: 0,
+      },
+    ]);
+
+    expect(parsed.documents).toEqual([
+      { documentId: "d1", content: "doc chunk", similarity: 0.9 },
+    ]);
+    expect(parsed.transcripts).toEqual([
+      {
+        transcriptId: "t1",
+        recordingId: "r1",
+        startMs: 100,
+        endMs: 200,
+        content: "transcript chunk",
+        similarity: 0.8,
+      },
+    ]);
   });
 });
