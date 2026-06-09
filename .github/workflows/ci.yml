@@ -62,12 +62,17 @@ jobs:
           bunx supabase start
           bunx supabase db reset
           bunx supabase status -o env > supabase.env
+          # `supabase status -o env` double-quotes every value. $GITHUB_ENV
+          # stores values verbatim, so the quotes would survive into
+          # process.env and break z.string().url() (Invalid URL). Rename the
+          # keys, then strip the surrounding quotes before exporting.
           sed -n \
             -e 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p' \
             -e 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=/p' \
             -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SECRET_KEY=/p' \
             -e 's/^DB_URL=/PG_BOSS_DATABASE_URL=/p' \
-            supabase.env >> "$GITHUB_ENV"
+            supabase.env \
+            | sed -E 's/="(.*)"$/=\1/' >> "$GITHUB_ENV"
 
       - name: Install Playwright browser
         working-directory: apps/web
