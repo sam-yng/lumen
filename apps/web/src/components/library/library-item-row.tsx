@@ -151,6 +151,12 @@ export function ItemRow({
       ),
   );
 
+  // Radix closes the menu after onSelect and restores focus; mounting a
+  // dialog in the same tick lets that teardown dismiss it. Defer one tick.
+  function openAfterMenuCloses(open: (value: boolean) => void) {
+    setTimeout(() => open(true), 0);
+  }
+
   function openItem() {
     if (type === "folder") onOpenFolder?.(item.id);
     if (type === "document") onOpenDocument?.(item.id);
@@ -261,20 +267,24 @@ export function ItemRow({
               </DropdownMenuItem>
             )}
             {type !== "folder" && availableTags.length > 0 && (
-              <DropdownMenuItem onSelect={() => setTagOpen(true)}>
+              <DropdownMenuItem
+                onSelect={() => openAfterMenuCloses(setTagOpen)}
+              >
                 <Tag /> Add tag…
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onSelect={() => setMoveOpen(true)}>
+            <DropdownMenuItem onSelect={() => openAfterMenuCloses(setMoveOpen)}>
               <FolderInput /> Move…
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
+            <DropdownMenuItem
+              onSelect={() => openAfterMenuCloses(setRenameOpen)}
+            >
               <Pencil /> Rename…
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onSelect={() => setDeleteOpen(true)}
+              onSelect={() => openAfterMenuCloses(setDeleteOpen)}
             >
               <Trash2 /> Delete…
             </DropdownMenuItem>
