@@ -166,6 +166,60 @@ export function fetchTranscriptDetail(recordingId: string) {
   }>(`/api/library/transcripts/${recordingId}`);
 }
 
+export function startLiveSession(input: {
+  name: string;
+  folderId: string | null;
+}) {
+  return requestJson<{
+    file: Tables<"files">;
+    recording: Tables<"recordings">;
+    transcript: Tables<"transcripts">;
+  }>("/api/library/live-sessions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function appendLiveSegments(input: {
+  recordingId: string;
+  segments: Array<{ startMs: number; endMs: number; text: string }>;
+}) {
+  return requestJson<{ inserted: number }>(
+    `/api/library/live-sessions/${input.recordingId}/segments`,
+    {
+      method: "POST",
+      body: JSON.stringify({ segments: input.segments }),
+    },
+  );
+}
+
+export function finalizeLiveSession(input: {
+  recordingId: string;
+  audio: Blob;
+  language: string | null;
+}) {
+  const body = new FormData();
+  body.set(
+    "audio",
+    new File([input.audio], "live-session.webm", {
+      type: input.audio.type || "audio/webm",
+    }),
+  );
+  if (input.language) body.set("language", input.language);
+
+  return requestForm<{
+    recording: Tables<"recordings">;
+    transcript: Tables<"transcripts">;
+  }>(`/api/library/live-sessions/${input.recordingId}/finalize`, body);
+}
+
+export function cancelLiveSession(recordingId: string) {
+  return requestJson<{ deleted: boolean }>(
+    `/api/library/live-sessions/${recordingId}`,
+    { method: "DELETE" },
+  );
+}
+
 export function createTag(input: { name: string; color: string | null }) {
   return requestJson<Tables<"tags">>("/api/library/tags", {
     method: "POST",

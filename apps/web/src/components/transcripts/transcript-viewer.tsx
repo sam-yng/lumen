@@ -58,6 +58,21 @@ function StatusState({
   onRetry: () => void;
   retrying: boolean;
 }) {
+  if (recording.status === "live") {
+    return (
+      <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
+        <div className="space-y-3">
+          <Mic className="mx-auto size-8 animate-pulse text-[var(--danger)]" />
+          <p className="font-medium">Live session in progress</p>
+          <p className="max-w-md font-mono text-[11.5px] text-[var(--text-3)]">
+            This recording is still being captured. If the session was
+            interrupted before it could be saved, delete it from the library.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (recording.status === "failed") {
     return (
       <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
