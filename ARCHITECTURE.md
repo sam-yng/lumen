@@ -81,9 +81,18 @@ fakes must implement both. The proxy treats `/api/mcp` as a public prefix
 sessions behind `recording_status = 'live'`, finalized into the standard
 recordings/transcripts pipeline).
 
-**Still not built** (clean boundaries, not placeholders): diarization
-(v3 m3, batch-only), clickable citation deep links (v3 m4), realtime
-collaboration.
+**Shipped in v3 m3:** batch speaker diarization. A `DiarizationProvider` seam
+(`apps/web/worker/diarization-provider.ts`) with a sherpa-onnx implementation
+(pyannote segmentation-3.0 + 3D-Speaker embedding, local ONNX via
+`bun run worker:diarization-models`). The worker diarizes the audio *before*
+transcription (Whisper deletes its WAV input when done), then assigns each
+segment the speaker turn with the largest time overlap
+(`worker/speaker-merge.ts`). Env-gated by `DIARIZATION_ENABLED`; any
+diarization error degrades to `speaker: null` and the job still completes.
+The live path never labels speakers.
+
+**Still not built** (clean boundaries, not placeholders): clickable citation
+deep links (v3 m4), realtime collaboration.
 
 ## Security
 

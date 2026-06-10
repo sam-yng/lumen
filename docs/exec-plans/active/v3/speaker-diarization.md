@@ -102,10 +102,26 @@ for local dev.
 
 ## Verification Gate
 
-- `bun run check` green.
-- Unit tests: overlap-merge pure function (containment, partial overlap, ties,
-  gaps → null); worker pipeline with a fake `DiarizationProvider`; diarization
-  failure still yields a `done` recording with null speakers.
-- Manual happy path (working rule #3): upload a real multi-speaker recording,
-  confirm distinct speaker labels render in the transcript viewer and segment
-  text/timing is unchanged from a no-diarization run.
+- [x] `bun run check` green.
+- [x] Unit tests: overlap-merge pure function (containment, partial overlap,
+  ties, gaps → null); worker pipeline with a fake `DiarizationProvider`;
+  diarization failure still yields a `done` recording with null speakers; and
+  diarize-before-transcribe ordering (see below).
+- [x] Manual happy path (working rule #3, 2026-06-10): uploaded a two-voice
+  synthetic seminar WAV; the worker produced `Speaker 1`/`Speaker 2` labels
+  matching the two voices turn-for-turn, and the transcript viewer rendered
+  them per segment with text/timing identical to a no-diarization run.
+
+### Build notes (2026-06-10)
+
+- **Ordering bug found during the happy path:** the Whisper provider deletes
+  its WAV input after transcribing, so running diarization after transcription
+  saw ENOENT and silently degraded to null speakers (the degrade rule worked
+  as designed). Fix: diarize first, then transcribe, then merge — pinned by a
+  pipeline test.
+- Models are fetched by `bun run worker:diarization-models` into
+  `apps/web/.models/diarization/` (gitignored); worker env:
+  `DIARIZATION_ENABLED`, `DIARIZATION_SEGMENTATION_MODEL_PATH`,
+  `DIARIZATION_EMBEDDING_MODEL_PATH`, optional
+  `DIARIZATION_CLUSTER_THRESHOLD` (default 0.9) and
+  `DIARIZATION_NUM_SPEAKERS` (default -1 = auto).

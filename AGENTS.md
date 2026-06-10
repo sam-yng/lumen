@@ -33,6 +33,7 @@ cd apps/marketing && bun run dev  # marketing site Next dev server (port 3001)
 cd apps/web && bun run db:types   # regenerate src/server/db/database.types.ts (never hand-edit)
 cd apps/web && bun run docs:db-schema  # regenerate docs/generated/db-schema.md (never hand-edit)
 cd apps/web && bun run worker:transcribe
+cd apps/web && bun run worker:diarization-models  # fetch local diarization ONNX models
 
 cd apps/web && bunx supabase start     # local Postgres + Auth + Storage (Docker)
 cd apps/web && bunx supabase status    # local URL + keys
@@ -93,8 +94,14 @@ turbo.json               workspace task pipeline
   live-session service (`server/services/live-sessions.ts`, recordings status
   `live`) finalizing through the batch transcript path. The batch
   `TranscriptionProvider` worker pipeline is untouched and stays the default.
-- Still not built: diarization (v3 m3), citation deep links (v3 m4), realtime
-  collab. Seams, not stubs.
+- Shipped in v3 m3: batch speaker diarization — `DiarizationProvider` seam in
+  `apps/web/worker/` with a sherpa-onnx implementation (local ONNX models via
+  `worker:diarization-models`), env-gated by `DIARIZATION_ENABLED` and
+  degrade-never-fail (errors → null speakers, job still `done`). Diarization
+  runs before transcription because Whisper deletes its WAV input. Live path
+  never labels speakers.
+- Still not built: citation deep links (v3 m4), realtime collab. Seams, not
+  stubs.
 
 ## Docs
 
