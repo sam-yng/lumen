@@ -63,7 +63,7 @@ apps/web/e2e/mobile-smoke.spec.ts       NEW — 375×812 drawer + row-menu flow
 **Files:**
 - Create: `apps/web/src/components/ui/sheet.tsx`
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```tsx
 "use client";
@@ -105,12 +105,12 @@ export function SheetContent({
 }
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `bun run check`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/components/ui/sheet.tsx
@@ -126,7 +126,7 @@ git commit -m "feat(web): add Sheet drawer primitive"
 - Modify: `apps/web/src/components/library/library-dialogs.tsx`
 - Modify: `apps/web/src/components/library/library-workspace.tsx` (upload dialog footer)
 
-- [ ] **Step 1: Replace `ui/dialog.tsx` contents**
+- [x] **Step 1: Replace `ui/dialog.tsx` contents**
 
 ```tsx
 "use client";
@@ -195,7 +195,7 @@ export const DialogTitle = DialogPrimitive.Title;
 export const DialogDescription = DialogPrimitive.Description;
 ```
 
-- [ ] **Step 2: Adopt `DialogFooter` in `library-dialogs.tsx`**
+- [x] **Step 2: Adopt `DialogFooter` in `library-dialogs.tsx`**
 
 In `TextInputDialog`, replace the footer `div`:
 
@@ -208,18 +208,18 @@ In `TextInputDialog`, replace the footer `div`:
 
 (and the closing tag; remove `mt-3`/spacing conflicts — keep the form's `space-y-4`, drop the footer's old classes entirely). Same change in `ConfirmDialog`: replace `<div className="mt-4 flex justify-end gap-2">` with `<DialogFooter>`. Add `DialogFooter` to the import from `@/components/ui/dialog`.
 
-- [ ] **Step 3: Adopt `DialogFooter` in the upload dialog**
+- [x] **Step 3: Adopt `DialogFooter` in the upload dialog**
 
 In `library-workspace.tsx`, the upload form's `<div className="flex justify-end gap-2">` becomes `<DialogFooter>` (import it).
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `bun run check`
 Expected: PASS.
 
 Run: `cd apps/web && bun run dev`, open `http://localhost:3000/library`, narrow viewport to 375px (devtools), open "New note": dialog rises from the bottom, full width, buttons stacked (Create above Cancel reversed order — `flex-col-reverse` puts primary on top); at ≥640px it's the centered modal.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/ui/dialog.tsx apps/web/src/components/library/library-dialogs.tsx apps/web/src/components/library/library-workspace.tsx
@@ -234,7 +234,7 @@ git commit -m "feat(web): responsive dialog - bottom sheet on mobile, shared foo
 - Create: `apps/web/src/components/ui/dropdown-menu.tsx`
 - Create: `apps/web/src/components/ui/select.tsx`
 
-- [ ] **Step 1: Create `dropdown-menu.tsx`**
+- [x] **Step 1: Create `dropdown-menu.tsx`**
 
 ```tsx
 "use client";
@@ -299,7 +299,7 @@ export function DropdownMenuSeparator({
 }
 ```
 
-- [ ] **Step 2: Create `select.tsx`** (styled native select — better mobile ergonomics than a custom listbox)
+- [x] **Step 2: Create `select.tsx`** (styled native select — better mobile ergonomics than a custom listbox)
 
 ```tsx
 import { ChevronDown } from "lucide-react";
@@ -326,12 +326,12 @@ export function Select({
 }
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `bun run check`
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/components/ui/dropdown-menu.tsx apps/web/src/components/ui/select.tsx
@@ -346,7 +346,7 @@ git commit -m "feat(web): add DropdownMenu and styled native Select primitives"
 - Modify: `apps/web/src/components/ui/button.tsx`
 - Modify: `apps/web/src/app/globals.css`
 
-- [ ] **Step 1: Button base classes**
+- [x] **Step 1: Button base classes**
 
 In the `cva` base string in `button.tsx`, add (keep everything else byte-identical):
 
@@ -355,7 +355,7 @@ In the `cva` base string in `button.tsx`, add (keep everything else byte-identic
 
 This expands the effective tap target ~12px on coarse pointers (28px `icon-sm` → 40px+, 24px `icon-xs`/`xs` → 36px+ — pair the smallest sizes with generous surrounding spacing) without changing visuals or layout.
 
-- [ ] **Step 2: globals.css base-layer additions**
+- [x] **Step 2: globals.css base-layer additions**
 
 Inside the existing `@layer base` block, add:
 
@@ -383,12 +383,12 @@ Inside the existing `@layer base` block, add:
 
 (Merge the `-webkit-font-smoothing` line into the existing `body` rule rather than adding a second `body` block.)
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `bun run check`
 Expected: PASS. In the browser at 375px, focusing the search input no longer zooms the page (iOS sim / responsive mode), buttons unchanged visually.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/components/ui/button.tsx apps/web/src/app/globals.css
@@ -404,7 +404,7 @@ git commit -m "feat(web): touch hit areas and global type polish"
 - Modify: `apps/web/src/components/library/library-workspace.tsx`
 - Modify: `apps/web/src/components/library/library-sidebar.tsx`
 
-- [ ] **Step 1: Replace `library-shell.tsx` contents**
+- [x] **Step 1: Replace `library-shell.tsx` contents**
 
 ```tsx
 "use client";
@@ -468,7 +468,7 @@ export function LibraryShell({
 }
 ```
 
-- [ ] **Step 2: Slim the workspace top bar**
+- [x] **Step 2: Slim the workspace top bar**
 
 In `library-workspace.tsx`, the `topBar` JSX no longer owns the sticky chrome (the shell does now). Replace its outer div classes:
 
@@ -479,7 +479,7 @@ In `library-workspace.tsx`, the `topBar` JSX no longer owns the sticky chrome (t
 <div className="flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3">
 ```
 
-- [ ] **Step 3: Sidebar border cleanup**
+- [x] **Step 3: Sidebar border cleanup**
 
 In `library-sidebar.tsx`, the `<aside>` no longer needs the stacked-layout border hack. Replace:
 
@@ -490,12 +490,12 @@ className="flex min-h-0 flex-col overflow-hidden border-b border-[var(--border-s
 className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--surface)] lg:border-r lg:border-[var(--border-soft)]"
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `bun run check` → PASS.
 Browser at 375px: sidebar gone from flow; hamburger opens drawer with the full sidebar; tapping a folder selects it AND closes the drawer; Esc/overlay close; at ≥1024px the 280px column is back and the hamburger is hidden. The note/transcript full-page routes are unaffected (they don't use `LibraryShell`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/library/library-shell.tsx apps/web/src/components/library/library-workspace.tsx apps/web/src/components/library/library-sidebar.tsx
@@ -510,7 +510,7 @@ git commit -m "feat(web): mobile drawer navigation for the library shell"
 - Modify: `apps/web/src/components/library/library-item-row.tsx`
 - Modify: `apps/web/src/components/library/library-dialogs.tsx` (add `SelectDialog`)
 
-- [ ] **Step 1: Add `SelectDialog` to `library-dialogs.tsx`**
+- [x] **Step 1: Add `SelectDialog` to `library-dialogs.tsx`**
 
 ```tsx
 export function SelectDialog({
@@ -584,7 +584,7 @@ export function SelectDialog({
 
 Add `import { Select } from "@/components/ui/select";` at the top.
 
-- [ ] **Step 2: Rewrite `ItemRow`**
+- [x] **Step 2: Rewrite `ItemRow`**
 
 Keep: all mutations/hooks, `STATUS_TONE`, `TagChips`, icon/name/meta derivation, `TextInputDialog`/`ConfirmDialog` wiring. Remove: `TagAttachForm`, `MoveSelect` (inline selects die). New row body:
 
@@ -729,12 +729,12 @@ Notes: status badge shows inline on `sm+`; below `sm` the recording status is al
 </div>
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `bun run check` → PASS.
 Browser: desktop row shows `⋯` on hover/focus; menu opens with all actions; Add tag/Move open dialogs (bottom sheets at 375px); rename/delete still work; tag chip click removes tag without opening the item; no nested-button hydration warning in console.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/components/library/library-item-row.tsx apps/web/src/components/library/library-dialogs.tsx
@@ -750,7 +750,7 @@ git commit -m "feat(web): collapse item row actions into a dropdown menu"
 - Modify: `apps/web/src/components/library/library-paths.ts`
 - Modify: `apps/web/src/components/library/library-workspace.tsx`
 
-- [ ] **Step 1: Create `library-filter-chips.tsx`**
+- [x] **Step 1: Create `library-filter-chips.tsx`**
 
 ```tsx
 "use client";
@@ -817,7 +817,7 @@ export function LibraryFilterChips({
 }
 ```
 
-- [ ] **Step 2: Add `folderPath` to `library-paths.ts`**
+- [x] **Step 2: Add `folderPath` to `library-paths.ts`**
 
 Read the file first; add alongside `folderName`, following its snapshot-shape conventions:
 
@@ -840,7 +840,7 @@ export function folderPath(
 
 (Match the existing import/type style in that file — if `folderName` takes the whole snapshot, take the whole snapshot.)
 
-- [ ] **Step 3: Wire both into `library-workspace.tsx`**
+- [x] **Step 3: Wire both into `library-workspace.tsx`**
 
 Breadcrumb (replaces the current two-crumb version inside `topBar`):
 
@@ -877,12 +877,12 @@ Place the mobile ellipsis between "Library" and the first rendered crumb (i.e. r
 
 Chip bar: render `<LibraryFilterChips tags={snapshot.tags} selectedTagId={selectedTagId} onSelectTag={setSelectedTagId} />` directly under the `<h2>` header block (inside the `mb-5` div, after the item-count line, with `mt-3`).
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `bun run check` → PASS.
 Browser: nested folder shows full clickable chain at ≥640px, `Library › … › parent › current` at 375px; chips scroll horizontally on mobile without showing a scrollbar; selecting a chip filters and tints; "All" resets.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/library/library-filter-chips.tsx apps/web/src/components/library/library-paths.ts apps/web/src/components/library/library-workspace.tsx
@@ -900,28 +900,28 @@ git commit -m "feat(web): tag filter chip bar and clickable breadcrumb ancestors
 
 Read each file before editing; apply these bounded changes and nothing else.
 
-- [ ] **Step 1: Editor toolbar**
+- [x] **Step 1: Editor toolbar**
 
 - Toolbar container: `sticky top-0 z-10` within the editor scroll area; below `sm` make it a no-wrap horizontal scroller: `flex items-center gap-1 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden` with `-mx-4 px-4` gutter bleed; `sm:overflow-visible sm:flex-wrap sm:mx-0 sm:px-0`.
 - Toolbar buttons: ensure every control is the shared `Button` (`variant="ghost" size="icon-sm"`) with `title` + `sr-only` labels — touch hit-area expansion from Task 4 then applies. Keep the exact existing toolset (repo rule; do not add controls).
 - Autosave indicator: keep the colored dot at all widths; hide its text label below `sm` (`hidden sm:inline`), add `sr-only` status text.
 
-- [ ] **Step 2: Transcript viewer**
+- [x] **Step 2: Transcript viewer**
 
 - Segment rows: current grid `[56px_1fr]` (or similar) becomes `grid-cols-1 gap-0.5 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-0` — timestamp renders above text below `sm`. Whole segment row remains the click-to-seek target with `min-h-[44px]` and `w-full text-left`.
 - Player: Play/Pause ≥44px (`size-11`); rate toggle and any icon buttons get `title` + Task-4 hit areas; player block `sticky top-0 z-10` under the route header; waveform untouched.
 - Timestamps/meta: confirm they render in `font-mono` (tabular-nums now applies globally).
 
-- [ ] **Step 3: Live session route**
+- [x] **Step 3: Live session route**
 
 - Same conventions: controls use shared `Button` sizes ≥44px effective, header truncates the title (`min-w-0 truncate`), no fixed pixel widths >viewport, mono meta in `font-mono`.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `bun run check` → PASS.
 Browser at 375px: editor toolbar scrolls horizontally (no wrap, no page overflow), typing + autosave still work; transcript segments stack timestamp-over-text, tapping a segment seeks audio; at ≥640px both return to current desktop layouts. `bun run test:e2e` still green (run with Supabase up).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/editor/document-editor.tsx apps/web/src/components/transcripts/transcript-viewer.tsx apps/web/src/components/library/live-session-route.tsx
@@ -940,26 +940,26 @@ git commit -m "feat(web): mobile-first editor toolbar, transcript segments, live
 
 Read each file before editing; bounded changes only.
 
-- [ ] **Step 1: Auth**
+- [x] **Step 1: Auth**
 
 - Auth route layout: page container gets `px-4 py-8` minimum padding so the 360px card never touches edges at 320–375px. If a brand/split panel exists in the `(auth)` layout, it hides below `lg` (`hidden lg:flex`); single centered column below.
 - `auth-form.tsx` itself keeps `max-w-[360px]` — inputs inherit 16px mobile size from Task 4 globals. Expected: no component change needed; verify, don't churn.
 
-- [ ] **Step 2: Search panel**
+- [x] **Step 2: Search panel**
 
 - Search input container: full width on mobile (`w-full`), no fixed pixel width.
 - Result rows: full-width `<button>` targets with `min-h-[44px] w-full text-left`, truncation on name/crumb, serif snippet wraps (no `truncate` on the snippet).
 
-- [ ] **Step 3: Tag panel (sidebar) + `/library/tags` view**
+- [x] **Step 3: Tag panel (sidebar) + `/library/tags` view**
 
 - Tag rows: `min-h-[40px]` targets; color picker swatches ≥40px tap targets with `aria-pressed` selection state; row text truncates; controls wrap (`flex-wrap`) instead of overflowing at 280px sidebar/drawer width.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `bun run check` → PASS. `bun run test` (Vitest — `auth-form.test.tsx`, `tag-color-picker.test.tsx` must stay green; update queries only if markup around them changed).
 Browser at 375px: login/signup cards padded and centered; search results tappable; tags view usable inside the drawer.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/auth-form.tsx apps/web/src/app/\(auth\) apps/web/src/components/search/search-panel.tsx apps/web/src/components/library/tag-panel.tsx
@@ -974,7 +974,7 @@ git commit -m "feat(web): mobile pass for auth, search, and tags surfaces"
 - Create: `apps/web/e2e/mobile-smoke.spec.ts`
 - Modify: `docs/FRONTEND.md` (document the new responsive conventions in the same change — repo doc rule)
 
-- [ ] **Step 1: Write the mobile smoke test**
+- [x] **Step 1: Write the mobile smoke test**
 
 ```ts
 import { expect, test } from "@playwright/test";
@@ -1020,20 +1020,20 @@ test("mobile drawer + row actions happy path", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run the e2e suite**
+- [x] **Step 2: Run the e2e suite**
 
 Run: `cd apps/web && bunx supabase start && bun run test:e2e`
 Expected: existing specs + mobile smoke PASS. Adjust selectors only if a real regression in this plan's changes is found — fix the code, not the assertion.
 
-- [ ] **Step 3: Screenshot verification grid**
+- [x] **Step 3: Screenshot verification grid**
 
 With dev server running, capture (Chrome DevTools MCP or manual) at **375 / 768 / 1280** widths: auth login, `/library` (drawer open + closed at 375), note editor, transcript viewer (done + processing if seed data allows), `/library/tags`, search results. Check each: no horizontal scroll (also spot-check 320px), aligned buttons, visible focus rings (tab through one screen per surface), reduced-motion emulation kills dialog/drawer animations.
 
-- [ ] **Step 4: Update `docs/FRONTEND.md`**
+- [x] **Step 4: Update `docs/FRONTEND.md`**
 
 Add a "Responsive conventions" subsection: mobile-first base + `sm/md/lg` ramp, drawer shell pattern, responsive dialog (bottom sheet `<sm`), `DialogFooter` for all dialog actions, dropdown row-action menus, touch hit-area rule, 16px mobile inputs. Remove the stale "Not yet implemented" note about the dark restyle if it misstates current reality after this work.
 
-- [ ] **Step 5: Final gate + commit**
+- [x] **Step 5: Final gate + commit**
 
 ```bash
 bun run check          # green
@@ -1051,3 +1051,33 @@ Then: repo working rule 3 (manual happy path in a real browser) and rule 7 (docs
 - **Placeholder scan:** T8/T9 are directive (files not fully read at planning time) but bounded: exact files, exact class recipes, exact verification. No TBDs.
 - **Type consistency:** `SelectDialog` props match both call sites in T6; `folderPath` return shape matches T7 breadcrumb usage; `Sheet`/`DialogFooter` APIs match their consumers in T5/T2/T6.
 - **Known risks:** nested-interactive cleanup in T6 (explicit restructure given); radix `DropdownMenuItem` `onSelect` closing before dialog opens — if the dialog fails to open, add `event.preventDefault()` in `onSelect` and open via `setTimeout(0)`; tw-animate class names verified against the package's documented utilities.
+
+---
+
+## Execution log (2026-06-10)
+
+All 10 tasks executed inline; `bun run check` green per commit; e2e suite
+green (mobile smoke included; live-session spec remains env-gated/skipped).
+
+**Deviations from plan:**
+
+- **Assistant panel (unplanned fix, root cause of "unusable on mobile"):**
+  `(app)/layout.tsx` rendered `AssistantPanel` as an always-on 320px flex
+  child, leaving a 375px phone with 55px of app. Panel is now `hidden lg:flex`
+  and the content column gained `min-w-0`. A responsive assistant entry point
+  is future work (tracked in FRONTEND.md).
+- **Menu→dialog race:** the plan's flagged risk materialized; fixed with the
+  planned mitigation (defer dialog open one tick — `openAfterMenuCloses` in
+  `library-item-row.tsx`).
+- **`library-happy-path` tag assertion** scoped to the sidebar
+  (`getByRole("complementary")`) because the new filter chip bar legitimately
+  duplicates the tag button in the content area.
+- **TagColorPicker** swapped its raw `<select>` for the shared `Select`
+  (consistency; covered by existing Vitest suite).
+
+**Verification evidence:** Chrome DevTools screenshots at 375/768/1280 —
+auth, library (drawer open/closed, bottom-sheet dialog), editor; 320px
+overflow = 0; focus rings visible; row `⋯` menu Open/Add tag/Move/Rename/
+Delete verified including DB persistence. Transcript-with-segments view not
+re-screenshotted (fresh seed has no recordings; change was CSS-only segment
+stacking) — covered by the manual happy path at branch close.

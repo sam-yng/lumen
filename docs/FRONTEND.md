@@ -11,9 +11,36 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
   tokens live in `packages/ui` and are consumed as `@lumen/ui/tokens.css`.
 - Forms: React 19 `useActionState` + server actions; validate with zod.
 - Visual language: see [DESIGN.md](DESIGN.md) for the full token system,
-  per-screen specs, and interaction states. **Not yet implemented** — the dark
-  theme restyle is a deferred pass after v1's functional milestones; current
-  components still use the default shadcn neutral palette.
+  per-screen specs, and interaction states. Implemented — the dark-first
+  restyle shipped in the post-v1 design pass and the 2026-06 frontend
+  overhaul added the responsive layer below.
+
+## Responsive conventions (2026-06 frontend overhaul)
+
+- **Mobile-first.** Base styles target ~375px phones; enhance with `sm` (640)
+  / `md` (768) / `lg` (1024). No horizontal scroll at any width ≥320px.
+- **Shell:** `LibraryShell` renders the 280px sidebar column only at `lg+`;
+  below that the full sidebar lives in a left `Sheet` drawer
+  (`components/ui/sheet.tsx`) opened by the top-bar hamburger. Any link/button
+  activation inside the drawer closes it.
+- **Dialogs:** `DialogContent` is a bottom sheet below `sm` and a centered
+  modal at `sm+`. Every dialog's actions go through `DialogFooter` (stacked
+  full-width on mobile, right-aligned row at `sm+`). Never hand-roll dialog
+  footers.
+- **Row actions:** list rows are a single full-width tap target plus one `⋯`
+  `DropdownMenu`; selects in flows use the styled native
+  `components/ui/select.tsx`. Dialogs opened from a menu item must defer one
+  tick past menu teardown (see `openAfterMenuCloses` in `library-item-row.tsx`).
+- **Touch targets:** the shared `Button` expands its hit area ~12px on coarse
+  pointers; keep interactive controls ≥44px effective. Hover-only reveals
+  (`md:opacity-0 md:group-hover:opacity-100`) always pair with
+  `md:group-focus-within:opacity-100` and stay visible below `md`.
+- **Type:** inputs render ≥16px below `sm` (global rule — prevents iOS focus
+  zoom); mono meta gets `tabular-nums`; headings `text-wrap: balance`.
+- **Motion:** tw-animate utilities on `data-[state]` with
+  `motion-reduce:animate-none`.
+- The assistant panel (`(app)/layout.tsx`) is hidden below `lg`; a responsive
+  assistant entry point is future work.
 
 ## Library workspace (M2)
 
@@ -48,8 +75,9 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 - Icon toolbar controls use accessible labels and keep the workspace dense.
 
 Status: M3 editor conventions captured; upload/transcription UI arrives in M4.
-The dark-theme visual restyle (all milestones) is specified in
-[DESIGN.md](DESIGN.md) and deferred to a post-v1 pass.
+The dark-theme visual restyle (all milestones) specified in
+[DESIGN.md](DESIGN.md) has shipped, including the mobile-first responsive
+pass above.
 
 ## Uploads and transcripts (M4)
 
