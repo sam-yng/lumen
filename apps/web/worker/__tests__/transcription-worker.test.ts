@@ -307,6 +307,31 @@ describe("processTranscriptionJob", () => {
     ).toEqual(["Speaker 1", "Speaker 2"]);
   });
 
+  it("diarizes before transcription so providers that delete the audio cannot starve it", async () => {
+    // The real Whisper provider removes its WAV input after transcribing.
+    const order: string[] = [];
+    const { deps, jobInput } = await diarizationFixture({
+      async diarize(audioPath) {
+        expect(await readFile(audioPath, "utf8")).toBe("fake audio");
+        order.push("diarize");
+        return [];
+      },
+    });
+    const inner = deps.provider;
+    deps.provider = {
+      async transcribe(audioPath) {
+        order.push("transcribe");
+        const result = await inner.transcribe(audioPath);
+        await rm(audioPath, { force: true });
+        return result;
+      },
+    };
+
+    await processTranscriptionJob(jobInput, deps);
+
+    expect(order).toEqual(["diarize", "transcribe"]);
+  });
+
   it("completes the job with null speakers when diarization fails", async () => {
     const { supabase, deps, jobInput } = await diarizationFixture({
       async diarize() {

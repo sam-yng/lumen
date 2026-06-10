@@ -16,14 +16,11 @@ import {
   SupabaseStorageProvider,
 } from "@/server/services/storage-provider";
 import { writeRecordingTranscript } from "@/server/services/transcripts";
-import type { DiarizationProvider } from "./diarization-provider";
+import type { DiarizationProvider, SpeakerTurn } from "./diarization-provider";
 import { SherpaOnnxDiarizationProvider } from "./sherpa-diarization-provider";
 import { assignSpeakers } from "./speaker-merge";
 import { createWorkerSupabase } from "./supabase";
-import type {
-  TranscriptionProvider,
-  TranscriptionSegment,
-} from "./transcription-provider";
+import type { TranscriptionProvider } from "./transcription-provider";
 import { WhisperTranscriptionProvider } from "./whisper-provider";
 
 type WorkerJobPayload = TranscriptionJobPayload & {
@@ -51,25 +48,23 @@ export type ProcessTranscriptionJobDeps = {
   tempDir: string;
 };
 
-// Diarization degrades, never fails: any error leaves speakers null and the
-// transcription job still completes.
-async function labelSpeakers(
-  segments: TranscriptionSegment[],
+// Diarization degrades, never fails: any error yields no turns and the
+// transcription job still completes with null speakers.
+async function diarizeSafe(
   audioPath: string,
   diarization: DiarizationProvider | undefined,
-): Promise<TranscriptionSegment[]> {
-  if (!diarization) return segments;
+): Promise<SpeakerTurn[]> {
+  if (!diarization) return [];
 
   try {
-    const turns = await diarization.diarize(audioPath);
-    return assignSpeakers(segments, turns);
+    return await diarization.diarize(audioPath);
   } catch (error) {
     console.error(
       `Diarization failed; keeping null speakers: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
-    return segments;
+    return [];
   }
 }
 
@@ -163,12 +158,14 @@ export async function processTranscriptionJob(
     if (!downloaded) throw new Error("Storage provider cannot download files.");
 
     await writeFile(audioPath, downloaded.bytes);
+    // Diarize first: the Whisper provider deletes its WAV input when it
+    // finishes, so the audio may not exist after transcription.
+    const turns = await diarizeSafe(audioPath, deps.diarization);
     const transcript = await deps.provider.transcribe(audioPath);
-    const segments = await labelSpeakers(
-      transcript.segments,
-      audioPath,
-      deps.diarization,
-    );
+    const segments =
+      turns.length > 0
+        ? assignSpeakers(transcript.segments, turns)
+        : transcript.segments;
 
     await writeRecordingTranscript(
       {
