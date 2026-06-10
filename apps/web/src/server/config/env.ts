@@ -23,6 +23,17 @@ const serverSchema = z.object({
   TRANSCRIPTION_STORAGE_BUCKET: z.string().min(1).default("library-files"),
   WHISPER_MODEL: z.string().min(1).default("base.en"),
   TRANSCRIPTION_TMP_DIR: z.string().min(1).default("/tmp/lumen-transcription"),
+  // Speaker diarization (v3 m3). Off by default; when enabled the worker
+  // labels batch transcript segments and degrades to null speakers on error.
+  DIARIZATION_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  DIARIZATION_SEGMENTATION_MODEL_PATH: z.string().min(1).optional(),
+  DIARIZATION_EMBEDDING_MODEL_PATH: z.string().min(1).optional(),
+  DIARIZATION_CLUSTER_THRESHOLD: z.coerce.number().gt(0).lt(1).default(0.9),
+  // -1 lets the clustering threshold decide how many speakers there are.
+  DIARIZATION_NUM_SPEAKERS: z.coerce.number().int().default(-1),
 });
 
 type PublicEnv = z.infer<typeof publicSchema>;
@@ -51,6 +62,13 @@ export function getServerEnv(): ServerEnv {
       TRANSCRIPTION_STORAGE_BUCKET: process.env.TRANSCRIPTION_STORAGE_BUCKET,
       WHISPER_MODEL: process.env.WHISPER_MODEL,
       TRANSCRIPTION_TMP_DIR: process.env.TRANSCRIPTION_TMP_DIR,
+      DIARIZATION_ENABLED: process.env.DIARIZATION_ENABLED,
+      DIARIZATION_SEGMENTATION_MODEL_PATH:
+        process.env.DIARIZATION_SEGMENTATION_MODEL_PATH,
+      DIARIZATION_EMBEDDING_MODEL_PATH:
+        process.env.DIARIZATION_EMBEDDING_MODEL_PATH,
+      DIARIZATION_CLUSTER_THRESHOLD: process.env.DIARIZATION_CLUSTER_THRESHOLD,
+      DIARIZATION_NUM_SPEAKERS: process.env.DIARIZATION_NUM_SPEAKERS,
     });
   }
   return serverEnv;

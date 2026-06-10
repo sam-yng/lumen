@@ -34,9 +34,8 @@ same rule when it gains content.
 
 ## Queued
 
-- **v3** — Advanced capture & retrieval (m3+: diarization, citation experience)
+- **v3** — Advanced capture & retrieval (m4+: citation experience)
   - [index.md](exec-plans/queued/v3/index.md)
-  - [speaker-diarization.md](exec-plans/queued/v3/speaker-diarization.md)
   - [citation-experience.md](exec-plans/queued/v3/citation-experience.md)
 
 ## Active
@@ -44,6 +43,9 @@ same rule when it gains content.
 - **v3** — Streaming transcription (m2; spike resolved: browser Transformers.js
   + segment POSTs)
   - [streaming-transcription.md](exec-plans/active/v3/streaming-transcription.md)
+
+- **v3** — Speaker diarization (m3; spike resolved: sherpa-onnx Node bindings)
+  - [speaker-diarization.md](exec-plans/active/v3/speaker-diarization.md)
 
 - **cross-cutting** — CI/CD hardening
   - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)

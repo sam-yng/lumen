@@ -44,7 +44,8 @@ Implement as separate plans so each can ship and be reviewed on its own:
    live capture in the browser → incremental transcript → finalize into the
    existing recordings/transcripts/segments + semantic-index pipeline. Adds a
    streaming provider beside the batch `TranscriptionProvider`; never replaces it.
-2. [speaker-diarization.md](speaker-diarization.md) — **milestone 3**: populate
+2. [speaker-diarization.md](../../active/v3/speaker-diarization.md) —
+   **milestone 3** (active): populate
    `transcript_segments.speaker` on the batch pipeline via a local, free
    diarization step merged onto Whisper segments by time overlap. The viewer
    already renders speaker labels conditionally.
