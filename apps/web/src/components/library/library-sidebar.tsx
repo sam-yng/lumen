@@ -125,7 +125,7 @@ export function LibrarySidebar({
   const navIdle = "text-[var(--text-2)] hover:bg-[var(--surface-2)]";
 
   return (
-    <aside className="flex min-h-0 flex-col overflow-hidden border-b border-[var(--border-soft)] bg-[var(--surface)] lg:border-r lg:border-b-0">
+    <aside className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--surface)] lg:border-r lg:border-[var(--border-soft)]">
       <div className="border-b border-[var(--border-soft)] p-4">
         <div className="mb-4 flex items-center justify-between">
           <div className="inline-flex items-center gap-2">

@@ -85,7 +85,7 @@ export function LibraryWorkspace({
     : null;
 
   const topBar = (
-    <div className="sticky top-0 z-20 flex min-h-[52px] items-center justify-between gap-3 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+    <div className="flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
         <button
           type="button"
