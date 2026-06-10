@@ -46,7 +46,7 @@ type FileRow = Tables<"files">;
 type RecordingRow = Tables<"recordings">;
 type TargetType = Database["public"]["Enums"]["tag_target_type"];
 
-export const STATUS_TONE = {
+const STATUS_TONE = {
   pending:
     "bg-[var(--warn-soft)] text-[var(--warn)] ring-1 ring-[color-mix(in_oklch,var(--warn),transparent_65%)]",
   processing:
@@ -56,6 +56,12 @@ export const STATUS_TONE = {
     "bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[color-mix(in_oklch,var(--danger),transparent_65%)]",
   live: "bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[color-mix(in_oklch,var(--danger),transparent_65%)]",
 } satisfies Record<RecordingRow["status"], string>;
+
+// Radix closes the menu after onSelect and restores focus; mounting a dialog
+// in the same tick lets that teardown dismiss it. Defer one tick.
+function openAfterMenuCloses(open: (value: boolean) => void) {
+  setTimeout(() => open(true), 0);
+}
 
 function TagChips({
   snapshot,
@@ -150,12 +156,6 @@ export function ItemRow({
           tagLink.tag_id === tag.id,
       ),
   );
-
-  // Radix closes the menu after onSelect and restores focus; mounting a
-  // dialog in the same tick lets that teardown dismiss it. Defer one tick.
-  function openAfterMenuCloses(open: (value: boolean) => void) {
-    setTimeout(() => open(true), 0);
-  }
 
   function openItem() {
     if (type === "folder") onOpenFolder?.(item.id);
@@ -330,9 +330,11 @@ export function ItemRow({
         label="Destination"
         options={[
           { value: "", label: "Library" },
-          ...snapshot.folders
-            .filter((folder) => folder.id !== item.id)
-            .map((folder) => ({ value: folder.id, label: folder.name })),
+          ...snapshot.folders.flatMap((folder) =>
+            folder.id === item.id
+              ? []
+              : [{ value: folder.id, label: folder.name }],
+          ),
         ]}
         defaultValue={
           ("folder_id" in item ? item.folder_id : item.parent_id) ?? ""

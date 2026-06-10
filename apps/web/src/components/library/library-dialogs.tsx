@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,24 +34,19 @@ export function TextInputDialog({
   onSubmit: (value: string) => void;
 }) {
   const fieldId = useId();
-  const [value, setValue] = useState(defaultValue);
 
-  // Reset the field to the provided default each time the dialog opens.
-  useEffect(() => {
-    if (open) setValue(defaultValue);
-  }, [open, defaultValue]);
-
+  // Uncontrolled on purpose: the dialog content unmounts when closed, so each
+  // open remounts the input fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         <form
           className="mt-3 space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const trimmed = value.trim();
-            if (!trimmed) return;
-            onSubmit(trimmed);
+          action={(formData) => {
+            const value = String(formData.get("value") ?? "").trim();
+            if (!value) return;
+            onSubmit(value);
             onOpenChange(false);
           }}
         >
@@ -59,10 +54,11 @@ export function TextInputDialog({
             <Label htmlFor={fieldId}>{label}</Label>
             <Input
               id={fieldId}
-              value={value}
+              name="value"
+              defaultValue={defaultValue}
               placeholder={placeholder}
-              onChange={(event) => setValue(event.target.value)}
               autoFocus
+              required
             />
           </div>
           <DialogFooter>
@@ -101,32 +97,23 @@ export function SelectDialog({
   onSubmit: (value: string) => void;
 }) {
   const fieldId = useId();
-  const [value, setValue] = useState(defaultValue);
 
-  // Reset the field to the provided default each time the dialog opens.
-  useEffect(() => {
-    if (open) setValue(defaultValue);
-  }, [open, defaultValue]);
-
+  // Uncontrolled on purpose: the dialog content unmounts when closed, so each
+  // open remounts the select fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         <form
           className="mt-3 space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(value);
+          action={(formData) => {
+            onSubmit(String(formData.get("value") ?? ""));
             onOpenChange(false);
           }}
         >
           <div className="space-y-1.5">
             <Label htmlFor={fieldId}>{label}</Label>
-            <Select
-              id={fieldId}
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-            >
+            <Select id={fieldId} name="value" defaultValue={defaultValue}>
               {options.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
