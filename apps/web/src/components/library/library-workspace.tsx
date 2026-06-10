@@ -24,8 +24,9 @@ import {
 } from "./library-api";
 import { LibraryContent } from "./library-content";
 import { TextInputDialog } from "./library-dialogs";
+import { LibraryFilterChips } from "./library-filter-chips";
 import { useLibraryMutation } from "./library-hooks";
-import { folderName } from "./library-paths";
+import { folderName, folderPath } from "./library-paths";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 
@@ -84,24 +85,50 @@ export function LibraryWorkspace({
     ? snapshot.tags.find((tag) => tag.id === selectedTagId)?.name
     : null;
 
+  const crumbs = folderPath(snapshot, selectedFolderId);
+
   const topBar = (
     <div className="flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
         <button
           type="button"
-          className="truncate hover:text-foreground"
+          className="shrink-0 truncate hover:text-foreground"
           onClick={() => setSelectedFolderId(null)}
         >
           Library
         </button>
-        {selectedFolderId ? (
-          <>
-            <ChevronRight className="size-4 shrink-0" />
-            <span className="truncate text-foreground">
-              {folderName(snapshot, selectedFolderId)}
-            </span>
-          </>
+        {crumbs.length > 2 ? (
+          <span
+            className="flex shrink-0 items-center gap-2 sm:hidden"
+            aria-hidden="true"
+          >
+            <ChevronRight className="size-4 shrink-0" />…
+          </span>
         ) : null}
+        {crumbs.map((crumb, index) => {
+          const isLast = index === crumbs.length - 1;
+          const isParent = index === crumbs.length - 2;
+          return (
+            <span
+              key={crumb.id}
+              className={`${
+                isLast || isParent ? "flex" : "hidden sm:flex"
+              } min-w-0 items-center gap-2`}
+            >
+              <ChevronRight className="size-4 shrink-0" />
+              <button
+                type="button"
+                onClick={() => setSelectedFolderId(crumb.id)}
+                className={`truncate ${
+                  isLast ? "text-foreground" : "hover:text-foreground"
+                }`}
+                aria-current={isLast ? "page" : undefined}
+              >
+                {crumb.name}
+              </button>
+            </span>
+          );
+        })}
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -160,6 +187,13 @@ export function LibraryWorkspace({
             ? `Filtered by ${selectedTagName}`
             : `${snapshot.folders.length + snapshot.documents.length + snapshot.files.length} items`}
         </p>
+        <div className="mt-3">
+          <LibraryFilterChips
+            tags={snapshot.tags}
+            selectedTagId={selectedTagId}
+            onSelectTag={setSelectedTagId}
+          />
+        </div>
       </div>
       <SearchPanel
         inputRef={searchInputRef}
