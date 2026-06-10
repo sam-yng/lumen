@@ -177,6 +177,13 @@ export function LibraryWorkspace({
           onRecordSave={(file) =>
             uploadMutation.mutate({ file, folderId: selectedFolderId })
           }
+          onStartLiveSession={() =>
+            router.push(
+              selectedFolderId
+                ? `/library/live?folderId=${selectedFolderId}`
+                : "/library/live",
+            )
+          }
         />
         <LibraryContent
           snapshot={snapshot}

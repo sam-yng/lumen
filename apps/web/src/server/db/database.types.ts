@@ -474,7 +474,7 @@ export type Database = {
     }
     Enums: {
       file_kind: "audio" | "other"
-      recording_status: "pending" | "processing" | "done" | "failed"
+      recording_status: "pending" | "processing" | "done" | "failed" | "live"
       semantic_search_source_type: "document" | "transcript"
       tag_target_type: "document" | "file" | "recording"
     }
@@ -608,7 +608,7 @@ export const Constants = {
   public: {
     Enums: {
       file_kind: ["audio", "other"],
-      recording_status: ["pending", "processing", "done", "failed"],
+      recording_status: ["pending", "processing", "done", "failed", "live"],
       semantic_search_source_type: ["document", "transcript"],
       tag_target_type: ["document", "file", "recording"],
     },

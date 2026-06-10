@@ -41,6 +41,7 @@ export const STATUS_TONE = {
   done: "bg-[var(--ok-soft)] text-[var(--ok)] ring-1 ring-[color-mix(in_oklch,var(--ok),transparent_65%)]",
   failed:
     "bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[color-mix(in_oklch,var(--danger),transparent_65%)]",
+  live: "bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[color-mix(in_oklch,var(--danger),transparent_65%)]",
 } satisfies Record<RecordingRow["status"], string>;
 
 function TagChips({

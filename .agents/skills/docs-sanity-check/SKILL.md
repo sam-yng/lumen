@@ -36,6 +36,8 @@ Run all six; aggregate findings into a single report before touching anything.
 1. **Broken internal links** — For every markdown file in `AGENTS.md`, `ARCHITECTURE.md`, and `docs/**/*.md`: extract every `[text](path)` where `path` is relative (not `http(s)://`). For each, resolve against the file's dir and verify the target exists (allow `#anchor` suffixes). Report the (file, line, broken link, resolved path) tuples.
 
 2. **Orphaned code refs** — Grep doc files for `src/**/*.{ts,tsx}`, `supabase/**/*.sql`, and other repo-relative paths. For each referenced path, verify existence via `Glob`. Skip references that are clearly filename templates (contain `YYYY-MM-DD`, `[slug]`, `<topic>`, or other placeholder tokens). Also grep for backticked identifiers that look like symbols (function/component names) and spot-check a handful via `Grep`. Report references to paths/symbols that no longer exist.
+   - **Completed exec plans are historical records.** For `docs/exec-plans/completed/**`, a code path that no longer exists is not automatically `BROKEN`; it may record what that milestone created before later refactors renamed or moved it. Do not rewrite completed plans just to match current paths. If the completed plan or a later completed plan records the rename/move/deletion (for example Next `middleware` → `proxy`, timestamped migrations replacing `000_init.sql`, or `components/transcript/` becoming `components/transcripts/`), classify it as `HISTORICAL`/informational and take no edit action.
+   - **Active and queued exec plans are allowed to point forward.** A missing path in `docs/exec-plans/active/**` or `docs/exec-plans/queued/**` is only `BROKEN` when the surrounding text says the file should already exist. If it is listed under create/delete steps, conflict flags, or future implementation instructions, classify it as planned work rather than rot.
 
 3. **Unreachable docs** — BFS the link graph starting at `AGENTS.md` (plus any `docs/*/index.md` and `README.md` as extra roots). Any `docs/**/*.md` not reached is orphaned. Report the orphans.
 
@@ -55,6 +57,7 @@ Run all six; aggregate findings into a single report before touching anything.
    - `ORPHAN` — unreachable doc files
    - `STALE` — freshness flags
    - `STUB` — TODO markers (lowest priority; informational)
+   - `HISTORICAL` — obsolete code refs intentionally preserved in completed plans (informational; do not edit)
 4. **Confirm per group**: ask the user which groups to apply fixes for. Do NOT bundle "apply all".
 5. **Apply**:
    - `BROKEN` → edit the referring doc (remove link, or fix path if the target clearly moved).
@@ -67,6 +70,7 @@ Run all six; aggregate findings into a single report before touching anything.
 - **Never auto-delete human-authored content.** Only `docs/generated/` is safe to overwrite without asking.
 - **Never silently rewrite content.** All edits outside `docs/generated/` require explicit per-file confirmation.
 - **Never touch `CLAUDE.md` or `AGENTS.md` content** unless the user explicitly opted in to "fix broken links in AGENTS.md" — those files are load-bearing for every agent session.
+- **Do not rewrite completed milestones to modernize paths.** Completed plans are evidence of what was built at that time; changing `src/middleware.ts` to `src/proxy.ts` or `000_init.sql` to a later timestamped migration can falsify the record unless the completed plan itself is explicitly documenting the later correction.
 - **Preserve link text.** When fixing a broken path, keep the original anchor text; only change the target.
 - **Keep the report under ~400 lines.** If a check produces more findings than that, summarize + attach a full list as a follow-up artifact.
 
@@ -93,6 +97,10 @@ Run all six; aggregate findings into a single report before touching anything.
 
 ## STUB (N)
 - docs/DESIGN.md:5 — TODO
+...
+
+## HISTORICAL (N)
+- docs/exec-plans/completed/v1/m0-harness-and-scaffold.md:33 — `src/middleware.ts` was later renamed to `src/proxy.ts`; no edit
 ...
 
 ## Proposed actions

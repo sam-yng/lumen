@@ -58,7 +58,13 @@ These boundaries exist so later milestones plug in cleanly:
    They already take an authenticated context and enforce scoping, so they work
    outside an HTTP request unchanged.
 2. **`TranscriptionProvider` interface** *(M4)*. `nodejs-whisper` is the v1
-   implementation; v3 may add streaming behind the same interface.
+   implementation and stays the batch default. v3 m2 added the **separate**
+   `StreamingTranscriptionProvider` seam
+   (`apps/web/src/lib/transcription/streaming-provider.ts`) for live capture:
+   inference runs in the browser (Transformers.js Whisper in a Web Worker,
+   WebGPU→WASM) and only finalized text segments reach the server via the
+   live-session service (`server/services/live-sessions.ts`), which finalizes
+   through the same `writeRecordingTranscript` path as batch jobs.
 3. **`StorageProvider` interface** *(M4)*. Supabase Storage is the v1
    implementation; the backend can be swapped without touching callers.
 
@@ -71,8 +77,13 @@ fakes must implement both. The proxy treats `/api/mcp` as a public prefix
 (bearer-authenticated by the route, not the cookie session); see
 [docs/SECURITY.md](docs/SECURITY.md).
 
-**Still not built** (clean boundaries, not placeholders): the in-app assistant,
-streaming/live transcription, diarization, realtime collaboration.
+**Shipped in v3 m2:** live/streaming transcription (browser-side Whisper, live
+sessions behind `recording_status = 'live'`, finalized into the standard
+recordings/transcripts pipeline).
+
+**Still not built** (clean boundaries, not placeholders): diarization
+(v3 m3, batch-only), clickable citation deep links (v3 m4), realtime
+collaboration.
 
 ## Security
 

@@ -62,6 +62,17 @@ M4 implementation notes:
   and `transcripts` include `eq("user_id", userId)`; segment inserts use the
   transcript id created by that user-scoped transcript insert.
 
+V3 m2 live-session notes:
+
+- Live capture adds no service-role surface. The live-session route handlers
+  (`app/api/library/live-sessions/**`) authenticate the cookie session exactly
+  like uploads, and the live-session service runs entirely on the user-scoped
+  client — RLS governs every row it touches.
+- Audio never reaches the server during a session; the browser runs Whisper
+  locally and POSTs only text segments. Finalization uploads the audio blob to
+  the storage key reserved under `<user_id>/…` at session start, so the
+  existing bucket policies apply unchanged.
+
 V2 semantic-search notes:
 
 - Semantic chunks are stored in `semantic_search_chunks`, which is directly

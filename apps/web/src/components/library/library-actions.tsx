@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderPlus, Plus, Upload } from "lucide-react";
+import { FolderPlus, Plus, Radio, Upload } from "lucide-react";
 import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
 import { Button } from "@/components/ui/button";
 
@@ -9,11 +9,13 @@ export function LibraryActions({
   onCreateFolder,
   onUpload,
   onRecordSave,
+  onStartLiveSession,
 }: {
   onCreateNote: () => void;
   onCreateFolder: () => void;
   onUpload: () => void;
   onRecordSave: (file: File) => void;
+  onStartLiveSession: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-soft)] pb-4">
@@ -33,6 +35,15 @@ export function LibraryActions({
       <Button type="button" variant="outline" size="sm" onClick={onUpload}>
         <Upload className="size-4" />
         Upload
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onStartLiveSession}
+      >
+        <Radio className="size-4" />
+        Live session
       </Button>
       <RecordAudioForm onSave={onRecordSave} />
     </div>

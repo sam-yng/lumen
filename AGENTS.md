@@ -85,8 +85,16 @@ turbo.json               workspace task pipeline
   auth, `/api/mcp` is a proxy public prefix). The service-layer client now has
   `.rpc()` + `.in()` (`server/services/context.ts`) — test fakes must implement
   both. See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/SECURITY.md](docs/SECURITY.md).
-- Still not built: in-app AI assistant, streaming/live transcription,
-  diarization, realtime collab. Seams, not stubs.
+- Shipped in v2 (2026-06-08): the in-app AI assistant (browser verification
+  still gated on a real Claude key — see
+  `docs/exec-plans/active/production/prod-readiness/prod-assistant-verification.md`).
+- Shipped in v3 m2: live/streaming transcription — browser-side Whisper
+  (`src/lib/transcription/`, `StreamingTranscriptionProvider` seam) +
+  live-session service (`server/services/live-sessions.ts`, recordings status
+  `live`) finalizing through the batch transcript path. The batch
+  `TranscriptionProvider` worker pipeline is untouched and stays the default.
+- Still not built: diarization (v3 m3), citation deep links (v3 m4), realtime
+  collab. Seams, not stubs.
 
 ## Docs
 
