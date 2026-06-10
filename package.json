@@ -15,10 +15,12 @@
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "test:e2e": "bun run --filter @lumen/web test:e2e"
+    "test:e2e": "bun run --filter @lumen/web test:e2e",
+    "doctor": "npx react-doctor@latest"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
+    "react-doctor": "^0.5.1",
     "turbo": "^2"
   },
   "trustedDependencies": [

@@ -106,12 +106,13 @@ turbo.json               workspace task pipeline
 
 ## Agent skills
 
-Portable skills are vendored in-repo at [`.agent/skills/`](.agent/skills/README.md)
+Portable skills are vendored in-repo at [`.agents/skills/`](.agents/skills/README.md)
 so every machine/tool shares the same versions. Claude Code does **not**
-auto-load `.agent/skills/` — read a skill's `SKILL.md` and follow it. Includes
-`docs-sanity-check`, `finishing-a-development-branch`, and the superpowers
-skills referenced by `docs/exec-plans/**` (`executing-plans`,
-`subagent-driven-development`, `test-driven-development`).
+auto-load `.agents/skills/` — read a skill's `SKILL.md` and follow it. Includes
+`docs-sanity-check`, `finishing-a-development-branch`, `react-doctor`, and the
+superpowers skills referenced by `docs/exec-plans/**` (`executing-plans`,
+`subagent-driven-development`, `test-driven-development`). React Doctor also runs
+in CI on every PR and push to `main` (`.github/workflows/react-doctor.yml`).
 
 ## Working rules
 
@@ -124,7 +125,7 @@ skills referenced by `docs/exec-plans/**` (`executing-plans`,
    pause the current work, stash or otherwise isolate your changes, fix the
    baseline failure first, then resume. Do not wave it away as unrelated.
 7. **Closing a branch** (impl complete, `bun run check` green): run
-   [`docs-sanity-check`](.agent/skills/docs-sanity-check/SKILL.md) (fix
+   [`docs-sanity-check`](.agents/skills/docs-sanity-check/SKILL.md) (fix
    `BROKEN`/`DRIFT`, triage the rest), then
-   [`finishing-a-development-branch`](.agent/skills/finishing-a-development-branch/SKILL.md)
+   [`finishing-a-development-branch`](.agents/skills/finishing-a-development-branch/SKILL.md)
    to merge/PR/cleanup.
