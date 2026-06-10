@@ -34,7 +34,12 @@ same rule when it gains content.
 
 ## Queued
 
-_(none)_
+- **v3** — Advanced capture & retrieval (m2+: streaming transcription,
+  diarization, citation experience)
+  - [index.md](exec-plans/queued/v3/index.md)
+  - [streaming-transcription.md](exec-plans/queued/v3/streaming-transcription.md)
+  - [speaker-diarization.md](exec-plans/queued/v3/speaker-diarization.md)
+  - [citation-experience.md](exec-plans/queued/v3/citation-experience.md)
 
 ## Active
 

@@ -5,10 +5,10 @@
 > **Area:** assistant, MCP client, BYO Claude key, product UI
 > **Created:** 2026-06-04
 > **Completed:** 2026-06-08
-> **Depends on:** `docs/exec-plans/completed/v2/mcp-server-auth.md` (shipped)
+> **Depends on:** [`completed/v2/mcp-server-auth.md`](mcp-server-auth.md) (shipped)
 > **Supersedes:** none
-> **Design:** `docs/superpowers/specs/2026-06-08-in-app-assistant-design.md`
-> **Plan:** `docs/superpowers/plans/2026-06-08-in-app-assistant.md`
+> **Design:** [`docs/superpowers/specs/2026-06-08-in-app-assistant-design.md`](../../../superpowers/specs/2026-06-08-in-app-assistant-design.md)
+> **Plan:** [`docs/superpowers/plans/2026-06-08-in-app-assistant.md`](../../../superpowers/plans/2026-06-08-in-app-assistant.md)
 
 ## Retrospective
 
