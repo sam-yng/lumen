@@ -1,6 +1,6 @@
 # Speaker Diarization Plan (v3 Milestone 3)
 
-> **Status:** queued
+> **Status:** active
 > **Version:** v3
 > **Area:** transcription pipeline, worker
 > **Created:** 2026-06-10
@@ -37,6 +37,43 @@ Evaluation criteria: label accuracy on real 2–4-speaker seminar audio, CPU
 runtime relative to transcription itself, integration complexity (Node-only
 strongly preferred), and license terms. Record the decision and rejected
 alternatives in this plan, then build.
+
+### Decision (2026-06-10): sherpa-onnx (option 2)
+
+Spike run in a throwaway project against `sherpa-onnx-node` 1.13.2 with the
+sherpa-onnx 4-speaker reference recording
+(`0-four-speakers-zh.wav`, 56.9 s):
+
+- **API works from Node directly** — `new OfflineSpeakerDiarization(config)` +
+  `process(samples)` returns `{ start, end, speaker }` turns; the native addon
+  (`sherpa-onnx-darwin-arm64`) installs cleanly via Bun.
+- **Runtime:** 12.8 s CPU for 56.9 s of audio (~4.4× faster than realtime on an
+  M-series laptop) — well under the cost of transcription itself.
+- **Accuracy:** clustering-threshold sweep on the 4-speaker file:
+  0.5 → 8 clusters (over-split), 0.7/0.8 → 5, **0.9 → exactly 4** with sensible
+  turn structure. Default the threshold to 0.9 and keep it env-tunable.
+- **Licenses:** `sherpa-onnx-node` Apache-2.0; segmentation model
+  pyannote/segmentation-3.0 is **MIT** (the HF gate is a contact-info form
+  only, and sherpa-onnx redistributes the converted ONNX in its GitHub
+  releases); speaker-embedding model 3D-Speaker ERes2Net is Apache-2.0.
+
+**Rejected — whisper.cpp tinydiarize:** `nodejs-whisper` 0.3.0 hardcodes its
+model list and CLI flags (no `-tdrz`, no `small.en-tdrz`), so it would need a
+fork or a raw `whisper-cli` bypass; the tdrz model is English-only; and it
+emits speaker-*turn* marks without identity, so it cannot produce stable
+"Speaker N" labels for >2 speakers — the stated goal.
+
+**Rejected — Python sidecar (pyannote.audio):** second runtime
+(venv/packaging/Windows dev) against the plan's strong Node-only preference;
+sherpa-onnx runs the same pyannote segmentation model family and met the
+accuracy bar in the spike.
+
+**Input constraint (accepted):** sherpa-onnx reads WAV (non-16 kHz WAV is
+linear-resampled in TS); non-WAV audio degrades to `speaker: null` with a log
+line, per the degrade-never-fail rule. Whisper transcription is unaffected.
+The worker does not auto-download models: paths come from env, and
+`apps/web/scripts/fetch-diarization-models.ts` downloads the two ONNX files
+for local dev.
 
 ## Scope
 
