@@ -13,8 +13,12 @@ export function HowItWorks() {
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
       <Reveal className="reveal mb-12 max-w-xl">
         <h2 className="font-serif text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-          From recording to recall in three steps.
+          From lecture capture to grounded answers.
         </h2>
+        <p className="text-text-2 mt-4 text-pretty text-base leading-relaxed">
+          Lumen keeps the workflow direct: capture the raw material, make it
+          searchable, then retrieve the exact context you need.
+        </p>
       </Reveal>
 
       <Reveal className="relative">

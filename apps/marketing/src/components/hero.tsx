@@ -3,9 +3,9 @@ import { AppMock } from "@/components/app-mock";
 import { siteConfig } from "@/lib/site";
 
 const proofPoints = [
-  "Private local transcription",
-  "Nested study library",
-  "Search notes + transcripts",
+  "Local + live transcription",
+  "Hybrid study retrieval",
+  "AI uses your Claude key",
 ] as const;
 
 export function Hero() {
@@ -17,7 +17,7 @@ export function Hero() {
       <div className="relative z-10 mx-auto grid min-h-[calc(88svh-64px)] w-full max-w-6xl items-center gap-10 px-6 py-14 sm:py-18 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <div className="flex flex-col items-start gap-6">
           <span className="l-chip l-rise" style={{ "--i": 0 } as CSSProperties}>
-            Study workspace
+            Private AI-ready study workspace
           </span>
           <h1
             className="l-rise max-w-2xl text-balance font-serif text-4xl font-semibold leading-tight text-foreground sm:text-6xl"

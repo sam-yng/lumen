@@ -15,19 +15,36 @@ const transcriptLines = [
   "called cristae, which increase surface area.",
 ];
 
-const demoStages = [
+const systemStages = [
   {
-    label: "Capture",
-    value: "Lecture audio + note",
+    label: "Local capture",
+    value: "recordings, notes, files",
   },
   {
-    label: "Transcribe",
-    value: "Local CPU processing",
+    label: "Hybrid retrieval",
+    value: "full-text + semantic chunks",
   },
   {
-    label: "Recall",
-    value: "Search notes + transcript",
+    label: "MCP tools",
+    value: "same contract in-app and external",
   },
+  {
+    label: "Claude assistant",
+    value: "enabled with your API key",
+  },
+] as const;
+
+const toolCalls = [
+  "search_notes",
+  "get_transcript",
+  "list_by_tag",
+  "create_note",
+] as const;
+
+const retrievalRows = [
+  { label: "FTS", value: "respiration lecture" },
+  { label: "Vector", value: "membrane surface area" },
+  { label: "Source", value: "Biology 101 / week 08" },
 ] as const;
 
 const waveformBars = Array.from({ length: 24 }, (_, i) => ({
@@ -48,20 +65,21 @@ export function AppMock({
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-20">
       <Reveal className="grid items-start gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:gap-12">
-        <div className="reveal sticky top-24 hidden max-w-sm lg:block">
-          <span className="l-chip">Product demo</span>
+        <div className="reveal max-w-sm lg:sticky lg:top-24">
+          <span className="l-chip">AI and retrieval layer</span>
           <h2 className="mt-5 max-w-sm text-balance font-serif text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-            See the study loop in motion.
+            Not just storage. A tool-aware study system.
           </h2>
           <p className="text-text-2 mt-4 text-pretty text-base leading-relaxed">
-            These are lightweight demos of the v1 product foundation: folders,
-            notes, uploads, local transcription, transcripts, tags, and search.
+            Lumen turns your workspace into retrievable context: local
+            transcripts, semantic chunks, service-layer tools, MCP access, and
+            an in-app assistant when you add your Claude API key.
           </p>
           <div className="mt-7 grid gap-3">
-            {demoStages.map((stage) => (
+            {systemStages.map((stage) => (
               <div
                 key={stage.label}
-                className="border-border-soft bg-surface/60 rounded-lg border p-3"
+                className="border-border-soft bg-surface/60 l-system-card rounded-lg border p-3"
               >
                 <p className="text-sm font-medium text-foreground">
                   {stage.label}
@@ -73,10 +91,115 @@ export function AppMock({
         </div>
 
         <div className="reveal">
-          <ProductFrame />
+          <CapabilityMap />
         </div>
       </Reveal>
     </section>
+  );
+}
+
+function CapabilityMap() {
+  return (
+    <div
+      aria-hidden="true"
+      className="border-border-soft bg-surface relative overflow-hidden rounded-xl border p-4 shadow-[var(--shadow-pop)] sm:p-5"
+    >
+      <div className="l-system-grid" />
+      <div className="relative grid gap-4 lg:grid-cols-[1fr_0.92fr]">
+        <div className="space-y-4">
+          <div className="border-border-soft bg-background/50 rounded-lg border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="l-chip">Retrieval</span>
+              <span className="text-text-4 font-mono text-[10px]">
+                scoped by user
+              </span>
+            </div>
+            <div className="mt-4 space-y-2">
+              {retrievalRows.map((row, i) => (
+                <div
+                  key={row.label}
+                  className="l-retrieval-row bg-surface-2 flex items-center gap-3 rounded-md px-3 py-2"
+                  style={{ "--i": i } as CSSProperties}
+                >
+                  <span className="text-accent-text w-14 font-mono text-[10px]">
+                    {row.label}
+                  </span>
+                  <span className="text-text-2 truncate text-xs">
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="border-border-soft bg-background/50 rounded-lg border p-4">
+              <span className="text-text-4 text-[10px] font-medium uppercase tracking-wide">
+                Local transcription
+              </span>
+              <div className="mt-4 flex h-14 items-end gap-1.5">
+                {waveformBars.slice(0, 14).map((bar) => (
+                  <span
+                    key={`system-${bar.id}`}
+                    className="l-wave bg-ok/80 w-full rounded-full"
+                    style={
+                      {
+                        "--h": bar.height,
+                        "--i": bar.index,
+                      } as CSSProperties
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="border-border-soft bg-background/50 rounded-lg border p-4">
+              <span className="text-text-4 text-[10px] font-medium uppercase tracking-wide">
+                Semantic chunks
+              </span>
+              <div className="mt-4 grid grid-cols-5 gap-1.5">
+                {Array.from({ length: 20 }, (_, i) => (
+                  <span
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static decorative grid
+                    key={i}
+                    className="l-vector-cell bg-[var(--accent-soft)] h-4 rounded"
+                    style={{ "--i": i } as CSSProperties}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-border-soft bg-background/50 rounded-lg border p-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="l-chip">Assistant</span>
+            <span className="text-warn font-mono text-[10px]">Claude key</span>
+          </div>
+          <div className="mt-4 rounded-lg border border-[var(--accent-line)] bg-[var(--accent-soft)] p-3">
+            <p className="text-sm font-medium text-foreground">
+              "Summarize the respiration lecture and make exam prompts."
+            </p>
+            <p className="text-text-3 mt-2 text-xs leading-relaxed">
+              The assistant can call scoped MCP tools over your own workspace.
+              Inference runs through your Anthropic account.
+            </p>
+          </div>
+          <div className="mt-4 space-y-2">
+            {toolCalls.map((tool, i) => (
+              <div
+                key={tool}
+                className="l-tool-call border-border-soft bg-surface-2 flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+                style={{ "--i": i } as CSSProperties}
+              >
+                <span className="text-text-2 font-mono text-xs">{tool}</span>
+                <span className="bg-ok h-1.5 w-1.5 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
