@@ -110,7 +110,7 @@ function SearchResultRow({
   "onOpenDocument" | "onOpenTranscript" | "onSelectFile"
 >) {
   const rowClass =
-    "flex w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
+    "flex min-h-[44px] w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
 
   if (result.kind === "document") {
     return (
