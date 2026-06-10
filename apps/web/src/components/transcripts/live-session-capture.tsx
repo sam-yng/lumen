@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2, Mic, Square, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useReducer, useRef } from "react";
 import {
   appendLiveSegments,
   cancelLiveSession,
@@ -11,6 +11,10 @@ import {
   libraryQueryKey,
   startLiveSession,
 } from "@/components/library/library-api";
+import {
+  createInitialLiveSessionState,
+  liveSessionReducer,
+} from "@/components/transcripts/live-session-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AsrStatus } from "@/lib/transcription/asr-protocol";
@@ -20,8 +24,6 @@ import type {
   StreamingTranscriptionSession,
 } from "@/lib/transcription/streaming-provider";
 import { TransformersStreamingTranscriptionProvider } from "@/lib/transcription/transformers-streaming-provider";
-
-type Phase = "idle" | "starting" | "recording" | "saving" | "error";
 
 function formatElapsed(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -53,18 +55,38 @@ function statusLabel(status: AsrStatus | null) {
     : "Transcribing on-device (CPU)";
 }
 
-export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
+async function appendPendingSegmentBatches(
+  recordingId: string,
+  pendingRef: { current: StreamingSegment[] },
+): Promise<void> {
+  const batch = pendingRef.current.splice(0, 50);
+  if (batch.length === 0) return;
+
+  try {
+    await appendLiveSegments({
+      recordingId,
+      segments: batch.map((segment) => ({
+        startMs: Math.round(segment.startMs),
+        endMs: Math.round(segment.endMs),
+        text: segment.text,
+      })),
+    });
+  } catch (cause) {
+    pendingRef.current.unshift(...batch);
+    throw cause;
+  }
+
+  return appendPendingSegmentBatches(recordingId, pendingRef);
+}
+
+function useLiveSessionCaptureController(folderId: string | null) {
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [asrWarning, setAsrWarning] = useState<string | null>(null);
-  const [asrStatus, setAsrStatus] = useState<AsrStatus | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const [finals, setFinals] = useState<StreamingSegment[]>([]);
-  const [interim, setInterim] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(
+    liveSessionReducer,
+    undefined,
+    createInitialLiveSessionState,
+  );
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -77,49 +99,37 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
   const transcriptRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (phase !== "recording") return;
+    if (state.phase !== "recording") return;
     const startedAt = Date.now();
     const interval = window.setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+      dispatch({
+        seconds: Math.floor((Date.now() - startedAt) / 1000),
+        type: "elapsed",
+      });
     }, 500);
     return () => window.clearInterval(interval);
-  }, [phase]);
+  }, [state.phase]);
 
   useEffect(() => {
-    if (phase !== "recording" && phase !== "saving") return;
+    if (state.phase !== "recording" && state.phase !== "saving") return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [phase]);
+  }, [state.phase]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: finals/interim drive the scroll position, not the effect body.
   useEffect(() => {
     const container = transcriptRef.current;
     if (container) container.scrollTop = container.scrollHeight;
-  }, [finals, interim]);
+  });
 
   function drainSegments(): Promise<void> {
     drainingRef.current ??= (async () => {
       try {
         const recordingId = recordingIdRef.current;
-        if (!recordingId) return;
-        while (pendingRef.current.length > 0) {
-          const batch = pendingRef.current.splice(0, 50);
-          try {
-            await appendLiveSegments({
-              recordingId,
-              segments: batch.map((segment) => ({
-                startMs: Math.round(segment.startMs),
-                endMs: Math.round(segment.endMs),
-                text: segment.text,
-              })),
-            });
-          } catch (cause) {
-            pendingRef.current.unshift(...batch);
-            throw cause;
-          }
+        if (recordingId) {
+          await appendPendingSegmentBatches(recordingId, pendingRef);
         }
       } finally {
         drainingRef.current = null;
@@ -139,25 +149,24 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
   }
 
   async function start() {
-    setError(null);
-    setAsrWarning(null);
-    setPhase("starting");
+    dispatch({ type: "beginStart" });
 
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      setError(
-        "Microphone access was denied. Allow microphone access in your browser and try again.",
-      );
-      setPhase("error");
+      dispatch({
+        error:
+          "Microphone access was denied. Allow microphone access in your browser and try again.",
+        type: "fail",
+      });
       return;
     }
     streamRef.current = stream;
 
     try {
       const session = await startLiveSession({
-        name: name.trim() || defaultSessionName(),
+        name: state.name.trim() || defaultSessionName(),
         folderId,
       });
       recordingIdRef.current = session.recording.id;
@@ -171,25 +180,25 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
       recorder.start(1000);
 
       const provider = new TransformersStreamingTranscriptionProvider({
-        onStatus: setAsrStatus,
+        onStatus: (status) => dispatch({ status, type: "asrStatus" }),
       });
       const asrSession = await provider.startSession({
         onEvent: (event) => {
           if (event.kind === "interim") {
-            setInterim(event.segment.text);
+            dispatch({ text: event.segment.text, type: "interimSegment" });
             return;
           }
-          setInterim(null);
-          setFinals((previous) => [...previous, event.segment]);
+          dispatch({ segment: event.segment, type: "finalSegment" });
           pendingRef.current.push(event.segment);
           drainSegments().catch(() => {
             // Retried by the next drain; surfaced if the final drain fails.
           });
         },
         onError: (cause) => {
-          setAsrWarning(
-            `Live transcription stopped (${cause.message}). Audio is still being recorded and will be saved.`,
-          );
+          dispatch({
+            type: "asrWarning",
+            warning: `Live transcription stopped (${cause.message}). Audio is still being recorded and will be saved.`,
+          });
         },
       });
       asrSessionRef.current = asrSession;
@@ -198,10 +207,7 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
         asrSession.pushAudio(samples);
       });
 
-      setElapsed(0);
-      setFinals([]);
-      setInterim(null);
-      setPhase("recording");
+      dispatch({ type: "recordingStarted" });
     } catch (cause) {
       teardownMedia();
       const recordingId = recordingIdRef.current;
@@ -209,17 +215,20 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
       if (recordingId) {
         cancelLiveSession(recordingId).catch(() => {});
       }
-      setError(
-        cause instanceof Error ? cause.message : "Could not start the session.",
-      );
-      setPhase("error");
+      dispatch({
+        error:
+          cause instanceof Error
+            ? cause.message
+            : "Could not start the session.",
+        type: "fail",
+      });
     }
   }
 
   async function stopAndSave() {
     const recordingId = recordingIdRef.current;
     if (!recordingId) return;
-    setPhase("saving");
+    dispatch({ type: "saving" });
 
     try {
       await captureRef.current?.stop().catch(() => {});
@@ -245,7 +254,6 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
       for (const track of streamRef.current?.getTracks() ?? []) track.stop();
       streamRef.current = null;
 
-      // Flush the ASR tail, then make sure every final segment reached the server.
       await asrSessionRef.current?.finish();
       asrSessionRef.current = null;
       await drainSegments();
@@ -260,12 +268,13 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
       router.push(`/library/transcripts/${result.recording.id}`);
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Could not save the live session.",
-      );
-      setPhase("error");
+      dispatch({
+        error:
+          cause instanceof Error
+            ? cause.message
+            : "Could not save the live session.",
+        type: "fail",
+      });
     }
   }
 
@@ -283,76 +292,163 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
     router.push("/library");
   }
 
-  if (phase === "idle" || phase === "error") {
-    return (
-      <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
-        <div className="flex items-center gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] text-[var(--danger)]">
-            <Mic className="size-5" />
-          </div>
-          <div>
-            <h3 className="text-[19px] font-semibold">Live session</h3>
-            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-              transcribed on-device while you record · nothing but text leaves
-              your machine until you save
-            </p>
-          </div>
+  return {
+    cancel: () => router.push("/library"),
+    discard,
+    setName: (name: string) => dispatch({ name, type: "name" }),
+    start,
+    state,
+    stopAndSave,
+    transcriptRef,
+  };
+}
+
+function LiveSessionSetupView({
+  error,
+  name,
+  onCancel,
+  onNameChange,
+  onStart,
+}: {
+  error: string | null;
+  name: string;
+  onCancel(): void;
+  onNameChange(name: string): void;
+  onStart(): void;
+}) {
+  return (
+    <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+      <div className="flex items-center gap-3">
+        <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] text-[var(--danger)]">
+          <Mic className="size-5" />
         </div>
-
-        {error ? (
-          <div className="flex items-start gap-2 rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-[13px] text-[var(--danger)]">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        ) : null}
-
-        <div className="space-y-1.5">
-          <label
-            htmlFor="live-session-name"
-            className="text-[13px] font-medium"
-          >
-            Session name
-          </label>
-          <Input
-            id="live-session-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Live session (named automatically if left blank)"
-            maxLength={200}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button type="button" onClick={() => void start()}>
-            <Mic className="size-4" />
-            Start recording
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/library")}
-          >
-            Cancel
-          </Button>
-        </div>
-      </section>
-    );
-  }
-
-  if (phase === "starting") {
-    return (
-      <section className="mx-auto grid min-h-60 max-w-2xl place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
-        <div className="space-y-3 text-center">
-          <Loader2 className="mx-auto size-6 animate-spin text-[var(--busy)]" />
-          <p className="text-sm">Starting live session…</p>
+        <div>
+          <h3 className="text-[19px] font-semibold">Live session</h3>
           <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-            {statusLabel(asrStatus)}
+            transcribed on-device while you record · nothing but text leaves
+            your machine until you save
           </p>
         </div>
-      </section>
+      </div>
+
+      {error ? (
+        <div className="flex items-start gap-2 rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-[13px] text-[var(--danger)]">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <div className="space-y-1.5">
+        <label htmlFor="live-session-name" className="text-[13px] font-medium">
+          Session name
+        </label>
+        <Input
+          id="live-session-name"
+          value={name}
+          onChange={(event) => onNameChange(event.target.value)}
+          placeholder="Live session (named automatically if left blank)"
+          maxLength={200}
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button type="button" onClick={onStart}>
+          <Mic className="size-4" />
+          Start recording
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function LiveSessionStartingView({
+  asrStatus,
+}: {
+  asrStatus: AsrStatus | null;
+}) {
+  return (
+    <section className="mx-auto grid min-h-60 max-w-2xl place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+      <div className="space-y-3 text-center">
+        <Loader2 className="mx-auto size-6 animate-spin text-[var(--busy)]" />
+        <p className="text-sm">Starting live session…</p>
+        <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+          {statusLabel(asrStatus)}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function TranscriptRows({
+  finals,
+  interim,
+}: {
+  finals: StreamingSegment[];
+  interim: string | null;
+}) {
+  if (finals.length === 0 && !interim) {
+    return (
+      <p className="grid min-h-48 place-items-center text-center font-mono text-[11.5px] text-[var(--text-3)]">
+        Listening… transcript appears here as you speak.
+      </p>
     );
   }
 
+  return (
+    <>
+      {finals.map((segment) => (
+        <div
+          key={`${segment.startMs}-${segment.endMs}`}
+          className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2"
+        >
+          <span className="font-mono text-[11.5px] text-[var(--text-3)]">
+            {formatTime(segment.startMs)}
+          </span>
+          <span className="font-serif text-[16.5px] leading-7 text-foreground">
+            {segment.text}
+          </span>
+        </div>
+      ))}
+      {interim ? (
+        <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2">
+          <span className="font-mono text-[11.5px] text-[var(--text-4)]">
+            …
+          </span>
+          <span className="font-serif text-[16.5px] italic leading-7 text-[var(--text-3)]">
+            {interim}
+          </span>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function LiveSessionRecordingView({
+  asrStatus,
+  asrWarning,
+  elapsed,
+  finals,
+  interim,
+  name,
+  onDiscard,
+  onStopAndSave,
+  phase,
+  transcriptRef,
+}: {
+  asrStatus: AsrStatus | null;
+  asrWarning: string | null;
+  elapsed: number;
+  finals: StreamingSegment[];
+  interim: string | null;
+  name: string;
+  onDiscard(): void;
+  onStopAndSave(): void;
+  phase: "recording" | "saving";
+  transcriptRef: RefObject<HTMLDivElement | null>;
+}) {
   const saving = phase === "saving";
 
   return (
@@ -378,11 +474,7 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
           <span className="w-12 font-mono text-[13px] text-[var(--text-2)]">
             {formatElapsed(elapsed)}
           </span>
-          <Button
-            type="button"
-            onClick={() => void stopAndSave()}
-            disabled={saving}
-          >
+          <Button type="button" onClick={onStopAndSave} disabled={saving}>
             {saving ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
@@ -395,7 +487,7 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
             variant="outline"
             size="icon-sm"
             title="Discard session"
-            onClick={() => void discard()}
+            onClick={onDiscard}
             disabled={saving}
           >
             <span className="sr-only">Discard session</span>
@@ -415,38 +507,44 @@ export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
         ref={transcriptRef}
         className="max-h-[58dvh] min-h-60 space-y-1 overflow-auto p-4"
       >
-        {finals.length === 0 && !interim ? (
-          <p className="grid min-h-48 place-items-center text-center font-mono text-[11.5px] text-[var(--text-3)]">
-            Listening… transcript appears here as you speak.
-          </p>
-        ) : (
-          <>
-            {finals.map((segment) => (
-              <div
-                key={`${segment.startMs}-${segment.endMs}`}
-                className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2"
-              >
-                <span className="font-mono text-[11.5px] text-[var(--text-3)]">
-                  {formatTime(segment.startMs)}
-                </span>
-                <span className="font-serif text-[16.5px] leading-7 text-foreground">
-                  {segment.text}
-                </span>
-              </div>
-            ))}
-            {interim ? (
-              <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2">
-                <span className="font-mono text-[11.5px] text-[var(--text-4)]">
-                  …
-                </span>
-                <span className="font-serif text-[16.5px] italic leading-7 text-[var(--text-3)]">
-                  {interim}
-                </span>
-              </div>
-            ) : null}
-          </>
-        )}
+        <TranscriptRows finals={finals} interim={interim} />
       </div>
     </section>
+  );
+}
+
+export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
+  const controller = useLiveSessionCaptureController(folderId);
+  const { state } = controller;
+
+  if (state.phase === "idle" || state.phase === "error") {
+    return (
+      <LiveSessionSetupView
+        error={state.error}
+        name={state.name}
+        onCancel={controller.cancel}
+        onNameChange={controller.setName}
+        onStart={() => void controller.start()}
+      />
+    );
+  }
+
+  if (state.phase === "starting") {
+    return <LiveSessionStartingView asrStatus={state.asrStatus} />;
+  }
+
+  return (
+    <LiveSessionRecordingView
+      asrStatus={state.asrStatus}
+      asrWarning={state.asrWarning}
+      elapsed={state.elapsed}
+      finals={state.finals}
+      interim={state.interim}
+      name={state.name}
+      onDiscard={() => void controller.discard()}
+      onStopAndSave={() => void controller.stopAndSave()}
+      phase={state.phase}
+      transcriptRef={controller.transcriptRef}
+    />
   );
 }
