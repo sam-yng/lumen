@@ -1,7 +1,9 @@
 # v3 Advanced Capture & Retrieval Planning Group (m2+)
 
-> **Status:** queued — scoped, not started; promote child plans to `active/v3/`
-> as implementation begins (see Promotion Rule).
+> **Status:** queued — m2 (streaming transcription) promoted to
+> [`active/v3/`](../../active/v3/streaming-transcription.md) 2026-06-10; m3/m4
+> remain queued. Promote child plans to `active/v3/` as implementation begins
+> (see Promotion Rule).
 > **Version:** v3
 > **Area:** transcription pipeline, diarization, assistant/citation UX
 > **Created:** 2026-06-10
@@ -37,7 +39,8 @@ segment and timestamp.
 
 Implement as separate plans so each can ship and be reviewed on its own:
 
-1. [streaming-transcription.md](streaming-transcription.md) — **milestone 2**:
+1. [streaming-transcription.md](../../active/v3/streaming-transcription.md) —
+   **milestone 2** (active):
    live capture in the browser → incremental transcript → finalize into the
    existing recordings/transcripts/segments + semantic-index pipeline. Adds a
    streaming provider beside the batch `TranscriptionProvider`; never replaces it.
