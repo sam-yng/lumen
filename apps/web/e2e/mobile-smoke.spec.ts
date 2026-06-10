@@ -25,6 +25,14 @@ test("mobile drawer + row actions happy path", async ({ page }) => {
   );
   expect(overflow).toBe(0);
 
+  // Inputs must compute to >=16px below sm or iOS Safari zooms on focus.
+  // (Tailwind v4 utilities beat @layer base, so this guards the component
+  // classes, not the global fallback rule.)
+  const searchFontSize = await page
+    .getByLabel("Search notes and transcripts")
+    .evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
+  expect(searchFontSize).toBeGreaterThanOrEqual(16);
+
   // Drawer: open, create a note from the sidebar action, drawer closes.
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
@@ -53,4 +61,39 @@ test("mobile drawer + row actions happy path", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Delete…" }).click();
   await page.getByRole("button", { name: "Delete" }).click();
   await expect(page.getByRole("button", { name: renamedName })).toHaveCount(0);
+});
+
+test("tag rename from the drawer survives the drawer close-on-click handler", async ({
+  page,
+}) => {
+  const tagName = `Tag ${Date.now()}`;
+  const renamedTag = `${tagName} renamed`;
+
+  await login(page);
+
+  // Create a tag inside the drawer; the create form is marked data-drawer-stay
+  // so the drawer must remain open afterwards.
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  const drawer = page.getByRole("dialog");
+  await drawer.getByLabel("Tag name").fill(tagName);
+  await drawer.getByRole("button", { name: "Create tag" }).click();
+  await expect(
+    drawer.getByRole("button", { name: tagName, exact: true }),
+  ).toBeVisible();
+
+  // Rename through the tag controls; the dialog is owned by drawer content,
+  // so this regresses if the drawer closes (and unmounts it) on that click.
+  await drawer.getByRole("button", { name: `Rename ${tagName}` }).click();
+  await page.getByLabel("Tag name").last().fill(renamedTag);
+  await page.getByRole("button", { name: "Rename", exact: true }).click();
+  await expect(
+    drawer.getByRole("button", { name: renamedTag, exact: true }),
+  ).toBeVisible();
+
+  // Cleanup.
+  await drawer.getByRole("button", { name: `Delete ${renamedTag}` }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(
+    drawer.getByRole("button", { name: renamedTag, exact: true }),
+  ).toHaveCount(0);
 });

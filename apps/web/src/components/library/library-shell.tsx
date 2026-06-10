@@ -24,11 +24,18 @@ export function LibraryShell({
           aria-describedby={undefined}
           // Any nav/folder/tag activation inside the drawer should also close
           // it; capturing link/button clicks is simpler than threading a
-          // callback through every sidebar row.
+          // callback through every sidebar row. Two opt-outs: portaled dialogs
+          // (React events propagate through the React tree, so a dialog owned
+          // by drawer content would unmount with the drawer) and anything
+          // marked data-drawer-stay (e.g. controls that open those dialogs).
           onClickCapture={(event) => {
-            if ((event.target as HTMLElement).closest("a, button")) {
-              setNavOpen(false);
-            }
+            const target = event.target as HTMLElement;
+            // The drawer itself is role="dialog"; only skip dialogs OTHER
+            // than it (portaled children rendered by drawer content).
+            const dialog = target.closest('[role="dialog"]');
+            if (dialog && dialog !== event.currentTarget) return;
+            if (target.closest("[data-drawer-stay]")) return;
+            if (target.closest("a, button")) setNavOpen(false);
           }}
         >
           <SheetTitle className="sr-only">Navigation</SheetTitle>

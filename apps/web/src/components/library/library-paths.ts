@@ -14,8 +14,10 @@ export function folderPath(
 ): { id: string; name: string }[] {
   const byId = new Map(snapshot.folders.map((folder) => [folder.id, folder]));
   const path: { id: string; name: string }[] = [];
+  const visited = new Set<string>();
   let current = folderId ? byId.get(folderId) : undefined;
-  while (current) {
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
     path.unshift({ id: current.id, name: current.name });
     current = current.parent_id ? byId.get(current.parent_id) : undefined;
   }

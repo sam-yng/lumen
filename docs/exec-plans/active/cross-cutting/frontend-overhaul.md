@@ -1081,3 +1081,34 @@ overflow = 0; focus rings visible; row `⋯` menu Open/Add tag/Move/Rename/
 Delete verified including DB persistence. Transcript-with-segments view not
 re-screenshotted (fresh seed has no recordings; change was CSS-only segment
 stacking) — covered by the manual happy path at branch close.
+
+## Code-review fixes (2026-06-10, post-execution review)
+
+Subagent code review (range c685c1a..d34e5b4) found one Critical and two
+Important issues; all fixed and covered:
+
+1. **Critical — drawer close-on-click unmounted drawer-owned dialogs.** Tag
+   rename/delete dialogs live inside `TagPanel` (drawer content on mobile);
+   React portals propagate synthetic events through the React tree, so the
+   close-any-button capture handler closed the drawer and unmounted the
+   just-opened dialog. Fix: the handler now skips clicks inside any
+   `role="dialog"` other than the drawer itself, plus a `data-drawer-stay`
+   opt-out (tag rename/delete buttons, tag create form). New e2e: drawer tag
+   create → rename → delete.
+2. **Important — 16px mobile input rule was inert.** Tailwind v4 utilities
+   layer beats `@layer base`, so component `text-[13px]` won. Fixed in the
+   components: `Input`/`Select` are `text-[16px] sm:text-[13px]`, search input
+   `text-[16px] sm:text-[15px]`; globals rule kept for raw elements. New e2e
+   assertion checks computed font-size ≥16px at 375px.
+3. **Important — chips/breadcrumbs below touch floor.** Filter chips (28px)
+   and breadcrumb buttons now carry the `pointer-coarse` hit-area expansion
+   (chips ≥40px, crumbs ≥40px effective).
+
+Minors taken: `folderPath()` cycle guard; selected tag chips use
+`--accent-text` (consistent with "All"). Minors deferred: double-mounted
+sidebar below `lg` (state divergence is cosmetic); Move dialog offering
+descendants (server rejects; pre-existing); menu-open via controlled state
+instead of `setTimeout(0)`.
+
+Verification after fixes: `bun run check` green, full e2e green (5 passed,
+live-session spec env-gated).

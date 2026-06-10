@@ -25,6 +25,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         variant="outline"
         size="sm"
         title={`Rename ${tag.name}`}
+        data-drawer-stay
         onClick={() => setRenameOpen(true)}
       >
         <span className="sr-only">Rename {tag.name}</span>
@@ -35,6 +36,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         variant="outline"
         size="sm"
         title={`Delete ${tag.name}`}
+        data-drawer-stay
         onClick={() => setDeleteOpen(true)}
       >
         <span className="sr-only">Delete {tag.name}</span>
@@ -77,6 +79,7 @@ export function TagPanel({
     <section className="space-y-3 border-t border-[var(--border-soft)] pt-4">
       <form
         className="space-y-2"
+        data-drawer-stay
         onSubmit={(event) => {
           event.preventDefault();
           const form = event.currentTarget;

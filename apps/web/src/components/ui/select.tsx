@@ -12,7 +12,7 @@ export function Select({
     <div className={cn("relative", className)}>
       <select
         data-slot="select"
-        className="h-9 w-full appearance-none rounded-md border border-input bg-[var(--surface-2)] pr-8 pl-3 text-[13px] text-foreground transition-[border-color,box-shadow,background] duration-150 ease-[var(--ease)] outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] disabled:pointer-events-none disabled:opacity-50"
+        className="h-9 w-full appearance-none rounded-md border border-input bg-[var(--surface-2)] pr-8 pl-3 text-[16px] text-foreground sm:text-[13px] transition-[border-color,box-shadow,background] duration-150 ease-[var(--ease)] outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] disabled:pointer-events-none disabled:opacity-50"
         {...props}
       >
         {children}

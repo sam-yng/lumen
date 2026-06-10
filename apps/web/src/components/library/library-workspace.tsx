@@ -92,7 +92,7 @@ export function LibraryWorkspace({
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
         <button
           type="button"
-          className="shrink-0 truncate hover:text-foreground"
+          className="relative shrink-0 truncate hover:text-foreground pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-['']"
           onClick={() => setSelectedFolderId(null)}
         >
           Library
@@ -119,7 +119,7 @@ export function LibraryWorkspace({
               <button
                 type="button"
                 onClick={() => setSelectedFolderId(crumb.id)}
-                className={`truncate ${
+                className={`relative truncate pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-[''] ${
                   isLast ? "text-foreground" : "hover:text-foreground"
                 }`}
                 aria-current={isLast ? "page" : undefined}

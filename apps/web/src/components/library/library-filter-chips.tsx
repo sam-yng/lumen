@@ -16,7 +16,7 @@ export function LibraryFilterChips({
   if (tags.length === 0) return null;
 
   const base =
-    "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-[background,border-color,color] duration-150 ease-[var(--ease)]";
+    "relative inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-[background,border-color,color] duration-150 ease-[var(--ease)] pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-['']";
 
   return (
     <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 [&::-webkit-scrollbar]:hidden">
@@ -45,7 +45,7 @@ export function LibraryFilterChips({
             aria-pressed={selected}
             className={`${base} ${
               selected
-                ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-foreground"
+                ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--accent-text)]"
                 : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)] hover:border-[var(--border-strong)]"
             }`}
           >
