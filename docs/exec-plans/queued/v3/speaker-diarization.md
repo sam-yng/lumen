@@ -5,8 +5,9 @@
 > **Area:** transcription pipeline, worker
 > **Created:** 2026-06-10
 > **Depends on:** [`completed/v1/m4-transcription.md`](../../completed/v1/m4-transcription.md);
-> sequenced after [streaming-transcription.md](streaming-transcription.md) to
-> avoid concurrent worker-pipeline rewrites (no hard code dependency).
+> sequenced after [streaming-transcription.md](../../active/v3/streaming-transcription.md)
+> (promoted to active 2026-06-10) to avoid concurrent worker-pipeline rewrites
+> (no hard code dependency).
 > **Supersedes:** none
 > **Design:** spike-first — Task 1 produces the engine decision; if a
 > superpowers design spec is written for it, link it here before build.

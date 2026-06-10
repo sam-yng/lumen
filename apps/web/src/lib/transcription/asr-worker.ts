@@ -29,14 +29,31 @@ type Transcriber = (
 const scope = self as unknown as {
   postMessage(message: AsrWorkerResponse): void;
   onmessage: ((event: MessageEvent<AsrWorkerRequest>) => void) | null;
-  navigator?: { gpu?: unknown };
+  navigator?: { gpu?: { requestAdapter(): Promise<unknown> } };
 };
 
 function post(message: AsrWorkerResponse) {
   scope.postMessage(message);
 }
 
-async function createTranscriber(modelId: string): Promise<Transcriber | null> {
+async function pickDevice(forceWasm: boolean): Promise<"webgpu" | "wasm"> {
+  if (forceWasm || !scope.navigator?.gpu) return "wasm";
+  try {
+    // Probe before committing: transformers.js caches the FIRST session-init
+    // promise (wasmInitPromise), so a failed webgpu attempt poisons every
+    // later attempt in this worker. The cross-worker retry in the provider
+    // covers the case where the adapter exists but session creation fails.
+    const adapter = await scope.navigator.gpu.requestAdapter();
+    return adapter ? "webgpu" : "wasm";
+  } catch {
+    return "wasm";
+  }
+}
+
+async function createTranscriber(
+  modelId: string,
+  forceWasm: boolean,
+): Promise<Transcriber | null> {
   const progressCallback = (progress: { progress?: number }) => {
     post({
       type: "status",
@@ -48,49 +65,35 @@ async function createTranscriber(modelId: string): Promise<Transcriber | null> {
     });
   };
 
-  const candidates: Array<{
-    device: "webgpu" | "wasm";
-    dtype: unknown;
-  }> = scope.navigator?.gpu
-    ? [
-        {
-          device: "webgpu",
-          dtype: { encoder_model: "fp32", decoder_model_merged: "q4" },
-        },
-        { device: "wasm", dtype: "q8" },
-      ]
-    : [{ device: "wasm", dtype: "q8" }];
+  const device = await pickDevice(forceWasm);
+  const dtype =
+    device === "webgpu"
+      ? { encoder_model: "fp32", decoder_model_merged: "q4" }
+      : "q8";
 
-  let lastError: unknown = null;
-  for (const candidate of candidates) {
-    try {
-      const transcriber = (await pipeline(
-        "automatic-speech-recognition",
-        modelId,
-        {
-          device: candidate.device,
-          dtype: candidate.dtype,
-          progress_callback: progressCallback,
-        } as never,
-      )) as unknown as Transcriber;
-      post({
-        type: "status",
-        status: { state: "ready", device: candidate.device },
-      });
-      return transcriber;
-    } catch (error) {
-      lastError = error;
-    }
+  try {
+    const transcriber = (await pipeline(
+      "automatic-speech-recognition",
+      modelId,
+      {
+        device,
+        dtype,
+        progress_callback: progressCallback,
+      } as never,
+    )) as unknown as Transcriber;
+    post({ type: "status", status: { state: "ready", device } });
+    return transcriber;
+  } catch (error) {
+    post({
+      type: "error",
+      stage: "load",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Could not load the transcription model.",
+    });
+    return null;
   }
-
-  post({
-    type: "error",
-    message:
-      lastError instanceof Error
-        ? lastError.message
-        : "Could not load the transcription model.",
-  });
-  return null;
 }
 
 // Pending PCM not yet folded into a closed window.
@@ -200,6 +203,7 @@ async function pump() {
   } catch (error) {
     post({
       type: "error",
+      stage: "transcribe",
       message: error instanceof Error ? error.message : "Transcription failed.",
     });
   } finally {
@@ -214,7 +218,10 @@ scope.onmessage = (event: MessageEvent<AsrWorkerRequest>) => {
   const message = event.data;
 
   if (message.type === "configure") {
-    transcriberPromise ??= createTranscriber(message.modelId);
+    transcriberPromise ??= createTranscriber(
+      message.modelId,
+      message.forceWasm ?? false,
+    );
     return;
   }
 

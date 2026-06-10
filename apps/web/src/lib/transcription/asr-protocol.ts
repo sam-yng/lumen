@@ -4,7 +4,7 @@ import type { StreamingSegment } from "@/lib/transcription/streaming-provider";
 // ASR Web Worker. Audio flows in as 16 kHz mono PCM; segments flow out.
 
 export type AsrWorkerRequest =
-  | { type: "configure"; modelId: string }
+  | { type: "configure"; modelId: string; forceWasm?: boolean }
   | { type: "push"; samples: Float32Array }
   | { type: "finish" };
 
@@ -17,7 +17,7 @@ export type AsrWorkerResponse =
   | { type: "interim"; segment: StreamingSegment }
   | { type: "final"; segment: StreamingSegment }
   | { type: "finished" }
-  | { type: "error"; message: string };
+  | { type: "error"; stage: "load" | "transcribe"; message: string };
 
 export const ASR_SAMPLE_RATE = 16_000;
 export const DEFAULT_ASR_MODEL_ID = "onnx-community/whisper-base.en";

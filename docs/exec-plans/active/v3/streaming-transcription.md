@@ -113,3 +113,21 @@ scope). Logged in `tech-debt-tracker.md`.
   microphone in the browser, watch incremental text appear, stop, then confirm
   the finalized recording plays back with synced segments in the transcript
   viewer and is findable via search.
+
+## Verification Record (2026-06-10)
+
+- `bun run check` green (Biome + typecheck + 171 unit tests, incl.
+  `live-sessions.test.ts` per the gate above and `whisper-output.test.ts`).
+- `bun run build` green — Turbopack bundles the ASR Web Worker.
+- Happy path executed end-to-end in a real Chromium against the local stack
+  via `e2e/live-session.spec.ts` (gated behind `LIVE_SESSION_E2E=1`; fake
+  microphone fed a Windows-TTS WAV): live page → start → on-device Whisper
+  produced incremental text → stop & save → transcript page reached `done`
+  with the spoken words rendered → file findable via library search with real
+  audio bytes uploaded. A human real-microphone pass remains worthwhile at
+  milestone review but the full pipeline is browser-verified.
+- **Fix found by verification:** transformers.js caches its first
+  session-init promise per worker, so a failed WebGPU init poisoned the WASM
+  fallback. The worker now probes `requestAdapter()` before choosing WebGPU,
+  and the provider respawns a WASM-forced worker (replaying retained audio)
+  if a WebGPU load still fails.
