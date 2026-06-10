@@ -59,3 +59,4 @@ next-env.d.ts
 
 # local diarization models (fetched via worker:diarization-models)
 /apps/web/.models/
+.superpowers/
