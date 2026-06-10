@@ -16,8 +16,14 @@ import {
   SupabaseStorageProvider,
 } from "@/server/services/storage-provider";
 import { writeRecordingTranscript } from "@/server/services/transcripts";
+import type { DiarizationProvider } from "./diarization-provider";
+import { SherpaOnnxDiarizationProvider } from "./sherpa-diarization-provider";
+import { assignSpeakers } from "./speaker-merge";
 import { createWorkerSupabase } from "./supabase";
-import type { TranscriptionProvider } from "./transcription-provider";
+import type {
+  TranscriptionProvider,
+  TranscriptionSegment,
+} from "./transcription-provider";
 import { WhisperTranscriptionProvider } from "./whisper-provider";
 
 type WorkerJobPayload = TranscriptionJobPayload & {
@@ -40,9 +46,32 @@ export type ProcessTranscriptionJobDeps = {
   supabase: WorkerSupabaseClient;
   storage: StorageProvider;
   provider: TranscriptionProvider;
+  diarization?: DiarizationProvider;
   embeddingProvider?: EmbeddingProvider;
   tempDir: string;
 };
+
+// Diarization degrades, never fails: any error leaves speakers null and the
+// transcription job still completes.
+async function labelSpeakers(
+  segments: TranscriptionSegment[],
+  audioPath: string,
+  diarization: DiarizationProvider | undefined,
+): Promise<TranscriptionSegment[]> {
+  if (!diarization) return segments;
+
+  try {
+    const turns = await diarization.diarize(audioPath);
+    return assignSpeakers(segments, turns);
+  } catch (error) {
+    console.error(
+      `Diarization failed; keeping null speakers: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return segments;
+  }
+}
 
 async function markRecordingProcessing(
   supabase: ServiceSupabaseClient,
@@ -135,6 +164,11 @@ export async function processTranscriptionJob(
 
     await writeFile(audioPath, downloaded.bytes);
     const transcript = await deps.provider.transcribe(audioPath);
+    const segments = await labelSpeakers(
+      transcript.segments,
+      audioPath,
+      deps.diarization,
+    );
 
     await writeRecordingTranscript(
       {
@@ -145,7 +179,7 @@ export async function processTranscriptionJob(
         recordingId: payload.recordingId,
         fullText: transcript.fullText,
         language: transcript.language,
-        segments: transcript.segments,
+        segments,
         embeddingProvider: deps.embeddingProvider,
       },
     );
@@ -164,6 +198,37 @@ export async function processTranscriptionJob(
   }
 }
 
+type DiarizationEnv = {
+  DIARIZATION_ENABLED: boolean;
+  DIARIZATION_SEGMENTATION_MODEL_PATH?: string;
+  DIARIZATION_EMBEDDING_MODEL_PATH?: string;
+  DIARIZATION_CLUSTER_THRESHOLD: number;
+  DIARIZATION_NUM_SPEAKERS: number;
+};
+
+export function createDiarizationProvider(
+  env: DiarizationEnv,
+): DiarizationProvider | undefined {
+  if (!env.DIARIZATION_ENABLED) return undefined;
+
+  if (
+    !env.DIARIZATION_SEGMENTATION_MODEL_PATH ||
+    !env.DIARIZATION_EMBEDDING_MODEL_PATH
+  ) {
+    console.error(
+      "DIARIZATION_ENABLED is true but model paths are missing; speakers will stay null. Set DIARIZATION_SEGMENTATION_MODEL_PATH and DIARIZATION_EMBEDDING_MODEL_PATH (see scripts/fetch-diarization-models.ts).",
+    );
+    return undefined;
+  }
+
+  return new SherpaOnnxDiarizationProvider({
+    segmentationModelPath: env.DIARIZATION_SEGMENTATION_MODEL_PATH,
+    embeddingModelPath: env.DIARIZATION_EMBEDDING_MODEL_PATH,
+    clusterThreshold: env.DIARIZATION_CLUSTER_THRESHOLD,
+    numSpeakers: env.DIARIZATION_NUM_SPEAKERS,
+  });
+}
+
 export async function startTranscriptionWorker() {
   const env = getServerEnv();
   const supabase = createWorkerSupabase();
@@ -172,6 +237,7 @@ export async function startTranscriptionWorker() {
   const provider = new WhisperTranscriptionProvider({
     modelName: env.WHISPER_MODEL,
   });
+  const diarization = createDiarizationProvider(env);
 
   await boss.work<WorkerJobPayload>(
     TRANSCRIPTION_QUEUE_NAME,
@@ -183,6 +249,7 @@ export async function startTranscriptionWorker() {
         supabase: supabase as unknown as WorkerSupabaseClient,
         storage,
         provider,
+        diarization,
         tempDir: env.TRANSCRIPTION_TMP_DIR,
       });
     },

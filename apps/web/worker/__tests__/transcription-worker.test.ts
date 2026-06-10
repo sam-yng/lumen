@@ -6,6 +6,7 @@ import {
   EMBEDDING_DIMENSIONS,
   type EmbeddingProvider,
 } from "@/server/services/embedding-provider";
+import type { DiarizationProvider } from "../diarization-provider";
 import type { TranscriptionProvider } from "../transcription-provider";
 import {
   processTranscriptionJob,
@@ -286,4 +287,119 @@ describe("processTranscriptionJob", () => {
       ]),
     );
   });
+
+  it("labels segments with speakers from the diarization provider", async () => {
+    const { supabase, deps, jobInput } = await diarizationFixture({
+      async diarize(audioPath) {
+        expect(audioPath).toMatch(/018f4ed7-47c4-7583-8207-1e5ce4d0a2a7\.mp3$/);
+        return [
+          { startMs: 0, endMs: 1_000, speaker: "Speaker 1" },
+          { startMs: 1_000, endMs: 2_000, speaker: "Speaker 2" },
+        ];
+      },
+    });
+
+    await processTranscriptionJob(jobInput, deps);
+
+    expect(supabase.tables.recordings[0]).toMatchObject({ status: "done" });
+    expect(
+      supabase.tables.transcript_segments.map((row) => row.speaker),
+    ).toEqual(["Speaker 1", "Speaker 2"]);
+  });
+
+  it("completes the job with null speakers when diarization fails", async () => {
+    const { supabase, deps, jobInput } = await diarizationFixture({
+      async diarize() {
+        throw new Error("diarization exploded");
+      },
+    });
+
+    await processTranscriptionJob(jobInput, deps);
+
+    expect(supabase.tables.recordings[0]).toMatchObject({
+      status: "done",
+      error: null,
+    });
+    expect(
+      supabase.tables.transcript_segments.map((row) => row.speaker),
+    ).toEqual([null, null]);
+  });
 });
+
+async function diarizationFixture(diarization: DiarizationProvider) {
+  const tempDir = await mkdtemp(join(tmpdir(), "lumen-worker-"));
+  tempDirs.push(tempDir);
+
+  const supabase = new TrackingSupabase({
+    files: [
+      {
+        id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+        user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
+        name: "lecture.mp3",
+        storage_key: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
+      },
+    ],
+    recordings: [
+      {
+        id: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
+        user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
+        file_id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+        status: "pending",
+        error: null,
+      },
+    ],
+    transcripts: [],
+    transcript_segments: [],
+    semantic_search_chunks: [],
+  });
+
+  const provider: TranscriptionProvider = {
+    async transcribe() {
+      return {
+        fullText: "Hello there. General Kenobi.",
+        language: "en",
+        segments: [
+          { startMs: 0, endMs: 900, text: "Hello there.", speaker: null },
+          {
+            startMs: 1_100,
+            endMs: 1_900,
+            text: "General Kenobi.",
+            speaker: null,
+          },
+        ],
+      };
+    },
+  };
+
+  return {
+    supabase,
+    jobInput: {
+      id: "job-1",
+      name: "transcribe-recording",
+      data: {
+        userId: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
+        recordingId: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
+        fileId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+        storageKey: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
+        bucket: "library-files",
+      },
+    },
+    deps: {
+      bucket: "library-files",
+      supabase: supabase as unknown as WorkerSupabaseClient,
+      storage: {
+        async download() {
+          return {
+            bytes: new TextEncoder().encode("fake audio"),
+            contentType: "audio/mpeg",
+          };
+        },
+        async upload() {},
+        async remove() {},
+      },
+      provider,
+      diarization,
+      tempDir,
+    },
+  };
+}
