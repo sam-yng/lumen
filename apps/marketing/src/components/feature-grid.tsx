@@ -7,8 +7,13 @@ export function FeatureGrid() {
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
       <Reveal className="reveal mb-12 max-w-xl">
         <h2 className="font-serif text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-          Everything you need to study, in one place.
+          Built for the messy middle of real study.
         </h2>
+        <p className="text-text-2 mt-4 text-pretty text-base leading-relaxed">
+          Lectures, files, transcripts, search, and AI assistance all work from
+          the same user-scoped workspace instead of becoming another pile of
+          disconnected exports.
+        </p>
       </Reveal>
 
       <Reveal>

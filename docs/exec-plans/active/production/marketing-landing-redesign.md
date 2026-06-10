@@ -1076,3 +1076,89 @@ Then use the in-app browser at `http://localhost:3001` to capture desktop and mo
 - **Scope control:** No new dependencies, no Supabase/app imports, no fake AI assistant or v2 functionality.
 - **Verification requirement:** Must include screenshot evidence in the completion note because the user explicitly requested screenshots.
 - **Verification completed:** `bun run check` passed, `cd apps/marketing && bun run build` passed, browser console had no errors, and mobile viewport reported no horizontal overflow.
+
+---
+
+## Task 13: Expanded Product Positioning + Demo Variety Pass
+
+**Context:** User review on 2026-06-10 asked the marketing site to reflect the
+expanded product scope: more product visuals, no shimmer effect on the hero
+animation, no duplicated product animation, sharper problem/solution copy, and
+clear disclosure that AI features currently require the user's Claude API key.
+
+**Files:**
+- Modify: `apps/marketing/src/lib/site.ts`
+- Modify: `apps/marketing/src/components/hero.tsx`
+- Modify: `apps/marketing/src/components/app-mock.tsx`
+- Modify: `apps/marketing/src/components/feature-grid.tsx`
+- Modify: `apps/marketing/src/components/how-it-works.tsx`
+- Modify: `apps/marketing/src/components/trust-strip.tsx`
+- Modify: `apps/marketing/src/components/final-cta.tsx`
+- Modify: `apps/marketing/src/components/site-footer.tsx`
+- Modify: `apps/marketing/src/app/globals.css`
+- Modify: `apps/marketing/src/app/page.tsx` if the section order changes
+
+- [x] **Step 1: Refresh the product narrative**
+
+Move the page from v1-only "notes + local transcription + search" copy to the
+current product story: a private study workspace that captures lectures and
+notes, transcribes locally/live, retrieves over notes/transcripts with hybrid
+search, and optionally runs an in-app assistant through the MCP-backed tool
+contract. State that AI assistant inference requires the user's Claude API key.
+Do not claim diarization or citation deep links are shipped; those remain future
+milestones.
+
+- [x] **Step 2: Remove hero shimmer**
+
+Delete the product-frame sheen overlay and related animation from
+`globals.css`. Keep the waveform/progress/transcript motion and reduced-motion
+coverage.
+
+- [x] **Step 3: Replace duplicate product animation**
+
+Keep the hero product frame as the primary app visual. Replace the repeated
+`AppMock` section with a different visual treatment: an AI/retrieval command
+center or capability map that shows local transcription, semantic retrieval,
+MCP tools, and Claude-key assistant flow. It should be CSS-rendered, static
+HTML/CSS, dependency-free, and clearly distinct from the hero mock.
+
+- [x] **Step 4: Update feature cards and trust/CTA copy**
+
+Feature cards should describe the actual problem solved: fragmented lecture
+materials, hard-to-search recordings, trustworthy retrieval over a personal
+workspace, and an honest AI layer. Trust badges should include the Claude-key
+disclosure and local/private processing claims without overpromising.
+
+- [x] **Step 5: Verify**
+
+Run:
+
+```bash
+bun run format
+bun run check
+cd apps/marketing && bun run build
+```
+
+Then run the marketing dev server and verify in the in-app browser at desktop
+and mobile widths:
+- no shimmer/sheen crosses the hero app mock;
+- first viewport still has a clear product signal;
+- the later visual section is not a duplicate of the hero product mock;
+- Claude-key copy is visible before the final CTA;
+- no mobile overflow or text/button overlap;
+- reduced-motion keeps content visible.
+
+## Task 13 Self-review notes
+
+- **Spec coverage:** The task directly maps each user request to a bounded file
+  set and verification checklist.
+- **Accuracy guardrail:** Shipped features can be marketed; diarization and
+  citation deep links must not be described as available.
+- **Scope control:** No new dependencies, no `apps/web` imports, and no real
+  user data or fake testimonials.
+- **Verification completed:** `bun run format`, `npx react-doctor@latest
+  --verbose --diff` (100/100), `bun run check`, and `cd apps/marketing && bun
+  run build` passed. Browser verification confirmed no hero sheen CSS, desktop
+  product signal visible, the replacement AI/retrieval section is distinct from
+  the hero mock, Claude-key copy is visible, mobile `scrollWidth` equals
+  `clientWidth`, and reduced-motion CSS covers the new animations.

@@ -6,37 +6,37 @@
  */
 export const siteConfig = {
   name: "Lumen",
-  tagline: "Your study workspace, all in one place.",
+  tagline: "Turn lectures into a searchable study system.",
   description:
-    "Nest your notes in folders, upload lectures, transcribe them locally, and search across everything — one calm, private home for how you study.",
+    "Capture notes, files, and recordings in one private workspace, transcribe lectures locally or live, search with hybrid retrieval, and use a Claude-key assistant when you want AI help.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001",
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
 } as const;
 
 export const features = [
   {
-    title: "Nested library",
-    body: "Organise everything in folders within folders — notes, files, and recordings live side by side.",
+    title: "One library for the whole course",
+    body: "Nest folders, notes, files, recordings, transcripts, and tags together instead of scattering study material across five tools.",
   },
   {
-    title: "Rich-text notes",
-    body: "Write with a fast, structured editor: headings, lists, tables, and links that stay out of your way.",
+    title: "Notes built for recall",
+    body: "Write structured study notes with headings, lists, tables, and links, then keep them beside the lecture evidence they came from.",
   },
   {
-    title: "Local transcription",
-    body: "Upload a lecture or seminar and transcribe it on your own CPU. No audio leaves your machine to be processed.",
+    title: "Local and live transcription",
+    body: "Upload recorded audio for batch transcription, or capture live sessions in the browser. Audio processing stays local by design.",
   },
   {
-    title: "Transcript viewing",
-    body: "Read transcripts alongside the source recording, ready to revisit and reference while you study.",
+    title: "Hybrid search over everything",
+    body: "Combine full-text search with semantic retrieval across notes and transcript chunks, so the answer can surface even when you remember the idea, not the wording.",
   },
   {
-    title: "Tagging",
-    body: "Tag anything and pull related material back together across the whole library in seconds.",
+    title: "Assistant over your workspace",
+    body: "Ask about notes, transcripts, documents, and tags through the same MCP tool contract exposed to external hosts.",
   },
   {
-    title: "Full-text search",
-    body: "Search across notes, files, and transcripts at once — find the one line you remember, instantly.",
+    title: "Bring your Claude key",
+    body: "AI inference currently runs with your own Claude API key. Lumen stores it server-side, encrypted at rest, and the key is never shown again.",
   },
 ] as const;
 
@@ -44,23 +44,23 @@ export const steps = [
   {
     n: "01",
     title: "Capture",
-    body: "Drop in lecture recordings, files, and notes — organised in nested folders from day one.",
+    body: "Drop in readings, lecture recordings, files, and notes — organised in nested folders from day one.",
   },
   {
     n: "02",
-    title: "Transcribe locally",
-    body: "Turn audio into searchable text on your own machine. No audio leaves your computer to be processed.",
+    title: "Transcribe",
+    body: "Run batch transcription on your machine or capture live text in the browser, then finalize into the same transcript path.",
   },
   {
     n: "03",
-    title: "Find anything",
-    body: "Full-text search across notes, files, and transcripts. Tag and pull related material together.",
+    title: "Retrieve and reason",
+    body: "Search lexically and semantically, then ask the Claude-key assistant to work through your own MCP-backed study tools.",
   },
 ] as const;
 
 export const trustBadges = [
-  "Local transcription",
-  "Private by default",
-  "Search everything",
-  "Free to start",
+  "Local-first transcription",
+  "Hybrid retrieval",
+  "MCP-backed AI",
+  "Claude key required for AI",
 ] as const;

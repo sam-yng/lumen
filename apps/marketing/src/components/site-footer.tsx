@@ -1,5 +1,7 @@
 import { siteConfig } from "@/lib/site";
 
+const copyrightYear = "2026";
+
 export function SiteFooter() {
   return (
     <footer className="border-border-soft border-t">
@@ -9,7 +11,7 @@ export function SiteFooter() {
             {siteConfig.name}
           </span>
           <p className="text-text-4 mt-1 text-xs">
-            A study workspace for notes, recordings, and transcripts.
+            Private study capture, retrieval, transcription, and Claude-key AI.
           </p>
         </div>
         <nav className="flex flex-wrap gap-x-6 gap-y-2">
@@ -29,8 +31,8 @@ export function SiteFooter() {
       </div>
       <div className="border-border-soft border-t">
         <p className="text-text-4 mx-auto w-full max-w-5xl px-6 py-5 text-xs">
-          © {new Date().getFullYear()} {siteConfig.name}. A study workspace for
-          notes, recordings, and transcripts.
+          © {copyrightYear} {siteConfig.name}. AI assistant features require
+          your own Claude API key.
         </p>
       </div>
     </footer>

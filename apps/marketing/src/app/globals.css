@@ -120,22 +120,6 @@
     position: relative;
     transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
   }
-  .l-product-frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      110deg,
-      transparent 0%,
-      transparent 36%,
-      oklch(1 0 0 / 5%) 46%,
-      transparent 58%,
-      transparent 100%
-    );
-    transform: translateX(-120%);
-    animation: l-sheen 7s var(--ease) infinite;
-  }
   .l-product-frame--compact {
     transform: perspective(1200px) rotateX(2deg) rotateY(-4deg);
   }
@@ -185,6 +169,41 @@
     min-width: 72px;
     height: 42px;
   }
+  .l-system-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border-soft) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: radial-gradient(circle at 52% 38%, #000 0 42%, transparent 78%);
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  .l-system-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .l-system-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent-line);
+  }
+  .l-retrieval-row {
+    animation: l-row-pulse 4.8s var(--ease) infinite;
+    animation-delay: calc(var(--i, 0) * 420ms);
+  }
+  .l-vector-cell {
+    opacity: 0.38;
+    animation: l-vector-pulse 3.6s var(--ease) infinite;
+    animation-delay: calc(var(--i, 0) * 58ms);
+  }
+  .l-tool-call {
+    animation: l-tool-step 5.6s var(--ease) infinite;
+    animation-delay: calc(var(--i, 0) * 520ms);
+  }
 
   /* SVG line that draws itself when its container becomes visible. */
   .l-draw {
@@ -225,17 +244,6 @@
   }
   50% {
     transform: translate3d(-8%, -6%, 0) scale(0.95);
-  }
-}
-
-@keyframes l-sheen {
-  0%,
-  48% {
-    transform: translateX(-120%);
-  }
-  72%,
-  100% {
-    transform: translateX(120%);
   }
 }
 
@@ -304,6 +312,41 @@
   }
 }
 
+@keyframes l-row-pulse {
+  0%,
+  100% {
+    background: var(--surface-2);
+  }
+  34%,
+  48% {
+    background: var(--accent-soft);
+  }
+}
+
+@keyframes l-vector-pulse {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scaleY(0.72);
+  }
+  45% {
+    opacity: 0.9;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes l-tool-step {
+  0%,
+  100% {
+    border-color: var(--border-soft);
+  }
+  28%,
+  44% {
+    border-color: var(--accent-line);
+    box-shadow: 0 10px 32px -18px var(--accent-glow);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .l-rise {
@@ -314,13 +357,15 @@
   }
   .l-aurora::before,
   .l-aurora::after,
-  .l-product-frame::after,
   .l-live-dot,
   .l-progress,
   .l-wave,
   .l-type-line::after,
   .l-transcript-line,
-  .l-caret {
+  .l-caret,
+  .l-retrieval-row,
+  .l-vector-cell,
+  .l-tool-call {
     animation: none;
   }
   .l-draw {
