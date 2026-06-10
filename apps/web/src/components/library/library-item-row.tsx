@@ -4,13 +4,22 @@ import {
   File as FileIcon,
   FileText,
   Folder,
+  FolderInput,
   Mic,
+  MoreHorizontal,
   Pencil,
   Tag,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Database, Tables } from "@/server/db/database.types";
 import type { LibrarySnapshot } from "@/server/services/library";
 import {
@@ -23,7 +32,11 @@ import {
   updateFileMetadata,
   updateFolder,
 } from "./library-api";
-import { ConfirmDialog, TextInputDialog } from "./library-dialogs";
+import {
+  ConfirmDialog,
+  SelectDialog,
+  TextInputDialog,
+} from "./library-dialogs";
 import { useLibraryMutation } from "./library-hooks";
 import { tagLinkForTarget, tagsForTarget } from "./library-tags";
 
@@ -59,7 +72,7 @@ function TagChips({
   if (tags.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="mt-1.5 flex flex-wrap gap-1">
       {tags.map((tag) => {
         const link = tagLinkForTarget(snapshot, targetType, targetId, tag.id);
         return (
@@ -79,97 +92,6 @@ function TagChips({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function TagAttachForm({
-  snapshot,
-  targetType,
-  targetId,
-}: {
-  snapshot: LibrarySnapshot;
-  targetType: TargetType;
-  targetId: string;
-}) {
-  const link = useLibraryMutation(linkTag);
-  const attached = new Set(
-    snapshot.tagLinks
-      .filter(
-        (tagLink) =>
-          tagLink.target_type === targetType && tagLink.target_id === targetId,
-      )
-      .map((tagLink) => tagLink.tag_id),
-  );
-  const availableTags = snapshot.tags.filter((tag) => !attached.has(tag.id));
-
-  if (availableTags.length === 0) return null;
-
-  return (
-    <form
-      className="flex items-center gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        const tagId = String(formData.get("tagId") ?? "");
-        if (!tagId) return;
-        link.mutate({ tagId, targetType, targetId });
-        event.currentTarget.reset();
-      }}
-    >
-      <select
-        name="tagId"
-        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-xs text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
-        aria-label="Tag"
-      >
-        {availableTags.map((tag) => (
-          <option key={tag.id} value={tag.id}>
-            {tag.name}
-          </option>
-        ))}
-      </select>
-      <Button type="submit" variant="outline" size="sm">
-        <span className="sr-only">Add tag</span>
-        <Tag className="size-4" />
-      </Button>
-    </form>
-  );
-}
-
-function MoveSelect({
-  folders,
-  currentFolderId,
-  onMove,
-}: {
-  folders: FolderRow[];
-  currentFolderId: string | null;
-  onMove: (folderId: string | null) => void;
-}) {
-  const [value, setValue] = useState(currentFolderId ?? "");
-
-  return (
-    <div className="flex items-center gap-2">
-      <select
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-xs text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
-        aria-label="Move to folder"
-      >
-        <option value="">Library</option>
-        {folders.map((folder) => (
-          <option key={folder.id} value={folder.id}>
-            {folder.name}
-          </option>
-        ))}
-      </select>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onMove(value === "" ? null : value)}
-      >
-        Move
-      </Button>
     </div>
   );
 }
@@ -200,8 +122,11 @@ export function ItemRow({
   const removeFolder = useLibraryMutation(deleteFolder);
   const removeDocument = useLibraryMutation(deleteDocument);
   const removeFile = useLibraryMutation(deleteFileMetadata);
+  const attachTag = useLibraryMutation(linkTag);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [tagOpen, setTagOpen] = useState(false);
 
   const icon =
     type === "folder" ? (
@@ -215,6 +140,22 @@ export function ItemRow({
     );
   const name = "title" in item ? item.title : item.name;
   const targetType: TargetType = type === "file" ? "file" : "document";
+
+  const availableTags = snapshot.tags.filter(
+    (tag) =>
+      !snapshot.tagLinks.some(
+        (tagLink) =>
+          tagLink.target_type === targetType &&
+          tagLink.target_id === item.id &&
+          tagLink.tag_id === tag.id,
+      ),
+  );
+
+  function openItem() {
+    if (type === "folder") onOpenFolder?.(item.id);
+    if (type === "document") onOpenDocument?.(item.id);
+    if (recording) onOpenRecording?.(recording.id);
+  }
 
   function applyRename(nextName: string) {
     if (type === "folder") renameFolder.mutate({ id: item.id, name: nextName });
@@ -230,6 +171,18 @@ export function ItemRow({
     if (type === "file") removeFile.mutate(item.id);
   }
 
+  function applyMove(folderId: string) {
+    const dest = folderId === "" ? null : folderId;
+    if (type === "folder") {
+      moveFolderMutation.mutate({ id: item.id, parentId: dest });
+    }
+    if (type === "document") {
+      moveDocumentMutation.mutate({ id: item.id, folderId: dest });
+    }
+    if (type === "file")
+      moveFileMutation.mutate({ id: item.id, folderId: dest });
+  }
+
   const meta =
     type === "file" && "mime_type" in item
       ? `${item.mime_type ?? "file"} · ${item.size_bytes} bytes`
@@ -238,16 +191,12 @@ export function ItemRow({
         : "Rich-text note";
 
   return (
-    <li className="group grid min-h-[58px] gap-3 border-b border-[var(--border-soft)] py-3 md:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="min-w-0 space-y-2">
+    <li className="group flex items-start gap-2 border-b border-[var(--border-soft)] py-2.5 last:border-b-0">
+      <div className="min-w-0 flex-1">
         <button
           type="button"
-          onClick={() => {
-            if (type === "folder") onOpenFolder?.(item.id);
-            if (type === "document") onOpenDocument?.(item.id);
-            if (recording) onOpenRecording?.(recording.id);
-          }}
-          className="flex min-w-0 items-center gap-3 rounded-md text-left"
+          onClick={openItem}
+          className="flex min-h-[44px] w-full min-w-0 items-center gap-3 rounded-md py-1 text-left"
         >
           <div
             className={`grid size-[34px] shrink-0 place-items-center rounded-md border ${
@@ -260,89 +209,77 @@ export function ItemRow({
           >
             {icon}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate font-medium text-foreground">{name}</p>
-            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+            <p className="truncate font-mono text-[11.5px] text-[var(--text-3)]">
               {meta}
             </p>
           </div>
         </button>
+        {type !== "folder" && (
+          <div className="pl-[46px]">
+            <TagChips
+              snapshot={snapshot}
+              targetType={targetType}
+              targetId={item.id}
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2 pt-2">
         {recording && (
-          <span className={`l-badge w-fit ${STATUS_TONE[recording.status]}`}>
+          <span
+            className={`l-badge hidden sm:inline-flex ${STATUS_TONE[recording.status]}`}
+          >
             {recording.status}
           </span>
         )}
-        {type !== "folder" && (
-          <TagChips
-            snapshot={snapshot}
-            targetType={targetType}
-            targetId={item.id}
-          />
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2 opacity-100 md:opacity-0 md:transition md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-        {type === "document" && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenDocument?.(item.id)}
-          >
-            Open
-          </Button>
-        )}
-        {recording && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenRecording?.(recording.id)}
-          >
-            Transcript
-          </Button>
-        )}
-        {type !== "folder" && (
-          <TagAttachForm
-            snapshot={snapshot}
-            targetType={targetType}
-            targetId={item.id}
-          />
-        )}
-        <MoveSelect
-          folders={snapshot.folders.filter((folder) => folder.id !== item.id)}
-          currentFolderId={
-            "folder_id" in item ? item.folder_id : item.parent_id
-          }
-          onMove={(folderId) => {
-            if (type === "folder")
-              moveFolderMutation.mutate({ id: item.id, parentId: folderId });
-            if (type === "document") {
-              moveDocumentMutation.mutate({ id: item.id, folderId });
-            }
-            if (type === "file")
-              moveFileMutation.mutate({ id: item.id, folderId });
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={() => setRenameOpen(true)}
-          title={`Rename ${name}`}
-        >
-          <span className="sr-only">Rename {name}</span>
-          <Pencil className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={() => setDeleteOpen(true)}
-          title={`Delete ${name}`}
-        >
-          <span className="sr-only">Delete {name}</span>
-          <Trash2 className="size-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="md:opacity-0 md:transition-opacity md:group-focus-within:opacity-100 md:group-hover:opacity-100 md:aria-expanded:opacity-100"
+              title={`Actions for ${name}`}
+            >
+              <span className="sr-only">Actions for {name}</span>
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {type === "document" && (
+              <DropdownMenuItem onSelect={() => onOpenDocument?.(item.id)}>
+                <FileText /> Open
+              </DropdownMenuItem>
+            )}
+            {recording && (
+              <DropdownMenuItem
+                onSelect={() => onOpenRecording?.(recording.id)}
+              >
+                <Mic /> Transcript
+              </DropdownMenuItem>
+            )}
+            {type !== "folder" && availableTags.length > 0 && (
+              <DropdownMenuItem onSelect={() => setTagOpen(true)}>
+                <Tag /> Add tag…
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={() => setMoveOpen(true)}>
+              <FolderInput /> Move…
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
+              <Pencil /> Rename…
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <Trash2 /> Delete…
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <TextInputDialog
         open={renameOpen}
@@ -360,6 +297,38 @@ export function ItemRow({
         description="This action cannot be undone."
         confirmLabel="Delete"
         onConfirm={applyDelete}
+      />
+      <SelectDialog
+        open={tagOpen}
+        onOpenChange={setTagOpen}
+        title={`Tag ${name}`}
+        label="Tag"
+        options={availableTags.map((tag) => ({
+          value: tag.id,
+          label: tag.name,
+        }))}
+        defaultValue={availableTags[0]?.id ?? ""}
+        submitLabel="Add tag"
+        onSubmit={(tagId) =>
+          attachTag.mutate({ tagId, targetType, targetId: item.id })
+        }
+      />
+      <SelectDialog
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        title={`Move ${name}`}
+        label="Destination"
+        options={[
+          { value: "", label: "Library" },
+          ...snapshot.folders
+            .filter((folder) => folder.id !== item.id)
+            .map((folder) => ({ value: folder.id, label: folder.name })),
+        ]}
+        defaultValue={
+          ("folder_id" in item ? item.folder_id : item.parent_id) ?? ""
+        }
+        submitLabel="Move"
+        onSubmit={applyMove}
       />
     </li>
   );
