@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileUploadPicker } from "./file-upload-picker";
@@ -239,7 +240,7 @@ export function LibraryWorkspace({
             }}
           >
             <FileUploadPicker name="file" />
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline" size="sm">
                   Cancel
@@ -248,7 +249,7 @@ export function LibraryWorkspace({
               <Button type="submit" size="sm">
                 Upload
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

@@ -7,6 +7,7 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -63,7 +64,7 @@ export function TextInputDialog({
               autoFocus
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline" size="sm">
                 Cancel
@@ -72,7 +73,7 @@ export function TextInputDialog({
             <Button type="submit" size="sm">
               {submitLabel}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
@@ -103,7 +104,7 @@ export function ConfirmDialog({
             {description}
           </DialogDescription>
         ) : null}
-        <div className="mt-4 flex justify-end gap-2">
+        <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" size="sm">
               Cancel
@@ -120,7 +121,7 @@ export function ConfirmDialog({
           >
             {confirmLabel}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
