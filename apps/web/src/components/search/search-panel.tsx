@@ -57,7 +57,7 @@ export function SearchPanel({
         <Input
           ref={inputRef}
           aria-label="Search notes and transcripts"
-          className="h-14 rounded-lg border-[var(--border-soft)] bg-[var(--surface)] pl-11 text-[15px] focus-visible:border-[var(--accent-line)]"
+          className="h-14 rounded-lg border-[var(--border-soft)] bg-[var(--surface)] pl-11 text-[16px] focus-visible:border-[var(--accent-line)] sm:text-[15px]"
           placeholder="Search notes and transcripts…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -110,7 +110,7 @@ function SearchResultRow({
   "onOpenDocument" | "onOpenTranscript" | "onSelectFile"
 >) {
   const rowClass =
-    "flex w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
+    "flex min-h-[44px] w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
 
   if (result.kind === "document") {
     return (

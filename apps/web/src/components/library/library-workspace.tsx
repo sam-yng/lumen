@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileUploadPicker } from "./file-upload-picker";
@@ -23,8 +24,9 @@ import {
 } from "./library-api";
 import { LibraryContent } from "./library-content";
 import { TextInputDialog } from "./library-dialogs";
+import { LibraryFilterChips } from "./library-filter-chips";
 import { useLibraryMutation } from "./library-hooks";
-import { folderName } from "./library-paths";
+import { folderName, folderPath } from "./library-paths";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 
@@ -83,24 +85,50 @@ export function LibraryWorkspace({
     ? snapshot.tags.find((tag) => tag.id === selectedTagId)?.name
     : null;
 
+  const crumbs = folderPath(snapshot, selectedFolderId);
+
   const topBar = (
-    <div className="sticky top-0 z-20 flex min-h-[52px] items-center justify-between gap-3 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+    <div className="flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
         <button
           type="button"
-          className="truncate hover:text-foreground"
+          className="relative shrink-0 truncate hover:text-foreground pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-['']"
           onClick={() => setSelectedFolderId(null)}
         >
           Library
         </button>
-        {selectedFolderId ? (
-          <>
-            <ChevronRight className="size-4 shrink-0" />
-            <span className="truncate text-foreground">
-              {folderName(snapshot, selectedFolderId)}
-            </span>
-          </>
+        {crumbs.length > 2 ? (
+          <span
+            className="flex shrink-0 items-center gap-2 sm:hidden"
+            aria-hidden="true"
+          >
+            <ChevronRight className="size-4 shrink-0" />…
+          </span>
         ) : null}
+        {crumbs.map((crumb, index) => {
+          const isLast = index === crumbs.length - 1;
+          const isParent = index === crumbs.length - 2;
+          return (
+            <span
+              key={crumb.id}
+              className={`${
+                isLast || isParent ? "flex" : "hidden sm:flex"
+              } min-w-0 items-center gap-2`}
+            >
+              <ChevronRight className="size-4 shrink-0" />
+              <button
+                type="button"
+                onClick={() => setSelectedFolderId(crumb.id)}
+                className={`relative truncate pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-[''] ${
+                  isLast ? "text-foreground" : "hover:text-foreground"
+                }`}
+                aria-current={isLast ? "page" : undefined}
+              >
+                {crumb.name}
+              </button>
+            </span>
+          );
+        })}
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -159,6 +187,13 @@ export function LibraryWorkspace({
             ? `Filtered by ${selectedTagName}`
             : `${snapshot.folders.length + snapshot.documents.length + snapshot.files.length} items`}
         </p>
+        <div className="mt-3">
+          <LibraryFilterChips
+            tags={snapshot.tags}
+            selectedTagId={selectedTagId}
+            onSelectTag={setSelectedTagId}
+          />
+        </div>
       </div>
       <SearchPanel
         inputRef={searchInputRef}
@@ -239,7 +274,7 @@ export function LibraryWorkspace({
             }}
           >
             <FileUploadPicker name="file" />
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline" size="sm">
                   Cancel
@@ -248,7 +283,7 @@ export function LibraryWorkspace({
               <Button type="submit" size="sm">
                 Upload
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

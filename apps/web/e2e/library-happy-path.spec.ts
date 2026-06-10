@@ -75,9 +75,12 @@ test("tags are created with a preset color", async ({ page }) => {
   await page.getByLabel("Tag color").selectOption({ label: "Blue" });
   await page.getByRole("button", { name: "Create tag" }).click();
 
-  // The new tag shows as a filter chip; exact match avoids the
-  // "Rename Exam" / "Delete Exam" control buttons.
+  // The new tag shows in the sidebar tag panel; exact match avoids the
+  // "Rename Exam" / "Delete Exam" control buttons, and scoping to the
+  // sidebar avoids the content-area filter chip duplicate.
   await expect(
-    page.getByRole("button", { name: "Exam", exact: true }),
+    page
+      .getByRole("complementary")
+      .getByRole("button", { name: "Exam", exact: true }),
   ).toBeVisible();
 });

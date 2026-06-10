@@ -47,6 +47,9 @@ same rule when it gains content.
 - **v3** — Speaker diarization (m3; spike resolved: sherpa-onnx Node bindings)
   - [speaker-diarization.md](exec-plans/active/v3/speaker-diarization.md)
 
+- **cross-cutting** — Frontend overhaul (mobile-first + component quality)
+  - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
+    (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
 - **cross-cutting** — CI/CD hardening
   - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
 - **cross-cutting** — Planning lifecycle enforcement (implemented; pending review)

@@ -46,7 +46,7 @@ export default function AuthLayout({
           Private by default · your recordings never leave your machine
         </p>
       </section>
-      <section className="grid min-h-dvh place-items-center p-6">
+      <section className="grid min-h-dvh place-items-center p-4 py-8 sm:p-6">
         {children}
       </section>
     </main>

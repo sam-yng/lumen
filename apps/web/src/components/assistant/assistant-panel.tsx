@@ -38,7 +38,7 @@ export function AssistantPanel() {
   const result = assistant.data;
 
   return (
-    <div className="flex h-full w-80 flex-col border-l bg-card p-4">
+    <div className="hidden h-full w-80 flex-col border-l bg-card p-4 lg:flex">
       <h2 className="text-sm font-semibold">Assistant</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Answers may be wrong — verify against your notes.

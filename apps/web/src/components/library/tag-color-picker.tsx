@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Select } from "@/components/ui/select";
 
 export const TAG_COLOR_PRESETS = [
   { label: "Green", value: "#22c55e" },
@@ -36,19 +37,19 @@ export function TagColorPicker({
         className="size-5 shrink-0 rounded-md border border-[var(--border-soft)]"
         style={{ backgroundColor: selected }}
       />
-      <select
+      <Select
         name={name}
         value={selected}
         aria-label="Tag color"
         onChange={(event) => choose(event.target.value)}
-        className="h-8 rounded-md border border-input bg-[var(--surface-2)] px-2 text-[13px] text-foreground outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)]"
+        className="flex-1"
       >
         {TAG_COLOR_PRESETS.map((preset) => (
           <option key={preset.value} value={preset.value}>
             {preset.label}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }

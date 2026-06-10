@@ -317,7 +317,7 @@ function LiveSessionSetupView({
   onStart(): void;
 }) {
   return (
-    <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+    <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-6">
       <div className="flex items-center gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] text-[var(--danger)]">
           <Mic className="size-5" />
@@ -402,7 +402,7 @@ function TranscriptRows({
       {finals.map((segment) => (
         <div
           key={`${segment.startMs}-${segment.endMs}`}
-          className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2"
+          className="grid grid-cols-1 gap-0.5 rounded-md px-3 py-2 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3"
         >
           <span className="font-mono text-[11.5px] text-[var(--text-3)]">
             {formatTime(segment.startMs)}
@@ -413,7 +413,7 @@ function TranscriptRows({
         </div>
       ))}
       {interim ? (
-        <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md px-3 py-2">
+        <div className="grid grid-cols-1 gap-0.5 rounded-md px-3 py-2 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3">
           <span className="font-mono text-[11.5px] text-[var(--text-4)]">
             …
           </span>

@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 export function TextInputDialog({
   open,
@@ -32,24 +34,19 @@ export function TextInputDialog({
   onSubmit: (value: string) => void;
 }) {
   const fieldId = useId();
-  const [value, setValue] = useState(defaultValue);
 
-  // Reset the field to the provided default each time the dialog opens.
-  useEffect(() => {
-    if (open) setValue(defaultValue);
-  }, [open, defaultValue]);
-
+  // Uncontrolled on purpose: the dialog content unmounts when closed, so each
+  // open remounts the input fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         <form
           className="mt-3 space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const trimmed = value.trim();
-            if (!trimmed) return;
-            onSubmit(trimmed);
+          action={(formData) => {
+            const value = String(formData.get("value") ?? "").trim();
+            if (!value) return;
+            onSubmit(value);
             onOpenChange(false);
           }}
         >
@@ -57,13 +54,14 @@ export function TextInputDialog({
             <Label htmlFor={fieldId}>{label}</Label>
             <Input
               id={fieldId}
-              value={value}
+              name="value"
+              defaultValue={defaultValue}
               placeholder={placeholder}
-              onChange={(event) => setValue(event.target.value)}
               autoFocus
+              required
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline" size="sm">
                 Cancel
@@ -72,7 +70,67 @@ export function TextInputDialog({
             <Button type="submit" size="sm">
               {submitLabel}
             </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function SelectDialog({
+  open,
+  onOpenChange,
+  title,
+  label,
+  options,
+  defaultValue = "",
+  submitLabel,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  label: string;
+  options: { value: string; label: string }[];
+  defaultValue?: string;
+  submitLabel: string;
+  onSubmit: (value: string) => void;
+}) {
+  const fieldId = useId();
+
+  // Uncontrolled on purpose: the dialog content unmounts when closed, so each
+  // open remounts the select fresh with the current defaultValue.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
+        <form
+          className="mt-3 space-y-4"
+          action={(formData) => {
+            onSubmit(String(formData.get("value") ?? ""));
+            onOpenChange(false);
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor={fieldId}>{label}</Label>
+            <Select id={fieldId} name="value" defaultValue={defaultValue}>
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" size="sm">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" size="sm">
+              {submitLabel}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
@@ -103,7 +161,7 @@ export function ConfirmDialog({
             {description}
           </DialogDescription>
         ) : null}
-        <div className="mt-4 flex justify-end gap-2">
+        <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" size="sm">
               Cancel
@@ -120,7 +178,7 @@ export function ConfirmDialog({
           >
             {confirmLabel}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
