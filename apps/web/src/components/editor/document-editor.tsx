@@ -30,6 +30,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -219,11 +220,12 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         </div>
         <div className="inline-flex items-center gap-2 font-mono text-[11.5px] text-[var(--text-3)]">
           <span className={`size-2 rounded-full ${statusTone}`} />
-          {status}
+          <span className="hidden sm:inline">{status}</span>
+          <span className="sr-only">{status}</span>
         </div>
       </div>
 
-      <div className="sticky top-0 z-10 flex min-h-[42px] flex-wrap items-center justify-center gap-1 border-b border-[var(--border-soft)] bg-[var(--surface)] px-3">
+      <div className="sticky top-0 z-10 flex min-h-[42px] items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
         <ToolbarButton
           label="Bold"
           active={editor.isActive("bold")}
@@ -284,7 +286,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         </ToolbarButton>
       </div>
 
-      <div className="mx-auto max-w-[700px] px-5 py-8">
+      <div className="mx-auto max-w-[700px] px-4 py-6 sm:px-5 sm:py-8">
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="l-chip border-dashed text-[var(--text-3)]">Tag</span>
         </div>
@@ -318,7 +320,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
                 Leave empty to remove the link.
               </p>
             </div>
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline" size="sm">
                   Cancel
@@ -327,7 +329,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
               <Button type="submit" size="sm">
                 Apply
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

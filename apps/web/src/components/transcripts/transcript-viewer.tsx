@@ -253,7 +253,8 @@ export function TranscriptViewer({
               <Button
                 type="button"
                 size="icon-lg"
-                className="rounded-full"
+                className="size-11 rounded-full"
+                title={playing ? "Pause" : "Play"}
                 onClick={() => {
                   const audio = audioRef.current;
                   if (!audio) return;
@@ -261,6 +262,7 @@ export function TranscriptViewer({
                   else audio.pause();
                 }}
               >
+                <span className="sr-only">{playing ? "Pause" : "Play"}</span>
                 {playing ? (
                   <Pause className="size-4" />
                 ) : (
@@ -294,7 +296,7 @@ export function TranscriptViewer({
                   }}
                 />
               </button>
-              <p className="w-[92px] text-right font-mono text-[11.5px] text-[var(--text-3)]">
+              <p className="shrink-0 text-right font-mono text-[11.5px] text-[var(--text-3)] sm:w-[92px]">
                 {formatTime(currentTime * 1000)} / {formatTime(duration * 1000)}
               </p>
               <Button
@@ -341,7 +343,7 @@ export function TranscriptViewer({
                     if (element) segmentRefs.current.set(segment.id, element);
                     else segmentRefs.current.delete(segment.id);
                   }}
-                  className={`grid w-full grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-md border-l-2 px-3 py-2 text-left transition hover:bg-[var(--surface-2)] ${
+                  className={`grid min-h-[44px] w-full grid-cols-1 gap-0.5 rounded-md border-l-2 px-3 py-2 text-left transition hover:bg-[var(--surface-2)] sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3 ${
                     index === activeIndex
                       ? "border-l-primary bg-[var(--accent-soft)]"
                       : "border-l-transparent"
