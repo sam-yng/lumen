@@ -1,10 +1,10 @@
 # Grounded Answers v2 Plan (v4 Milestone 2)
 
-> **Status:** queued
+> **Status:** completed — shipped on branch `feat/v4-grounded-answers`
 > **Version:** v4
 > **Area:** assistant, MCP, citation validation
 > **Created:** 2026-06-11
-> **Depends on:** [document-anchors.md](../../completed/v4/document-anchors.md) (final
+> **Depends on:** [document-anchors.md](document-anchors.md) (final
 > `GroundedSource` shape), [`completed/v3/cited-retrieval.md`](../../completed/v3/cited-retrieval.md)
 > (m1 contract + prompt rules),
 > [`completed/v2/in-app-assistant.md`](../../completed/v2/in-app-assistant.md)
@@ -25,7 +25,7 @@ a hallucinated citation renders as a confident, clickable chip. v4 m2 adds a
 checked against the `GroundedSource[]` actually retrieved that turn, and
 invalid ones are visibly degraded rather than presented as grounded.
 
-## Decision Spike (Task 1 — resolve before building)
+## Decision Spike (Task 1 — resolved 2026-06-11)
 
 Where the validated-answer boundary lives:
 
@@ -46,6 +46,27 @@ Where the validated-answer boundary lives:
 Also decide in the spike: how strict "supported" is — citation-id existence
 only, or also a cheap snippet-support check (cited text overlaps the source
 snippet). Start with existence; measure before adding cleverness.
+
+**Decision:** option 1 — a pure citation-validation module in
+`server/services/`, wired into `runAssistant` before each turn is returned.
+No new MCP surface: no concrete external-host use case exists for a
+`validate_citations` / `answer_question` tool, and composing answers
+server-side for an external host's own model (option 2) is an odd contract
+that doubles LLM spend for in-app turns. The module stays framework-agnostic
+and pure, so a thin MCP adapter can be added later without rework if a use
+case appears.
+
+Strictness: **existence-only** — a citation is valid iff its exact `[S#]`
+label matches a `citationId` in the sources retrieved that turn. No
+snippet-overlap check yet; the per-turn validation summary is the instrument
+that will show whether one is needed.
+
+Marked, not stripped: the answer text is returned unchanged (no wire munging,
+no offset drift for the UI citation splitter). Instead `AssistantResult`
+gains `invalidCitations` (distinct unknown labels) plus a `citationSummary`
+(valid/invalid mention counts), `sources` is filtered to cited-and-valid
+only, and the UI renders unknown labels as visibly degraded non-clickable
+chips rather than today's silent plain text.
 
 ## Scope
 
@@ -68,7 +89,8 @@ snippet). Start with existence; measure before adding cleverness.
 
 - Semantic entailment / NLI-style "does the source really support the claim"
   scoring — existence + optional snippet overlap only.
-- Retrieval changes (that's [retrieval-quality-reranking.md](retrieval-quality-reranking.md)).
+- Retrieval changes (that's
+  [retrieval-quality-reranking.md](../../queued/v4/retrieval-quality-reranking.md)).
 - Streaming-token-level validation; validation runs on the completed answer.
 - Any paid or non-BYO-key LLM call.
 
@@ -84,3 +106,31 @@ snippet). Start with existence; measure before adding cleverness.
   ([prod-assistant-verification.md](../../active/production/prod-readiness/prod-assistant-verification.md))
   — extend that gate's checklist with one validated-citation check rather
   than duplicating it here.
+
+## Retrospective (m2 complete — 2026-06-11)
+
+**Shipped:** pure citation-validation module
+(`server/services/citation-validation.ts`, existence-only, shared `[S#]`
+regex with the UI splitter), wired into `runAssistant` on both return paths
+(final answer and iteration cap). `AssistantResult.sources` now carries only
+cited-and-valid sources, plus new `invalidCitations` and `citationSummary`
+fields surfaced through `/api/assistant`. The assistant panel renders invalid
+labels as degraded non-link chips (dashed border, struck through, explanatory
+title) with an unverified-citations note under the turn. No new MCP surface,
+per the spike decision; MCP wire contract unchanged. Prompt text unchanged —
+no failure mode observed yet that warrants tightening; the summary counts are
+the instrument for that.
+
+**Verification:** `bun run check` green on 2026-06-11 (Biome, typecheck,
+37 Vitest files / 234 tests). New coverage: 8 unit tests for the module
+(valid/unknown/duplicate/zero-padded/malformed labels, empty source sets,
+cited-only filtering, ordering), 2 assistant integration tests through the
+fake MCP bridge (hallucinated label flagged + dropped; uncited sources
+filtered), and updated panel/citations component tests for the degraded
+rendering. Browser click-through is the new v4 m2 item on the key-gated
+assistant verification checklist.
+
+**Follow-up:** snippet-support checking deliberately deferred — add only if
+`citationSummary` shows invalid-mention rates worth chasing. A thin
+`validate_citations` MCP adapter remains possible without rework if an
+external-host use case materializes.

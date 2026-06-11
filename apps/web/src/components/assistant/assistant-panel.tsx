@@ -38,6 +38,7 @@ export function AssistantPanel() {
               role: "assistant",
               content: response.message,
               sources: response.sources,
+              invalidCitations: response.invalidCitations,
             },
           ]);
         }
@@ -68,6 +69,12 @@ export function AssistantPanel() {
             ) : (
               <div key={turn.id}>
                 <CitedText text={turn.content} sources={turn.sources ?? []} />
+                {(turn.invalidCitations?.length ?? 0) > 0 ? (
+                  <p className="mt-1 text-xs text-amber-600">
+                    {turn.invalidCitations?.join(", ")} could not be matched to
+                    a source — treat those claims as unverified.
+                  </p>
+                ) : null}
                 <SourceCards sources={turn.sources ?? []} />
               </div>
             ),

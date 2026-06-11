@@ -106,6 +106,13 @@ turbo.json               workspace task pipeline
   and the transcript viewer deep-links via `?segment=<id>` / `?t=<ms>`
   (scroll + highlight + audio seek). MCP wire contract unchanged; the manual
   click-through is part of the key-gated assistant verification gate.
+- Shipped in v4 m2 (2026-06-11): server-side citation validation — every
+  assistant turn's `[S#]` mentions are checked against that turn's retrieved
+  sources (pure module `server/services/citation-validation.ts`, existence-only);
+  `AssistantResult.sources` carries cited-and-valid sources only, plus
+  `invalidCitations` + `citationSummary`, and invalid labels render as degraded
+  non-link chips. No new MCP surface — the module is pure so a thin adapter can
+  be added if an external-host use case appears.
 - Still not built: realtime collab. Seams, not stubs.
 
 ## Docs

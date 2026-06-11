@@ -14,6 +14,7 @@ export type ChatTurn = {
   role: "user" | "assistant";
   content: string;
   sources?: GroundedSource[];
+  invalidCitations?: string[];
 };
 
 export function newTurnId(): string {
@@ -26,6 +27,8 @@ export type AssistantResponse =
       toolCalls: { name: string; ok: boolean }[];
       stoppedAtCap: boolean;
       sources: GroundedSource[];
+      invalidCitations: string[];
+      citationSummary: { validMentions: number; invalidMentions: number };
     }
   | { state: "no_api_key" }
   | { state: "invalid_key" }

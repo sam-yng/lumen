@@ -34,6 +34,7 @@ If the repo's layout is different, adapt the checks — don't abandon them.
 Run all six; aggregate findings into a single report before touching anything.
 
 1. **Broken internal links** — For every markdown file in `AGENTS.md`, `ARCHITECTURE.md`, and `docs/**/*.md`: extract every `[text](path)` where `path` is relative (not `http(s)://`). For each, resolve against the file's dir and verify the target exists (allow `#anchor` suffixes). Report the (file, line, broken link, resolved path) tuples.
+   - **Skip links inside fenced code blocks (` ``` `) and inline code spans.** Plans and skills quote markdown templates ("add this line to the index: `[foo.md](foo.md)`"); those snippets resolve relative to the *target* doc, not the doc that quotes them, and are not real links. Known example: `docs/superpowers/plans/2026-06-08-in-app-assistant.md` quotes an index entry for `docs/product-specs/index.md` inside a fence — not broken.
 
 2. **Orphaned code refs** — Grep doc files for `src/**/*.{ts,tsx}`, `supabase/**/*.sql`, and other repo-relative paths. For each referenced path, verify existence via `Glob`. Skip references that are clearly filename templates (contain `YYYY-MM-DD`, `[slug]`, `<topic>`, or other placeholder tokens). Also grep for backticked identifiers that look like symbols (function/component names) and spot-check a handful via `Grep`. Report references to paths/symbols that no longer exist.
    - **Completed exec plans are historical records.** For `docs/exec-plans/completed/**`, a code path that no longer exists is not automatically `BROKEN`; it may record what that milestone created before later refactors renamed or moved it. Do not rewrite completed plans just to match current paths. If the completed plan or a later completed plan records the rename/move/deletion (for example Next `middleware` → `proxy`, timestamped migrations replacing `000_init.sql`, or `components/transcript/` becoming `components/transcripts/`), classify it as `HISTORICAL`/informational and take no edit action.
@@ -115,5 +116,6 @@ Run all six; aggregate findings into a single report before touching anything.
 - **Over-aggressive pruning.** A stub is not rot; a TODO marker is a signal, not a failure. Report, don't delete.
 - **Treating `_(none yet)_` as brokenness.** It's an intentional empty-state.
 - **Ignoring anchors.** `[text](foo.md#section)` — verify the file exists; don't require the anchor to resolve (markdown anchors are fuzzy).
+- **Flagging links quoted in code fences.** A markdown link inside a fenced block or inline code is template/example content, not a navigable link. Strip fenced and inline code before extracting links, or every quoted index-entry snippet becomes a false `BROKEN`.
 - **Forgetting the generator.** If `docs/generated/db-schema.md` drifts, you must regenerate it from `supabase/migrations/`, not hand-edit it.
 - **Running checks in isolation.** Always produce the combined report first; piecemeal fixing creates churn.

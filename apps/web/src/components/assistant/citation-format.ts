@@ -1,3 +1,4 @@
+import { CITATION_MENTION_PATTERN } from "@/server/services/citation-validation";
 import type {
   GroundedDocumentSource,
   GroundedSource,
@@ -8,8 +9,6 @@ export type CitationPart =
   | { kind: "text"; text: string; start: number }
   | { kind: "citation"; label: string; start: number };
 
-const CITATION_PATTERN = /\[(S\d+)\]/g;
-
 /**
  * Split assistant text into plain runs and [S#] citation labels. Each part
  * carries its character offset in the source text — a stable identity for
@@ -18,7 +17,7 @@ const CITATION_PATTERN = /\[(S\d+)\]/g;
 export function splitCitations(text: string): CitationPart[] {
   const parts: CitationPart[] = [];
   let lastIndex = 0;
-  for (const match of text.matchAll(CITATION_PATTERN)) {
+  for (const match of text.matchAll(CITATION_MENTION_PATTERN)) {
     if (match.index > lastIndex) {
       parts.push({
         kind: "text",

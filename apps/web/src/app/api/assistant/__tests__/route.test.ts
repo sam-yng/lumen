@@ -50,6 +50,8 @@ describe("assistant route", () => {
       toolCalls: [],
       stoppedAtCap: false,
       sources: [],
+      invalidCitations: [],
+      citationSummary: { validMentions: 0, invalidMentions: 0 },
     });
     const res = await POST(
       req({ messages: [{ role: "user", content: "hi" }] }),
@@ -60,6 +62,8 @@ describe("assistant route", () => {
       toolCalls: [],
       stoppedAtCap: false,
       sources: [],
+      invalidCitations: [],
+      citationSummary: { validMentions: 0, invalidMentions: 0 },
     });
   });
 

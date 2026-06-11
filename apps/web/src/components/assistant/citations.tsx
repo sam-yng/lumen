@@ -27,8 +27,17 @@ export function CitedText({
         }
         const source = byLabel.get(part.label);
         if (!source) {
-          // Unknown label (model invented it, or sources were lost): plain text.
-          return <span key={part.start}>[{part.label}]</span>;
+          // Server-side validation found no retrieved source for this label
+          // (hallucinated citation, or sources were lost): degraded chip.
+          return (
+            <span
+              key={part.start}
+              title="This citation does not match any source from this answer."
+              className="mx-0.5 inline-flex items-center rounded border border-dashed border-[var(--border-soft)] px-1 align-baseline font-mono text-[11px] text-[var(--text-3)] line-through"
+            >
+              {part.label}
+            </span>
+          );
         }
         return (
           <Link

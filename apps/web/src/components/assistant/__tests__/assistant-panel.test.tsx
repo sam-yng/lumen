@@ -52,6 +52,8 @@ describe("AssistantPanel", () => {
           message: "The powerhouse [S1], says no one [S9].",
           toolCalls: [{ name: "search_notes", ok: true }],
           stoppedAtCap: false,
+          invalidCitations: ["S9"],
+          citationSummary: { validMentions: 1, invalidMentions: 1 },
           sources: [
             {
               citationId: "S1",
@@ -83,8 +85,13 @@ describe("AssistantPanel", () => {
         "/library/transcripts/r1?segment=seg-1",
       ),
     );
-    // Unknown label stays plain text; the source card shows title + timestamp.
-    expect(screen.getByText("[S9]")).toBeInTheDocument();
+    // The invalid label degrades to a non-link chip plus an honesty note; the
+    // source card shows title + timestamp.
+    expect(screen.queryByRole("link", { name: "S9" })).not.toBeInTheDocument();
+    expect(screen.getByText("S9")).toBeInTheDocument();
+    expect(
+      screen.getByText(/could not be matched to a source/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Lecture 3.wav")).toBeInTheDocument();
     expect(screen.getByText("1:05")).toBeInTheDocument();
     // Turns POSTed to the API are plain {role, content} — no sources payload.

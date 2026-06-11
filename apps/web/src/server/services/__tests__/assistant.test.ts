@@ -133,6 +133,89 @@ describe("runAssistant", () => {
     });
   });
 
+  it("drops hallucinated citations from sources and flags them", async () => {
+    const ctx = createContext({
+      documents: [
+        {
+          id: "d1",
+          user_id: userId,
+          title: "Biology notes",
+          content_text: "The mitochondria is the powerhouse of the cell.",
+        },
+      ],
+    });
+    const anthropic = fakeAnthropic([
+      {
+        stop_reason: "tool_use",
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "search_notes",
+            input: { query: "mitochondria" },
+          },
+        ],
+      },
+      {
+        stop_reason: "end_turn",
+        content: [
+          { type: "text", text: "Powerhouse [S1], invented claim [S2]." },
+        ],
+      },
+    ]);
+    const result = await runAssistant(ctx, {
+      anthropic,
+      messages: [{ role: "user", content: "what is the mitochondria?" }],
+    });
+    expect(result.message).toBe("Powerhouse [S1], invented claim [S2].");
+    expect(result.sources.map((s) => s.citationId)).toEqual(["S1"]);
+    expect(result.invalidCitations).toEqual(["S2"]);
+    expect(result.citationSummary).toEqual({
+      validMentions: 1,
+      invalidMentions: 1,
+    });
+  });
+
+  it("filters retrieved sources the answer never cites", async () => {
+    const ctx = createContext({
+      documents: [
+        {
+          id: "d1",
+          user_id: userId,
+          title: "Biology notes",
+          content_text: "The mitochondria is the powerhouse of the cell.",
+        },
+      ],
+    });
+    const anthropic = fakeAnthropic([
+      {
+        stop_reason: "tool_use",
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "search_notes",
+            input: { query: "mitochondria" },
+          },
+        ],
+      },
+      {
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: "I am not sure." }],
+      },
+    ]);
+    const result = await runAssistant(ctx, {
+      anthropic,
+      messages: [{ role: "user", content: "what is the mitochondria?" }],
+    });
+    expect(result.sources).toEqual([]);
+    expect(result.invalidCitations).toEqual([]);
+    expect(result.citationSummary).toEqual({
+      validMentions: 0,
+      invalidMentions: 0,
+    });
+  });
+
   it("executes a tool call then returns the follow-up answer", async () => {
     const ctx = createContext({ documents: [], folders: [] });
     const anthropic = fakeAnthropic([
