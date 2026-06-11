@@ -15,7 +15,10 @@ const runFfmpeg: FfmpegRunner = (args) =>
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`));
+      else
+        reject(
+          new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`),
+        );
     });
   });
 

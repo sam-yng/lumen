@@ -22,9 +22,13 @@ describe("convertToDiarizationWav", () => {
   it("invokes the runner with the conversion args", async () => {
     const calls: string[][] = [];
 
-    await convertToDiarizationWav("/tmp/in.webm", "/tmp/out.wav", async (args) => {
-      calls.push(args);
-    });
+    await convertToDiarizationWav(
+      "/tmp/in.webm",
+      "/tmp/out.wav",
+      async (args) => {
+        calls.push(args);
+      },
+    );
 
     expect(calls).toEqual([diarizationWavArgs("/tmp/in.webm", "/tmp/out.wav")]);
   });

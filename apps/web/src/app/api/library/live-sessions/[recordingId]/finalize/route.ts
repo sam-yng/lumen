@@ -4,8 +4,8 @@ import {
 } from "@/app/api/library/http";
 import { getServerEnv } from "@/server/config/env";
 import { createServerSupabase } from "@/server/db/client";
-import { enqueueSpeakerLabelJob } from "@/server/queue/transcription-jobs";
 import { getTranscriptionBoss } from "@/server/queue/runtime";
+import { enqueueSpeakerLabelJob } from "@/server/queue/transcription-jobs";
 import type { ServiceSupabaseClient } from "@/server/services/context";
 import { finalizeLiveSession } from "@/server/services/live-sessions";
 import { SupabaseStorageProvider } from "@/server/services/storage-provider";

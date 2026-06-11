@@ -126,11 +126,38 @@ transcript view.
 
 ## Verification Gate
 
-- `bun run check` green.
-- Unit tests: labeling job with a fake `DiarizationProvider` updates the
+- [x] `bun run check` green (2026-06-11).
+- [x] Unit tests: labeling job with a fake `DiarizationProvider` updates the
   right segments for the right user; labeling failure leaves segments
   untouched and the recording `done`; env-off means no job enqueued.
-- Manual happy path (working rule #3): record a live session with two
-  speakers, finalize, and see distinct speaker labels appear in the
-  transcript viewer; verify a batch upload of the same audio labels
-  comparably.
+  (`worker/__tests__/speaker-label-worker.test.ts`,
+  `queue/__tests__/transcription-jobs.test.ts`,
+  `worker/__tests__/audio-convert.test.ts`.)
+- [x] Manual happy path (working rule #3, 2026-06-11): a 41 s two-speaker
+  session (two distinct Windows TTS voices alternating over six turns,
+  encoded webm/opus like MediaRecorder) was driven through the **real** HTTP
+  routes — start → append segments → finalize — against local Supabase with
+  `DIARIZATION_ENABLED=true`; the worker picked up the `label-speakers` job,
+  converted with ffmpeg, diarized, and all six segments came back labeled
+  `Speaker 1`/`Speaker 2` turn-for-turn matching the voices; the transcript
+  viewer rendered the alternating SPEAKER chips with audio playback intact.
+- [x] Batch comparison: the batch-path diarization (same provider, original
+  WAV, no conversion) over the same audio produced the same speaker
+  structure (S1 ≈ 0–5 s / 12.6–18.1 s / 25.9–31.7 s, S2 in between) —
+  labels comparable across both input forms.
+
+### Verification notes (2026-06-11)
+
+- The mic-capture step itself was simulated (no microphone in the
+  verification environment): the live-capture browser UI (browser Whisper +
+  MediaRecorder, untouched by this milestone) was bypassed by calling the
+  same routes it calls. Worth a human spot-check with a real mic at review.
+- A full batch **upload** of the same audio was not runnable on this
+  machine: `nodejs-whisper` needs cmake/whisper.cpp which have never been
+  set up locally (the long-standing FFmpeg/host-dep tech-debt row). The
+  comparison above isolates the diarization stage, which is the only stage
+  this milestone shares with the batch path.
+- Local env additions for this feature: `apps/web/.env.local` gained
+  `DIARIZATION_ENABLED=true` + the two model paths (models fetched via
+  `bun run worker:diarization-models`); ffmpeg used a portable build on the
+  worker's `PATH` — the prod worker Dockerfile already installs ffmpeg.

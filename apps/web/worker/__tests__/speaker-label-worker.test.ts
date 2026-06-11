@@ -183,8 +183,7 @@ describe("processSpeakerLabelJob", () => {
       segmentUpdates.every((query) =>
         query.filters.some(
           (filter) =>
-            filter.column === "transcript_id" &&
-            filter.value === TRANSCRIPT_ID,
+            filter.column === "transcript_id" && filter.value === TRANSCRIPT_ID,
         ),
       ),
     ).toBe(true);
