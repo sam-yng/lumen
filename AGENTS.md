@@ -100,8 +100,13 @@ turbo.json               workspace task pipeline
   degrade-never-fail (errors → null speakers, job still `done`). Diarization
   runs before transcription because Whisper deletes its WAV input. Live path
   never labels speakers.
-- Still not built: citation deep links (v3 m4), realtime collab. Seams, not
-  stubs.
+- Shipped in v3 m4 (2026-06-11): citation experience —
+  assistant turns carry `GroundedSource[]` (`AssistantResult.sources`), `[S#]`
+  renders as clickable chips + source cards (`components/assistant/citations.tsx`),
+  and the transcript viewer deep-links via `?segment=<id>` / `?t=<ms>`
+  (scroll + highlight + audio seek). MCP wire contract unchanged; the manual
+  click-through is part of the key-gated assistant verification gate.
+- Still not built: realtime collab. Seams, not stubs.
 
 ## Docs
 

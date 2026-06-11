@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createContext } from "@/server/services/__tests__/fake-supabase";
+import {
+  createContext,
+  userId,
+} from "@/server/services/__tests__/fake-supabase";
 import {
   type AnthropicLike,
   connectMcpBridge,
@@ -85,6 +88,49 @@ describe("runAssistant", () => {
     });
     expect(result.message).toBe("Hi there.");
     expect(result.toolCalls).toEqual([]);
+    expect(result.sources).toEqual([]);
+  });
+
+  it("carries search_notes sources on the result keyed by citation label", async () => {
+    const ctx = createContext({
+      documents: [
+        {
+          id: "d1",
+          user_id: userId,
+          title: "Biology notes",
+          content_text: "The mitochondria is the powerhouse of the cell.",
+        },
+      ],
+    });
+    const anthropic = fakeAnthropic([
+      {
+        stop_reason: "tool_use",
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "search_notes",
+            input: { query: "mitochondria" },
+          },
+        ],
+      },
+      {
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: "It is the powerhouse [S1]." }],
+      },
+    ]);
+    const result = await runAssistant(ctx, {
+      anthropic,
+      messages: [{ role: "user", content: "what is the mitochondria?" }],
+    });
+    expect(result.message).toBe("It is the powerhouse [S1].");
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources[0]).toMatchObject({
+      citationId: "S1",
+      kind: "document",
+      title: "Biology notes",
+      source: { documentId: "d1" },
+    });
   });
 
   it("executes a tool call then returns the follow-up answer", async () => {

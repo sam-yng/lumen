@@ -34,18 +34,9 @@ same rule when it gains content.
 
 ## Queued
 
-- **v3** — Advanced capture & retrieval (m4+: citation experience)
-  - [index.md](exec-plans/queued/v3/index.md)
-  - [citation-experience.md](exec-plans/queued/v3/citation-experience.md)
+- _(nothing queued)_
 
 ## Active
-
-- **v3** — Streaming transcription (m2; spike resolved: browser Transformers.js
-  + segment POSTs)
-  - [streaming-transcription.md](exec-plans/active/v3/streaming-transcription.md)
-
-- **v3** — Speaker diarization (m3; spike resolved: sherpa-onnx Node bindings)
-  - [speaker-diarization.md](exec-plans/active/v3/speaker-diarization.md)
 
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
@@ -103,6 +94,18 @@ same rule when it gains content.
 - [cited-retrieval.md](exec-plans/completed/v3/cited-retrieval.md) (PR #23,
   2026-06-09) — milestone 1; manual assistant happy-path pending a Claude key
   (production-readiness blocker)
+- [index-m2-plus.md](exec-plans/completed/v3/index-m2-plus.md) — Advanced
+  capture & retrieval group (m2–m4, all shipped; completes the v3 release)
+- [streaming-transcription.md](exec-plans/completed/v3/streaming-transcription.md)
+  (2026-06-10) — milestone 2; browser Transformers.js
+  live capture finalizing through the batch transcript path
+- [speaker-diarization.md](exec-plans/completed/v3/speaker-diarization.md)
+  (2026-06-10) — milestone 3; sherpa-onnx batch diarization,
+  env-gated, degrade-never-fail
+- [citation-experience.md](exec-plans/completed/v3/citation-experience.md)
+  (2026-06-11) — milestone 4; clickable [S#] citations, source cards, and
+  transcript deep links; manual click-through carried by the assistant
+  verification gate
 
 ## Archive
 

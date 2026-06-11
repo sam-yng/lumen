@@ -1,12 +1,14 @@
 # Streaming Transcription Plan (v3 Milestone 2)
 
-> **Status:** active — spike resolved (see Decision Record); implementation in
-> progress on `feat/v3-streaming-transcription`.
+> **Status:** completed — shipped via `feat/v3-streaming-transcription`; full
+> verification record below (2026-06-10). Promoted `active/v3/ → completed/v3/`
+> 2026-06-11.
 > **Version:** v3
 > **Area:** transcription pipeline, live capture, worker
 > **Created:** 2026-06-10
-> **Depends on:** [`completed/v1/m4-transcription.md`](../../completed/v1/m4-transcription.md),
-> [`completed/v2/semantic-search.md`](../../completed/v2/semantic-search.md)
+> **Completed:** 2026-06-10
+> **Depends on:** [`completed/v1/m4-transcription.md`](../v1/m4-transcription.md),
+> [`completed/v2/semantic-search.md`](../v2/semantic-search.md)
 > **Supersedes:** none
 > **Design:** spike-first — Task 1 produced the engine/transport decision
 > recorded below; no separate superpowers design spec was written.

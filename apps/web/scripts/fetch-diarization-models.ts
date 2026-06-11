@@ -6,7 +6,7 @@
  *   DIARIZATION_SEGMENTATION_MODEL_PATH=.models/diarization/segmentation.onnx
  *   DIARIZATION_EMBEDDING_MODEL_PATH=.models/diarization/embedding.onnx
  *
- * Sources (see docs/exec-plans/active/v3/speaker-diarization.md for licenses):
+ * Sources (see docs/exec-plans/completed/v3/speaker-diarization.md for licenses):
  * - pyannote/segmentation-3.0 (MIT), converted ONNX from sherpa-onnx releases.
  * - 3D-Speaker ERes2Net speaker embedding (Apache-2.0).
  */

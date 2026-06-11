@@ -3,12 +3,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { TranscriptViewer } from "@/components/transcripts/transcript-viewer";
 import { fetchLibrarySnapshot, libraryQueryKey } from "./library-api";
 
 export function TranscriptRoute({ recordingId }: { recordingId: string }) {
   const router = useRouter();
+  // Citation deep link: ?segment=<id> targets a cited segment; ?t=<ms> is the
+  // timestamp fallback when no segment was resolved. Neither -> open at top.
+  const searchParams = useSearchParams();
+  const segmentId = searchParams.get("segment");
+  const rawT = searchParams.get("t");
+  const tMs = rawT !== null && /^\d+$/.test(rawT) ? Number(rawT) : null;
+  const deepLink = useMemo(
+    () => (segmentId !== null || tMs !== null ? { segmentId, tMs } : undefined),
+    [segmentId, tMs],
+  );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -51,6 +62,7 @@ export function TranscriptRoute({ recordingId }: { recordingId: string }) {
           <TranscriptViewer
             key={recording.id}
             recording={recording}
+            deepLink={deepLink}
             onClose={() => router.push("/library")}
           />
         ) : (

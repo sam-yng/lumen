@@ -1,16 +1,18 @@
 # v3 Advanced Capture & Retrieval Planning Group (m2+)
 
-> **Status:** queued — m2 (streaming transcription) promoted to
-> [`active/v3/`](../../active/v3/streaming-transcription.md) 2026-06-10; m3/m4
-> remain queued. Promote child plans to `active/v3/` as implementation begins
-> (see Promotion Rule).
+> **Status:** completed — all three children shipped: m2 (streaming
+> transcription, 2026-06-10), m3 (speaker diarization, 2026-06-10), m4
+> (citation experience, 2026-06-11, accepted on human review). Group moved
+> `queued/v3/index.md → completed/v3/index-m2-plus.md` 2026-06-11 (named to
+> coexist with the m1 group's [`index.md`](index.md) in the same bucket).
 > **Version:** v3
 > **Area:** transcription pipeline, diarization, assistant/citation UX
 > **Created:** 2026-06-10
-> **Depends on:** [`completed/v3/index.md`](../../completed/v3/index.md) (m1,
-> cited retrieval), [`completed/v1/m4-transcription.md`](../../completed/v1/m4-transcription.md),
-> [`completed/v2/semantic-search.md`](../../completed/v2/semantic-search.md),
-> [`completed/v2/in-app-assistant.md`](../../completed/v2/in-app-assistant.md)
+> **Completed:** 2026-06-11
+> **Depends on:** [`completed/v3/index.md`](index.md) (m1,
+> cited retrieval), [`completed/v1/m4-transcription.md`](../v1/m4-transcription.md),
+> [`completed/v2/semantic-search.md`](../v2/semantic-search.md),
+> [`completed/v2/in-app-assistant.md`](../v2/in-app-assistant.md)
 > **Supersedes:** none — continues the v3 release after the completed m1 group;
 > does not reopen it.
 
@@ -39,17 +41,18 @@ segment and timestamp.
 
 Implement as separate plans so each can ship and be reviewed on its own:
 
-1. [streaming-transcription.md](../../active/v3/streaming-transcription.md) —
-   **milestone 2** (active):
+1. [streaming-transcription.md](streaming-transcription.md) —
+   **milestone 2** (completed 2026-06-10):
    live capture in the browser → incremental transcript → finalize into the
    existing recordings/transcripts/segments + semantic-index pipeline. Adds a
    streaming provider beside the batch `TranscriptionProvider`; never replaces it.
-2. [speaker-diarization.md](../../active/v3/speaker-diarization.md) —
-   **milestone 3** (active): populate
+2. [speaker-diarization.md](speaker-diarization.md) —
+   **milestone 3** (completed 2026-06-10): populate
    `transcript_segments.speaker` on the batch pipeline via a local, free
    diarization step merged onto Whisper segments by time overlap. The viewer
    already renders speaker labels conditionally.
-3. [citation-experience.md](citation-experience.md) — **milestone 4**: thread
+3. [citation-experience.md](citation-experience.md) —
+   **milestone 4** (completed 2026-06-11): thread
    m1 `GroundedSource[]` through assistant turns and render `[S#]` as clickable
    citations — transcript sources deep-link the transcript viewer to the cited
    segment + timestamp; document sources open the note.
@@ -115,8 +118,20 @@ Move a child plan from `queued/` to `active/` only when implementation begins,
 into the same-named `v3` bucket, updating
 [`PLANS.md`](../../../PLANS.md) in the same change so the index remains
 trustworthy. Do not reopen
-[`completed/v3/index.md`](../../completed/v3/index.md); when all children here
+[`completed/v3/index.md`](index.md); when all children here
 ship, complete this group the same way that one was completed.
+
+## Completion Note
+
+Completed 2026-06-11: all three children shipped and were accepted, so the
+group moved `queued/ → completed/v3/` with [`PLANS.md`](../../../PLANS.md)
+updated in the same change, mirroring the m1 group's completion. The v3
+release scope is now fully shipped. The one carried-forward item — the
+Claude-key manual happy-paths (m1 retrieval citations + m4 click-through) —
+lives in the consolidated
+[assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md),
+not unfinished milestone work. Deferred-beyond-v3 items above remain decided
+and recorded here.
 
 ## Self-Review
 

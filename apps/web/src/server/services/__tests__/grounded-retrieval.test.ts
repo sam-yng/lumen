@@ -11,6 +11,7 @@ import {
   chooseBestTranscriptSegment,
   type GroundedCandidate,
   parseGroundedSemanticRows,
+  parseSearchNotesResult,
   retrieveGroundedSources,
 } from "@/server/services/grounded-retrieval";
 
@@ -557,5 +558,77 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
     expect(
       sources.map((s) => (s.source as { documentId: string }).documentId),
     ).toEqual(["mine"]);
+  });
+});
+
+describe("parseSearchNotesResult", () => {
+  const documentSource = {
+    citationId: "S1",
+    kind: "document",
+    title: "Biology notes",
+    snippet: "mitochondria",
+    score: 0.9,
+    source: { documentId: "d1" },
+  };
+  const transcriptSource = {
+    citationId: "S2",
+    kind: "transcript",
+    title: "Lecture 3",
+    snippet: "krebs cycle",
+    score: null,
+    source: {
+      transcriptId: "t1",
+      recordingId: "r1",
+      segmentId: "seg-1",
+      startMs: 1000,
+      endMs: 2000,
+    },
+  };
+
+  it("round-trips the JSON payload runSearchNotes emits", () => {
+    const payload = JSON.stringify(
+      { query: "mito", sources: [documentSource, transcriptSource] },
+      null,
+      2,
+    );
+    expect(parseSearchNotesResult(payload)).toEqual({
+      query: "mito",
+      sources: [documentSource, transcriptSource],
+    });
+  });
+
+  it("accepts transcript sources with null segment and timing", () => {
+    const payload = JSON.stringify({
+      query: "mito",
+      sources: [
+        {
+          ...transcriptSource,
+          source: {
+            ...transcriptSource.source,
+            segmentId: null,
+            startMs: null,
+            endMs: null,
+          },
+        },
+      ],
+    });
+    expect(parseSearchNotesResult(payload)?.sources[0]?.source).toMatchObject({
+      segmentId: null,
+      startMs: null,
+      endMs: null,
+    });
+  });
+
+  it("returns null for non-JSON text", () => {
+    expect(parseSearchNotesResult("Tool search_notes failed")).toBeNull();
+  });
+
+  it("returns null for JSON that is not a search_notes result", () => {
+    expect(parseSearchNotesResult(JSON.stringify({ id: "d1" }))).toBeNull();
+    expect(
+      parseSearchNotesResult(
+        JSON.stringify({ query: "x", sources: [{ citationId: 1 }] }),
+      ),
+    ).toBeNull();
   });
 });
