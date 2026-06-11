@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import type { EmbeddingProvider } from "@/server/services/embedding-provider";
@@ -31,6 +32,47 @@ export type SearchNotesToolResult = {
   query: string;
   sources: GroundedSource[];
 };
+
+const groundedSourceSchema: z.ZodType<GroundedSource> = z.object({
+  citationId: z.string(),
+  kind: z.enum(["document", "transcript"]),
+  title: z.string(),
+  snippet: z.string(),
+  score: z.number().nullable(),
+  source: z.union([
+    z.object({ documentId: z.string() }),
+    z.object({
+      transcriptId: z.string(),
+      recordingId: z.string(),
+      segmentId: z.string().nullable(),
+      startMs: z.number().nullable(),
+      endMs: z.number().nullable(),
+    }),
+  ]),
+});
+
+const searchNotesToolResultSchema: z.ZodType<SearchNotesToolResult> = z.object({
+  query: z.string(),
+  sources: z.array(groundedSourceSchema),
+});
+
+/**
+ * Parse a search_notes tool result back from its MCP text payload (the JSON
+ * runSearchNotes emits). Anything malformed returns null — callers treat the
+ * turn as having no recoverable sources rather than failing the run.
+ */
+export function parseSearchNotesResult(
+  text: string,
+): SearchNotesToolResult | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const parsed = searchNotesToolResultSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
 
 /** A ranked source before its stable citation label is assigned. */
 export type GroundedCandidate = Omit<GroundedSource, "citationId">;

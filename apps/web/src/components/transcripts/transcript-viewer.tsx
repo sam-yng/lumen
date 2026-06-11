@@ -49,6 +49,27 @@ function activeSegmentIndex(segments: SegmentRow[], currentTime: number) {
   return active;
 }
 
+export type TranscriptDeepLink = {
+  segmentId: string | null;
+  tMs: number | null;
+};
+
+/**
+ * Resolve a citation deep link to the millisecond position to open at.
+ * A known segment id wins (its exact start); otherwise the raw timestamp;
+ * otherwise null — open at the top, nothing to seek.
+ */
+export function resolveDeepLinkMs(
+  deepLink: TranscriptDeepLink,
+  segments: Pick<SegmentRow, "id" | "start_ms">[],
+): number | null {
+  if (deepLink.segmentId !== null) {
+    const segment = segments.find((row) => row.id === deepLink.segmentId);
+    if (segment) return segment.start_ms;
+  }
+  return deepLink.tMs;
+}
+
 function StatusState({
   recording,
   onRetry,
@@ -136,15 +157,20 @@ function StatusState({
 
 export function TranscriptViewer({
   recording,
+  deepLink,
   onClose,
 }: {
   recording: RecordingRow;
+  deepLink?: TranscriptDeepLink;
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const segmentListRef = useRef<HTMLOListElement | null>(null);
   const segmentRefs = useRef(new Map<string, HTMLButtonElement>());
+  const deepLinkApplied = useRef(false);
+  // Seek target waiting for the audio element to have metadata.
+  const pendingSeekMs = useRef<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(recording.duration_sec ?? 0);
   const [playing, setPlaying] = useState(false);
@@ -169,6 +195,23 @@ export function TranscriptViewer({
   );
   const progress = duration > 0 ? currentTime / duration : 0;
   const rate = RATES[rateIndex] ?? 1;
+
+  // Apply a citation deep link once, as soon as segments exist: setting
+  // currentTime drives the existing active-segment highlight + scroll effect,
+  // and the audio seek lands immediately or on loadedmetadata.
+  useEffect(() => {
+    if (deepLinkApplied.current || !deepLink || segments.length === 0) return;
+    deepLinkApplied.current = true;
+    const targetMs = resolveDeepLinkMs(deepLink, segments);
+    if (targetMs === null) return;
+    setCurrentTime(targetMs / 1000);
+    const audio = audioRef.current;
+    if (audio && audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      audio.currentTime = targetMs / 1000;
+    } else {
+      pendingSeekMs.current = targetMs;
+    }
+  }, [deepLink, segments]);
 
   useEffect(() => {
     const activeSegment = activeIndex >= 0 ? segments[activeIndex] : null;
@@ -317,9 +360,14 @@ export function TranscriptViewer({
               <audio
                 ref={audioRef}
                 src={`/api/library/files/${data.file.id}`}
-                onLoadedMetadata={(event) =>
-                  setDuration(event.currentTarget.duration)
-                }
+                onLoadedMetadata={(event) => {
+                  setDuration(event.currentTarget.duration);
+                  if (pendingSeekMs.current !== null) {
+                    event.currentTarget.currentTime =
+                      pendingSeekMs.current / 1000;
+                    pendingSeekMs.current = null;
+                  }
+                }}
                 onPause={() => setPlaying(false)}
                 onPlay={() => {
                   setPlaying(true);

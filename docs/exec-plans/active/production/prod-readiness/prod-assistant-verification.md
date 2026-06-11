@@ -50,6 +50,19 @@ and point at this gate for the carried-forward verification.
 - [ ] (MCP) Call `search_notes` and confirm the `{ query, sources }` payload with
       stable `citationId`s.
 
+### v3 m4 — citation experience happy-path (added 2026-06-11)
+
+See [`active/v3/citation-experience.md`](../../v3/citation-experience.md);
+build verified via fixture-driven tests, only this browser pass is key-gated.
+
+- [ ] Ask a question answered by a real transcript → the answer renders `[S#]`
+      chips and source cards under the turn.
+- [ ] Click a transcript citation → the transcript viewer opens scrolled to the
+      cited segment, highlighted, with audio seeked to its timestamp.
+- [ ] Click a document citation → the note opens.
+- [ ] A source with no resolved segment deep-links by timestamp; null timing
+      opens the transcript at the top.
+
 ## Exit criteria
 
 - [ ] Both flows above pass in a browser against the seeded/real data.

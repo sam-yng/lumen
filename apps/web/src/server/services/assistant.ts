@@ -3,6 +3,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { buildMcpServer } from "@/server/mcp/server";
 import type { ServiceContext } from "@/server/services/context";
+import {
+  type GroundedSource,
+  parseSearchNotesResult,
+} from "@/server/services/grounded-retrieval";
 
 export type AnthropicToolDef = {
   name: string;
@@ -104,6 +108,8 @@ export type AssistantResult = {
   message: string;
   toolCalls: ToolCallTrace[];
   stoppedAtCap: boolean;
+  /** Citation sources from this turn's search_notes calls, keyed by [S#] label. */
+  sources: GroundedSource[];
 };
 
 export async function runAssistant(
@@ -118,6 +124,10 @@ export async function runAssistant(
   const bridge = await connectMcpBridge(ctx);
   const toolCalls: ToolCallTrace[] = [];
   const messages: AssistantMessage[] = [...input.messages];
+  // Citation sources seen this turn. Labels restart at S1 per search_notes
+  // call, so a later search overwrites a reused label — matching the sources
+  // the model saw most recently when it wrote its final text.
+  const sourcesByLabel = new Map<string, GroundedSource>();
   // Most recent assistant text, surfaced if we stop at the iteration cap so the
   // caller never gets a blank turn.
   let lastText = "";
@@ -143,7 +153,12 @@ export async function runAssistant(
       }
 
       if (response.stop_reason !== "tool_use") {
-        return { message: lastText, toolCalls, stoppedAtCap: false };
+        return {
+          message: lastText,
+          toolCalls,
+          stoppedAtCap: false,
+          sources: orderedSources(sourcesByLabel),
+        };
       }
 
       const toolUses = response.content.filter(
@@ -162,6 +177,12 @@ export async function runAssistant(
         try {
           const text = await bridge.callTool(use.name, use.input);
           toolCalls.push({ name: use.name, ok: true });
+          if (use.name === "search_notes") {
+            const parsed = parseSearchNotesResult(text);
+            for (const source of parsed?.sources ?? []) {
+              sourcesByLabel.set(source.citationId, source);
+            }
+          }
           results.push({
             type: "tool_result",
             tool_use_id: use.id,
@@ -180,10 +201,24 @@ export async function runAssistant(
       messages.push({ role: "user", content: results });
     }
 
-    return { message: lastText, toolCalls, stoppedAtCap: true };
+    return {
+      message: lastText,
+      toolCalls,
+      stoppedAtCap: true,
+      sources: orderedSources(sourcesByLabel),
+    };
   } finally {
     await bridge.close();
   }
+}
+
+/** S2 sorts after S1 and before S10 regardless of Map insertion order. */
+function orderedSources(byLabel: Map<string, GroundedSource>): GroundedSource[] {
+  return [...byLabel.values()].sort(
+    (a, b) =>
+      Number(a.citationId.replace(/\D/g, "")) -
+      Number(b.citationId.replace(/\D/g, "")),
+  );
 }
 
 function extractText(content: Array<Record<string, unknown>>): string {

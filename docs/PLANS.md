@@ -40,7 +40,7 @@ same rule when it gains content.
 ## Active
 
 - **v3** — Citation experience (m4: clickable [S#] citations + transcript deep
-  links)
+  links; implemented 2026-06-11, pending milestone review)
   - [citation-experience.md](exec-plans/active/v3/citation-experience.md)
 
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)

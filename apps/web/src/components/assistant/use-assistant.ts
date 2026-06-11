@@ -1,17 +1,25 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import type { GroundedSource } from "@/server/services/grounded-retrieval";
 
 // Turns are plain text. Prior assistant turns are re-sent as strings, so the
 // model sees a coherent transcript but not earlier tool_use/tool_result blocks
 // — a deliberate v2 tradeoff (no tool context carried across turns).
-export type ChatTurn = { role: "user" | "assistant"; content: string };
+// Assistant turns also carry the citation sources from their run; sources are
+// a display concern only and are stripped before turns go back to the API.
+export type ChatTurn = {
+  role: "user" | "assistant";
+  content: string;
+  sources?: GroundedSource[];
+};
 export type AssistantResponse =
   | {
       state: "ok";
       message: string;
       toolCalls: { name: string; ok: boolean }[];
       stoppedAtCap: boolean;
+      sources: GroundedSource[];
     }
   | { state: "no_api_key" }
   | { state: "invalid_key" }
@@ -20,7 +28,8 @@ export type AssistantResponse =
 
 export function useAssistant() {
   return useMutation<AssistantResponse, Error, ChatTurn[]>({
-    mutationFn: async (messages) => {
+    mutationFn: async (turns) => {
+      const messages = turns.map(({ role, content }) => ({ role, content }));
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "content-type": "application/json" },

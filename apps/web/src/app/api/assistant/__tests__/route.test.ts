@@ -49,6 +49,7 @@ describe("assistant route", () => {
       message: "done",
       toolCalls: [],
       stoppedAtCap: false,
+      sources: [],
     });
     const res = await POST(
       req({ messages: [{ role: "user", content: "hi" }] }),
@@ -58,6 +59,7 @@ describe("assistant route", () => {
       message: "done",
       toolCalls: [],
       stoppedAtCap: false,
+      sources: [],
     });
   });
 

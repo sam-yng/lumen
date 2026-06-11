@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CitedText, SourceCards } from "@/components/assistant/citations";
 import {
   type ChatTurn,
   useAssistant,
@@ -28,7 +29,11 @@ export function AssistantPanel() {
         if (response.state === "ok") {
           setTurns((current) => [
             ...current,
-            { role: "assistant", content: response.message },
+            {
+              role: "assistant",
+              content: response.message,
+              sources: response.sources,
+            },
           ]);
         }
       },
@@ -50,15 +55,20 @@ export function AssistantPanel() {
             Ask about your notes, transcripts, or documents.
           </p>
         ) : (
-          turns.map((turn, index) => (
-            <p
+          turns.map((turn, index) =>
+            turn.role === "user" ? (
               // biome-ignore lint/suspicious/noArrayIndexKey: append-only chat list
-              key={index}
-              className={turn.role === "user" ? "font-medium" : ""}
-            >
-              {turn.content}
-            </p>
-          ))
+              <p key={index} className="font-medium">
+                {turn.content}
+              </p>
+            ) : (
+              // biome-ignore lint/suspicious/noArrayIndexKey: append-only chat list
+              <div key={index}>
+                <CitedText text={turn.content} sources={turn.sources ?? []} />
+                <SourceCards sources={turn.sources ?? []} />
+              </div>
+            ),
+          )
         )}
 
         {assistant.isPending ? (
