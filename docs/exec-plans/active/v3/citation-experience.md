@@ -1,6 +1,7 @@
 # Citation Experience Plan (v3 Milestone 4)
 
-> **Status:** queued
+> **Status:** active — promoted `queued/v3/ → active/v3/` 2026-06-11;
+> implementation on `feat/v3-citation-experience`.
 > **Version:** v3
 > **Area:** assistant UI, transcript viewer, citations
 > **Created:** 2026-06-10

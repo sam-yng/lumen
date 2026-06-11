@@ -3,8 +3,10 @@
 > **Status:** queued — m2 (streaming transcription) and m3 (speaker
 > diarization) shipped 2026-06-10 and moved to
 > [`completed/v3/`](../../completed/v3/streaming-transcription.md) 2026-06-11;
-> m4 (citation experience) is the remaining child. Promote child plans to
-> `active/v3/` as implementation begins (see Promotion Rule).
+> m4 (citation experience) promoted to
+> [`active/v3/`](../../active/v3/citation-experience.md) 2026-06-11 — the last
+> remaining child. Promote child plans to `active/v3/` as implementation
+> begins (see Promotion Rule).
 > **Version:** v3
 > **Area:** transcription pipeline, diarization, assistant/citation UX
 > **Created:** 2026-06-10
@@ -50,7 +52,8 @@ Implement as separate plans so each can ship and be reviewed on its own:
    `transcript_segments.speaker` on the batch pipeline via a local, free
    diarization step merged onto Whisper segments by time overlap. The viewer
    already renders speaker labels conditionally.
-3. [citation-experience.md](citation-experience.md) — **milestone 4**: thread
+3. [citation-experience.md](../../active/v3/citation-experience.md) —
+   **milestone 4** (active): thread
    m1 `GroundedSource[]` through assistant turns and render `[S#]` as clickable
    citations — transcript sources deep-link the transcript viewer to the cited
    segment + timestamp; document sources open the note.

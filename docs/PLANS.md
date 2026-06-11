@@ -34,11 +34,14 @@ same rule when it gains content.
 
 ## Queued
 
-- **v3** — Advanced capture & retrieval (m4+: citation experience)
+- **v3** — Advanced capture & retrieval group index (m2/m3 shipped; m4 active)
   - [index.md](exec-plans/queued/v3/index.md)
-  - [citation-experience.md](exec-plans/queued/v3/citation-experience.md)
 
 ## Active
+
+- **v3** — Citation experience (m4: clickable [S#] citations + transcript deep
+  links)
+  - [citation-experience.md](exec-plans/active/v3/citation-experience.md)
 
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
