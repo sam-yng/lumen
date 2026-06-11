@@ -36,8 +36,6 @@ same rule when it gains content.
 
 - **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
   - [index.md](exec-plans/queued/v4/index.md)
-  - [retrieval-quality-reranking.md](exec-plans/queued/v4/retrieval-quality-reranking.md)
-    — m3, measurement-first reranking decision
   - [streaming-diarization.md](exec-plans/queued/v4/streaming-diarization.md)
     — m4, speaker labels on the live path
   - [stale-live-sessions.md](exec-plans/queued/v4/stale-live-sessions.md) — m5,
@@ -123,6 +121,11 @@ same rule when it gains content.
   (2026-06-11) — milestone 2; server-side citation validation, assistant
   sources filtered to cited-and-valid, invalid labels rendered degraded;
   manual click-through carried by the assistant verification gate
+- [retrieval-quality-reranking.md](exec-plans/completed/v4/retrieval-quality-reranking.md)
+  (2026-06-11) — milestone 3; measurement-first retrieval-quality harness
+  shipped (`__tests__/retrieval-eval/`), recorded **NO-GO** on a reranker:
+  hybrid recall@8 misses are paraphrase-only and mostly out-of-pool, which
+  reranking cannot recover
 
 ## Archive
 
