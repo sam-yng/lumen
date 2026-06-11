@@ -33,6 +33,27 @@ export function extractTipTapText(contentJson: Json | null) {
   return normalizeText(parts);
 }
 
+export type TipTapTextBlock = {
+  blockIndex: number;
+  text: string;
+};
+
+export function extractTipTapTextBlocks(contentJson: Json | null) {
+  if (contentJson === null || !isRecord(contentJson)) return [];
+
+  const content = contentJson.content;
+  if (!Array.isArray(content)) return [];
+
+  const blocks: TipTapTextBlock[] = [];
+  content.forEach((child, blockIndex) => {
+    const parts: string[] = [];
+    collectText(child, parts);
+    const text = normalizeText(parts);
+    if (text.length > 0) blocks.push({ blockIndex, text });
+  });
+  return blocks;
+}
+
 export function defaultTipTapDocument(text: string | null): JsonRecord {
   return {
     type: "doc",

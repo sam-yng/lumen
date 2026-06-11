@@ -222,6 +222,8 @@ export type Database = {
           content: string
           content_tsv: unknown
           created_at: string
+          document_anchor_block_end: number | null
+          document_anchor_block_start: number | null
           document_id: string | null
           embedding: string
           end_ms: number | null
@@ -238,6 +240,8 @@ export type Database = {
           content: string
           content_tsv?: unknown
           created_at?: string
+          document_anchor_block_end?: number | null
+          document_anchor_block_start?: number | null
           document_id?: string | null
           embedding: string
           end_ms?: number | null
@@ -254,6 +258,8 @@ export type Database = {
           content?: string
           content_tsv?: unknown
           created_at?: string
+          document_anchor_block_end?: number | null
+          document_anchor_block_start?: number | null
           document_id?: string | null
           embedding?: string
           end_ms?: number | null

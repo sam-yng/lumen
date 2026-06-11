@@ -5,7 +5,7 @@
 > **Area:** search/retrieval, evaluation
 > **Created:** 2026-06-11
 > **Depends on:** [`completed/v2/task-4-hybrid-search-service.md`](../../completed/v2/task-4-hybrid-search-service.md)
-> (hybrid ranking under test), [document-anchors.md](document-anchors.md) and
+> (hybrid ranking under test), [document-anchors.md](../../completed/v4/document-anchors.md) and
 > [grounded-answers.md](grounded-answers.md) (final contract + the validation
 > summary that surfaces retrieval misses).
 > **Supersedes:** none — v3 deferred reranking "until grounded answers

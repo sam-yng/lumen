@@ -124,7 +124,10 @@ describe("parseGroundedSemanticRows", () => {
         id: "c1",
         user_id: "user-1",
         source_type: "document",
-        source: { documentId: "d1" },
+        source: {
+          documentId: "d1",
+          anchor: { blockStart: 2, blockEnd: 4 },
+        },
         chunk_index: 0,
         content: "doc chunk",
         similarity: 0.9,
@@ -168,7 +171,12 @@ describe("parseGroundedSemanticRows", () => {
     ]);
 
     expect(parsed.documents).toEqual([
-      { documentId: "d1", content: "doc chunk", similarity: 0.9 },
+      {
+        documentId: "d1",
+        anchor: { blockStart: 2, blockEnd: 4 },
+        content: "doc chunk",
+        similarity: 0.9,
+      },
     ]);
     expect(parsed.transcripts).toEqual([
       {
@@ -361,6 +369,47 @@ describe("retrieveGroundedSources (semantic)", () => {
       ["S1", "transcript", "lecture.m4a"],
       ["S2", "document", "Cell biology"],
     ]);
+  });
+
+  it("threads semantic document anchors into grounded document sources", async () => {
+    const ctx = createContext(
+      {
+        documents: [docRow({ id: "d1", title: "Cell biology" })],
+        transcripts: [],
+        recordings: [],
+        files: [],
+        transcript_segments: [],
+      },
+      {
+        match_semantic_search_chunks: [
+          {
+            id: "c-doc",
+            user_id: userId,
+            source_type: "document",
+            source: {
+              documentId: "d1",
+              anchor: { blockStart: 3, blockEnd: 3 },
+            },
+            chunk_index: 0,
+            content: "document passage",
+            similarity: 0.6,
+            text_rank: 0,
+          },
+        ],
+      },
+    );
+
+    const sources = await retrieveGroundedSources(ctx, "mito", {
+      embeddingProvider,
+    });
+
+    expect(sources[0]).toMatchObject({
+      kind: "document",
+      source: {
+        documentId: "d1",
+        anchor: { blockStart: 3, blockEnd: 3 },
+      },
+    });
   });
 
   it("does not return cross-user semantic rows or cross-user segments", async () => {
@@ -594,6 +643,25 @@ describe("parseSearchNotesResult", () => {
     expect(parseSearchNotesResult(payload)).toEqual({
       query: "mito",
       sources: [documentSource, transcriptSource],
+    });
+  });
+
+  it("round-trips document sources with optional block anchors", () => {
+    const anchoredDocumentSource = {
+      ...documentSource,
+      source: {
+        documentId: "d1",
+        anchor: { blockStart: 3, blockEnd: 4 },
+      },
+    };
+    const payload = JSON.stringify({
+      query: "mito",
+      sources: [anchoredDocumentSource],
+    });
+
+    expect(parseSearchNotesResult(payload)?.sources[0]?.source).toEqual({
+      documentId: "d1",
+      anchor: { blockStart: 3, blockEnd: 4 },
     });
   });
 

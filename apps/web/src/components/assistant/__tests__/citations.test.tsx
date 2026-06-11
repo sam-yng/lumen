@@ -74,6 +74,19 @@ describe("citationHref", () => {
     expect(citationHref(documentSource())).toBe("/library/notes/d1");
   });
 
+  it("links anchored document sources to the cited block", () => {
+    expect(
+      citationHref(
+        documentSource({
+          source: {
+            documentId: "d1",
+            anchor: { blockStart: 3, blockEnd: 4 },
+          },
+        } as Partial<GroundedSource>),
+      ),
+    ).toBe("/library/notes/d1?block=3");
+  });
+
   it("links transcript sources to the cited segment", () => {
     expect(citationHref(transcriptSource())).toBe(
       "/library/transcripts/r1?segment=seg-1",

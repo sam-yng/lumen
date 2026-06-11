@@ -232,9 +232,64 @@ describe("indexDocumentSearchChunks", () => {
       recording_id: null,
       start_ms: null,
       end_ms: null,
+      document_anchor_block_start: 0,
+      document_anchor_block_end: 0,
       chunk_index: 0,
       content: "fresh biology content",
       embedding: `[${vector(0.25).join(",")}]`,
+    });
+  });
+
+  it("indexes document chunks with anchors from TipTap top-level blocks", async () => {
+    const tables: { semantic_search_chunks: Row[] } = {
+      semantic_search_chunks: [],
+    };
+    const ctx = createContext(tables);
+    const { provider } = embeddingProvider([
+      vector(0.25),
+      vector(0.5),
+      vector(0.75),
+    ]);
+
+    await indexDocumentSearchChunks(ctx, {
+      document: document({
+        content_json: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "alpha ".repeat(90) }],
+            },
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "bravo ".repeat(90) }],
+            },
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "charlie ".repeat(90) }],
+            },
+          ],
+        },
+        content_text: "fallback text should not define anchors",
+      }),
+      provider,
+    });
+
+    expect(tables.semantic_search_chunks.length).toBeGreaterThan(1);
+    expect(tables.semantic_search_chunks[0]).toMatchObject({
+      document_anchor_block_start: 0,
+      document_anchor_block_end: 1,
+    });
+    expect(
+      tables.semantic_search_chunks.some(
+        (row) =>
+          row.document_anchor_block_start === 1 &&
+          row.document_anchor_block_end === 2,
+      ),
+    ).toBe(true);
+    expect(tables.semantic_search_chunks.at(-1)).toMatchObject({
+      document_anchor_block_start: 2,
+      document_anchor_block_end: 2,
     });
   });
 
@@ -411,6 +466,8 @@ describe("indexTranscriptSearchChunks", () => {
       recording_id: "recording-1",
       start_ms: 0,
       end_ms: 2_000,
+      document_anchor_block_start: null,
+      document_anchor_block_end: null,
       chunk_index: 0,
       content: "cells use energy energy becomes motion",
       embedding: `[${vector(0.75).join(",")}]`,

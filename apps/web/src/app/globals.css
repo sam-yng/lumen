@@ -134,6 +134,15 @@
     margin: 0 0 16px;
   }
 
+  .lumen-editor :where(.l-citation-block-active) {
+    border-radius: var(--r);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 6px var(--accent-soft);
+    transition:
+      background 180ms ease,
+      box-shadow 180ms ease;
+  }
+
   .lumen-editor :where(ul, ol) {
     margin: 0 0 16px;
     padding-left: 1.4rem;

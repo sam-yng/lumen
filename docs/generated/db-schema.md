@@ -105,6 +105,8 @@ RLS: enabled
 | `embedding` | vector(384) not null |
 | `created_at` | timestamptz not null default now() |
 | `updated_at` | timestamptz not null default now() |
+| `document_anchor_block_start` | integer |
+| `document_anchor_block_end` | integer |
 
 Policies: `semantic_search_chunks_select_own`, `semantic_search_chunks_insert_own`, `semantic_search_chunks_update_own`, `semantic_search_chunks_delete_own`
 
