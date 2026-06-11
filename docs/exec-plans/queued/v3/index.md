@@ -1,9 +1,10 @@
 # v3 Advanced Capture & Retrieval Planning Group (m2+)
 
-> **Status:** queued — m2 (streaming transcription) promoted to
-> [`active/v3/`](../../active/v3/streaming-transcription.md) 2026-06-10; m3/m4
-> remain queued. Promote child plans to `active/v3/` as implementation begins
-> (see Promotion Rule).
+> **Status:** queued — m2 (streaming transcription) and m3 (speaker
+> diarization) shipped 2026-06-10 and moved to
+> [`completed/v3/`](../../completed/v3/streaming-transcription.md) 2026-06-11;
+> m4 (citation experience) is the remaining child. Promote child plans to
+> `active/v3/` as implementation begins (see Promotion Rule).
 > **Version:** v3
 > **Area:** transcription pipeline, diarization, assistant/citation UX
 > **Created:** 2026-06-10
@@ -39,13 +40,13 @@ segment and timestamp.
 
 Implement as separate plans so each can ship and be reviewed on its own:
 
-1. [streaming-transcription.md](../../active/v3/streaming-transcription.md) —
-   **milestone 2** (active):
+1. [streaming-transcription.md](../../completed/v3/streaming-transcription.md) —
+   **milestone 2** (completed 2026-06-10):
    live capture in the browser → incremental transcript → finalize into the
    existing recordings/transcripts/segments + semantic-index pipeline. Adds a
    streaming provider beside the batch `TranscriptionProvider`; never replaces it.
-2. [speaker-diarization.md](../../active/v3/speaker-diarization.md) —
-   **milestone 3** (active): populate
+2. [speaker-diarization.md](../../completed/v3/speaker-diarization.md) —
+   **milestone 3** (completed 2026-06-10): populate
    `transcript_segments.speaker` on the batch pipeline via a local, free
    diarization step merged onto Whisper segments by time overlap. The viewer
    already renders speaker labels conditionally.

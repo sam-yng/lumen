@@ -1,11 +1,13 @@
 # Speaker Diarization Plan (v3 Milestone 3)
 
-> **Status:** active
+> **Status:** completed — verification gate fully checked (2026-06-10).
+> Promoted `active/v3/ → completed/v3/` 2026-06-11.
 > **Version:** v3
 > **Area:** transcription pipeline, worker
 > **Created:** 2026-06-10
-> **Depends on:** [`completed/v1/m4-transcription.md`](../../completed/v1/m4-transcription.md);
-> sequenced after [streaming-transcription.md](../../active/v3/streaming-transcription.md)
+> **Completed:** 2026-06-10
+> **Depends on:** [`completed/v1/m4-transcription.md`](../v1/m4-transcription.md);
+> sequenced after [streaming-transcription.md](streaming-transcription.md)
 > (promoted to active 2026-06-10) to avoid concurrent worker-pipeline rewrites
 > (no hard code dependency).
 > **Supersedes:** none

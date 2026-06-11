@@ -40,13 +40,6 @@ same rule when it gains content.
 
 ## Active
 
-- **v3** — Streaming transcription (m2; spike resolved: browser Transformers.js
-  + segment POSTs)
-  - [streaming-transcription.md](exec-plans/active/v3/streaming-transcription.md)
-
-- **v3** — Speaker diarization (m3; spike resolved: sherpa-onnx Node bindings)
-  - [speaker-diarization.md](exec-plans/active/v3/speaker-diarization.md)
-
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
@@ -103,6 +96,13 @@ same rule when it gains content.
 - [cited-retrieval.md](exec-plans/completed/v3/cited-retrieval.md) (PR #23,
   2026-06-09) — milestone 1; manual assistant happy-path pending a Claude key
   (production-readiness blocker)
+- [streaming-transcription.md](exec-plans/completed/v3/streaming-transcription.md)
+  (2026-06-10) — milestone 2 of the m2+ group
+  ([queued/v3/index.md](exec-plans/queued/v3/index.md)); browser Transformers.js
+  live capture finalizing through the batch transcript path
+- [speaker-diarization.md](exec-plans/completed/v3/speaker-diarization.md)
+  (2026-06-10) — milestone 3 of the m2+ group; sherpa-onnx batch diarization,
+  env-gated, degrade-never-fail
 
 ## Archive
 
