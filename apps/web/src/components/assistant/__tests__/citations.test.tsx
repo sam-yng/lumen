@@ -109,7 +109,7 @@ describe("citationHref", () => {
 });
 
 describe("CitedText", () => {
-  it("renders known labels as links and unknown labels as plain text", () => {
+  it("renders known labels as links and unknown labels as degraded chips", () => {
     render(
       <CitedText
         text="Powerhouse [S1], unknown [S9]."
@@ -118,7 +118,10 @@ describe("CitedText", () => {
     );
     const chip = screen.getByRole("link", { name: "S1" });
     expect(chip).toHaveAttribute("href", "/library/notes/d1");
-    expect(screen.getByText("[S9]")).toBeInTheDocument();
+    const degraded = screen.getByTitle(
+      "This citation does not match any source from this answer.",
+    );
+    expect(degraded).toHaveTextContent("S9");
     expect(screen.queryByRole("link", { name: "S9" })).not.toBeInTheDocument();
   });
 

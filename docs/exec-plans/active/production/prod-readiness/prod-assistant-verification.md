@@ -63,6 +63,16 @@ build verified via fixture-driven tests, only this browser pass is key-gated.
 - [ ] A source with no resolved segment deep-links by timestamp; null timing
       opens the transcript at the top.
 
+### v4 m2 — grounded answers / citation validation (added 2026-06-11)
+
+See [`completed/v4/grounded-answers.md`](../../../completed/v4/grounded-answers.md); validation
+is fixture-tested, only this browser pass is key-gated.
+
+- [ ] Ask a cited question → the source cards list only sources the answer
+      actually cites, and every rendered `[S#]` chip is clickable; if the model
+      invents a label, it renders as a degraded (non-link) chip with the
+      unverified-citations note under the answer.
+
 ## Exit criteria
 
 - [ ] Both flows above pass in a browser against the seeded/real data.

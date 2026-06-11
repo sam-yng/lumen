@@ -52,7 +52,8 @@ Implement as separate plans so each can ship and be reviewed on its own:
    document citations deep-link to the cited paragraph the way transcript
    citations deep-link to the segment. Finalizes the `GroundedSource` shape
    the rest of the group consumes.
-2. [grounded-answers.md](grounded-answers.md) — **milestone 2**: server-side
+2. [grounded-answers.md](../../completed/v4/grounded-answers.md) — **milestone 2
+   (completed)**: server-side
    citation validation for assistant answers (the item v3 explicitly deferred
    "to v4 once the citation UX shows where validation is actually needed" —
    it shipped, so this is due), with an `answer_question` service shape decided

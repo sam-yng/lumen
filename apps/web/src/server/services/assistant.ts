@@ -2,6 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { buildMcpServer } from "@/server/mcp/server";
+import {
+  type CitationSummary,
+  validateCitations,
+} from "@/server/services/citation-validation";
 import type { ServiceContext } from "@/server/services/context";
 import {
   type GroundedSource,
@@ -108,8 +112,12 @@ export type AssistantResult = {
   message: string;
   toolCalls: ToolCallTrace[];
   stoppedAtCap: boolean;
-  /** Citation sources from this turn's search_notes calls, keyed by [S#] label. */
+  /** Sources the answer actually cites, validated against this turn's retrieval. */
   sources: GroundedSource[];
+  /** [S#] labels in the answer that match no retrieved source. */
+  invalidCitations: string[];
+  /** Valid/invalid mention counts for this turn, for observability. */
+  citationSummary: CitationSummary;
 };
 
 export async function runAssistant(
@@ -153,12 +161,7 @@ export async function runAssistant(
       }
 
       if (response.stop_reason !== "tool_use") {
-        return {
-          message: lastText,
-          toolCalls,
-          stoppedAtCap: false,
-          sources: orderedSources(sourcesByLabel),
-        };
+        return validatedResult(lastText, toolCalls, false, sourcesByLabel);
       }
 
       const toolUses = response.content.filter(
@@ -201,12 +204,7 @@ export async function runAssistant(
       messages.push({ role: "user", content: results });
     }
 
-    return {
-      message: lastText,
-      toolCalls,
-      stoppedAtCap: true,
-      sources: orderedSources(sourcesByLabel),
-    };
+    return validatedResult(lastText, toolCalls, true, sourcesByLabel);
   } finally {
     await bridge.close();
   }
@@ -221,6 +219,24 @@ function orderedSources(
       Number(a.citationId.replace(/\D/g, "")) -
       Number(b.citationId.replace(/\D/g, "")),
   );
+}
+
+/** Validate the answer's citations against this turn's retrieved sources. */
+function validatedResult(
+  message: string,
+  toolCalls: ToolCallTrace[],
+  stoppedAtCap: boolean,
+  sourcesByLabel: Map<string, GroundedSource>,
+): AssistantResult {
+  const validated = validateCitations(message, orderedSources(sourcesByLabel));
+  return {
+    message,
+    toolCalls,
+    stoppedAtCap,
+    sources: validated.sources,
+    invalidCitations: validated.invalidCitations,
+    citationSummary: validated.summary,
+  };
 }
 
 function extractText(content: Array<Record<string, unknown>>): string {
