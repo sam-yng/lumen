@@ -1,4 +1,5 @@
 import type {
+  GroundedDocumentSource,
   GroundedSource,
   GroundedTranscriptSource,
 } from "@/server/services/grounded-retrieval";
@@ -40,6 +41,12 @@ export function isTranscriptSource(
   return "transcriptId" in source;
 }
 
+function isDocumentSource(
+  source: GroundedSource["source"],
+): source is GroundedDocumentSource {
+  return "documentId" in source;
+}
+
 /**
  * Where a citation clicks through to.
  * - Documents open the note.
@@ -48,8 +55,11 @@ export function isTranscriptSource(
  *   transcript page (null timing opens at the top).
  */
 export function citationHref(source: GroundedSource): string {
-  if (!isTranscriptSource(source.source)) {
-    return `/library/notes/${source.source.documentId}`;
+  if (isDocumentSource(source.source)) {
+    const base = `/library/notes/${source.source.documentId}`;
+    return source.source.anchor
+      ? `${base}?block=${source.source.anchor.blockStart}`
+      : base;
   }
   const transcript = source.source;
   const base = `/library/transcripts/${transcript.recordingId}`;

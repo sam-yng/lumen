@@ -20,7 +20,14 @@ import {
   ListChecks,
   TableIcon,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   libraryQueryKey,
   updateDocument,
@@ -90,13 +97,21 @@ function ToolbarButton({
   );
 }
 
-export function DocumentEditor({ document }: { document: DocumentRow }) {
+export function DocumentEditor({
+  document,
+  citationBlockIndex = null,
+}: {
+  document: DocumentRow;
+  citationBlockIndex?: number | null;
+}) {
   const queryClient = useQueryClient();
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkHref, setLinkHref] = useState("");
+  const editorShellRef = useRef<HTMLDivElement | null>(null);
   const linkFieldId = useId();
+  const anchorScopeId = `note-anchor-${linkFieldId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const content = useMemo(() => initialContent(document), [document]);
   const editor = useEditor({
     immediatelyRender: false,
@@ -133,7 +148,7 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
     },
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!editor || saveState !== "dirty") return;
 
     const timeout = window.setTimeout(async () => {
@@ -157,6 +172,51 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
 
     return () => window.clearTimeout(timeout);
   }, [document.id, editor, queryClient, saveState]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    function markCitationBlock() {
+      const editorRoot = editorShellRef.current?.querySelector(".lumen-editor");
+      const blockElements = Array.from(editorRoot?.children ?? []).filter(
+        (element): element is HTMLElement => element instanceof HTMLElement,
+      );
+
+      if (blockElements.length === 0) return false;
+
+      for (const [blockIndex, element] of blockElements.entries()) {
+        element.dataset.citationBlock = String(blockIndex);
+        element.classList.remove("l-citation-block-active");
+      }
+
+      if (citationBlockIndex === null) return;
+
+      const target = blockElements[citationBlockIndex];
+      if (!target) return;
+
+      target.classList.add("l-citation-block-active");
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      return true;
+    }
+
+    markCitationBlock();
+    const frame = window.requestAnimationFrame(markCitationBlock);
+    const timeout = window.setTimeout(markCitationBlock, 100);
+    const interval = window.setInterval(() => {
+      if (markCitationBlock()) window.clearInterval(interval);
+    }, 100);
+    const intervalStop = window.setTimeout(
+      () => window.clearInterval(interval),
+      2_000,
+    );
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+      window.clearTimeout(intervalStop);
+    };
+  }, [citationBlockIndex, editor]);
 
   if (!editor) {
     return (
@@ -286,7 +346,21 @@ export function DocumentEditor({ document }: { document: DocumentRow }) {
         </ToolbarButton>
       </div>
 
-      <div className="mx-auto max-w-[700px] px-4 py-6 sm:px-5 sm:py-8">
+      <div
+        id={anchorScopeId}
+        ref={editorShellRef}
+        data-citation-block-target={citationBlockIndex ?? undefined}
+        className="mx-auto max-w-[700px] px-4 py-6 sm:px-5 sm:py-8"
+      >
+        {citationBlockIndex !== null ? (
+          <style>{`
+            #${anchorScopeId} .lumen-editor > :nth-child(${citationBlockIndex + 1}) {
+              border-radius: var(--r);
+              background: var(--accent-soft);
+              box-shadow: 0 0 0 6px var(--accent-soft);
+            }
+          `}</style>
+        ) : null}
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="l-chip border-dashed text-[var(--text-3)]">Tag</span>
         </div>

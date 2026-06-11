@@ -130,6 +130,27 @@ function applyRlsAndPolicies(sql: string, tables: Map<string, Table>): void {
   }
 }
 
+function applyAddedColumns(sql: string, tables: Map<string, Table>): void {
+  const alterRe = /alter\s+table\s+(?:public\.)?("?\w+"?)\s+([\s\S]*?);/gi;
+
+  for (const match of sql.matchAll(alterRe)) {
+    const table = tables.get(match[1].replace(/"/g, ""));
+    if (!table) continue;
+
+    const body = match[2];
+    const addColumnRe =
+      /add\s+column\s+(?:if\s+not\s+exists\s+)?("?\w+"?)\s+([^,;]+?)(?=,\s*add\s+(?:column|constraint)\b|;|$)/gi;
+    for (const columnMatch of body.matchAll(addColumnRe)) {
+      const name = columnMatch[1].replace(/"/g, "");
+      if (table.columns.some((column) => column.name === name)) continue;
+      table.columns.push({
+        name,
+        definition: columnMatch[2].trim().replace(/\s+/g, " "),
+      });
+    }
+  }
+}
+
 function render(tables: Map<string, Table>): string {
   const lines: string[] = [
     "<!-- GENERATED from apps/web/supabase/migrations/ by apps/web/scripts/gen-db-schema.ts — do not edit. -->",
@@ -170,6 +191,7 @@ function render(tables: Map<string, Table>): string {
 function main(): void {
   const sql = readMigrations();
   const tables = parseTables(sql);
+  applyAddedColumns(sql, tables);
   applyRlsAndPolicies(sql, tables);
   writeFileSync(OUTPUT, `${render(tables)}\n`);
   console.log(`Wrote ${OUTPUT} (${tables.size} tables).`);

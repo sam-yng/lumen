@@ -61,6 +61,53 @@ describe("chunkDocument", () => {
     }
   });
 
+  it("records the block range covered by each document chunk", () => {
+    const chunks = chunkDocument({
+      documentId: "doc-1",
+      text: null,
+      blocks: [
+        { blockIndex: 0, text: "alpha ".repeat(90) },
+        { blockIndex: 1, text: "bravo ".repeat(90) },
+        { blockIndex: 2, text: "charlie ".repeat(90) },
+      ],
+    } as Parameters<typeof chunkDocument>[0] & {
+      blocks: Array<{ blockIndex: number; text: string }>;
+    });
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks[0]).toMatchObject({
+      documentAnchor: { blockStart: 0, blockEnd: 1 },
+    });
+    expect(
+      chunks.some(
+        (chunk) =>
+          chunk.documentAnchor?.blockStart === 1 &&
+          chunk.documentAnchor.blockEnd === 2,
+      ),
+    ).toBe(true);
+    expect(chunks.at(-1)).toMatchObject({
+      documentAnchor: { blockStart: 2, blockEnd: 2 },
+    });
+  });
+
+  it("keeps split chunks from one long block anchored to that block", () => {
+    const chunks = chunkDocument({
+      documentId: "doc-1",
+      text: null,
+      blocks: [{ blockIndex: 3, text: "alpha ".repeat(350) }],
+    } as Parameters<typeof chunkDocument>[0] & {
+      blocks: Array<{ blockIndex: number; text: string }>;
+    });
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(
+      chunks.every((chunk) => chunk.documentAnchor?.blockStart === 3),
+    ).toBe(true);
+    expect(chunks.every((chunk) => chunk.documentAnchor?.blockEnd === 3)).toBe(
+      true,
+    );
+  });
+
   it("splits long text near the limit with about 150 characters of overlap", () => {
     const text = Array.from({ length: 260 }, (_, index) => `token${index}`)
       .join(" ")
@@ -204,6 +251,7 @@ describe("chunkTranscript", () => {
         recordingId: "recording-1",
         startMs: 1_000,
         endMs: 9_000,
+        documentAnchor: null,
       });
       expect(chunk.content.length).toBeLessThanOrEqual(MAX_CHUNK_CHARS);
     }

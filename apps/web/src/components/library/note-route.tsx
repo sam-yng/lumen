@@ -3,10 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { DocumentEditor } from "@/components/editor/document-editor";
 import { fetchLibrarySnapshot, libraryQueryKey } from "./library-api";
 
 export function NoteRoute({ documentId }: { documentId: string }) {
+  const searchParams = useSearchParams();
+  const rawBlock = searchParams.get("block");
+  const citationBlockIndex = useMemo(
+    () =>
+      rawBlock !== null && /^\d+$/.test(rawBlock) ? Number(rawBlock) : null,
+    [rawBlock],
+  );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -41,7 +50,11 @@ export function NoteRoute({ documentId }: { documentId: string }) {
             {error instanceof Error ? error.message : "Could not load note."}
           </div>
         ) : document ? (
-          <DocumentEditor key={document.id} document={document} />
+          <DocumentEditor
+            key={document.id}
+            document={document}
+            citationBlockIndex={citationBlockIndex}
+          />
         ) : (
           <div className="grid min-h-80 place-items-center text-sm text-[var(--text-3)]">
             This note no longer exists.

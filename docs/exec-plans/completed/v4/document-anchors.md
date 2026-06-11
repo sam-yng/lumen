@@ -1,6 +1,6 @@
 # Document Paragraph Anchors Plan (v4 Milestone 1)
 
-> **Status:** queued
+> **Status:** completed — shipped on branch `feat/v4-document-anchors`
 > **Version:** v4
 > **Area:** semantic chunking, citations, editor/notes UX
 > **Created:** 2026-06-11
@@ -22,7 +22,7 @@ way transcript citations already deep-link to `?segment=<id>` / `?t=<ms>`
 document chunks store no location — transcript chunks got `start_ms`/`end_ms`
 for free and documents got nothing.
 
-## Decision Spike (Task 1 — resolve before building)
+## Decision Spike (Task 1 — resolved 2026-06-11)
 
 Anchor representation options. Constraint discovered in scoping: the chunker
 (`services/semantic-chunking.ts`) **normalizes whitespace before chunking**
@@ -43,7 +43,20 @@ do not map back to the original document text as-is.
 
 Evaluation criteria: stability under realistic edits, blast radius (does it
 touch stored editor content?), and how cheaply the note view can scroll to the
-anchor. Record the decision and rejected alternatives here, then build.
+anchor.
+
+**Decision:** use block/paragraph indexes. Document extraction will preserve
+TipTap block boundaries and each document chunk will record the zero-based
+block range it covers. Citation links will carry the start block and the note
+view will scroll/highlight that rendered block. This survives whitespace
+normalization, maps directly to the rendered editor, keeps transcript chunks
+untouched, and avoids stored-content migrations.
+
+**Rejected:** persistent TipTap node ids are more stable after edits but require
+schema/content migration across every stored note; that blast radius is too high
+for v4 m1. Character offsets are less useful because existing chunk
+normalization collapses whitespace, so offsets would either drift or require a
+larger extraction/chunking rewrite for weaker UX than paragraph anchors.
 
 ## Scope
 
@@ -87,3 +100,24 @@ anchor. Record the decision and rejected alternatives here, then build.
   by a long multi-paragraph note, click the document citation, and land on
   the highlighted paragraph; verify an old (pre-backfill) chunk degrades to
   opening the note.
+
+## Retrospective (m1 complete — 2026-06-11)
+
+**Shipped:** document semantic chunks now carry nullable paragraph/block
+anchors, `GroundedDocumentSource` and the MCP `search_notes` payload expose the
+anchor additively, document citation links open `/library/notes/<id>?block=<n>`,
+and the note editor highlights the cited block while anchorless sources still
+open the note normally. The schema migration replaces
+`match_semantic_search_chunks` so document source JSON includes `anchor` only
+when present.
+
+**Verification:** `bun run check` passed on 2026-06-11 after the final patch
+(Biome, plan lifecycle, typecheck, 36 Vitest files / 224 tests). Local browser
+verification used the seeded demo account plus a multi-paragraph note opened at
+`?block=1`; the second paragraph received the citation highlight while the
+first did not. Full assistant click-through remains covered by the existing
+Claude-key production gate.
+
+**Follow-up:** no contract-breaking follow-up. Existing chunks remain
+anchorless until documents are re-indexed; the one-shot reindex helper degrades
+per document and can be wired to an operator/admin entry point later if needed.

@@ -47,8 +47,8 @@ Deepen what v3 started, in both directions:
 
 Implement as separate plans so each can ship and be reviewed on its own:
 
-1. [document-anchors.md](document-anchors.md) — **milestone 1**: paragraph
-   anchors for document chunks (re-chunking pass + anchor metadata), so
+1. [document-anchors.md](../../completed/v4/document-anchors.md) — **milestone 1
+   (completed)**: paragraph anchors for document chunks (re-chunking pass + anchor metadata), so
    document citations deep-link to the cited paragraph the way transcript
    citations deep-link to the segment. Finalizes the `GroundedSource` shape
    the rest of the group consumes.

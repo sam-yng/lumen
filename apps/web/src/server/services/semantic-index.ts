@@ -1,5 +1,6 @@
 import type { Tables, TablesInsert } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
+import { extractTipTapTextBlocks } from "@/server/services/editor-content";
 import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertEmbedding } from "@/server/services/embedding-provider";
 import { assertNoDatabaseError, ServiceError } from "@/server/services/errors";
@@ -40,6 +41,8 @@ async function insertFreshChunks(
     recording_id: chunk.recordingId,
     start_ms: chunk.startMs,
     end_ms: chunk.endMs,
+    document_anchor_block_start: chunk.documentAnchor?.blockStart ?? null,
+    document_anchor_block_end: chunk.documentAnchor?.blockEnd ?? null,
     chunk_index: chunk.chunkIndex,
     content: chunk.content,
     embedding: serializeEmbedding(embeddings[index] ?? []),
@@ -66,6 +69,10 @@ export async function indexDocumentSearchChunks(
   const chunks = chunkDocument({
     documentId: input.document.id,
     text: input.document.content_text,
+    blocks:
+      input.document.content_json !== null
+        ? extractTipTapTextBlocks(input.document.content_json)
+        : undefined,
   });
 
   const { error } = await ctx.supabase
@@ -78,6 +85,38 @@ export async function indexDocumentSearchChunks(
   assertNoDatabaseError(error, "Could not delete semantic document chunks");
 
   await insertFreshChunks(ctx, chunks, input.provider);
+}
+
+export async function reindexAllDocumentSearchChunks(
+  ctx: ServiceContext,
+  input: { provider: EmbeddingProvider },
+): Promise<{ indexed: number; failed: number }> {
+  const { data, error } = await ctx.supabase
+    .from<Tables<"documents">>("documents")
+    .select("*")
+    .eq("user_id", ctx.userId);
+
+  assertNoDatabaseError(error, "Could not load documents for semantic reindex");
+
+  let indexed = 0;
+  let failed = 0;
+  for (const document of data) {
+    try {
+      await indexDocumentSearchChunks(ctx, {
+        document,
+        provider: input.provider,
+      });
+      indexed += 1;
+    } catch (error) {
+      failed += 1;
+      console.error("Document semantic reindex failed", {
+        documentId: document.id,
+        error,
+      });
+    }
+  }
+
+  return { indexed, failed };
 }
 
 export async function indexTranscriptSearchChunks(

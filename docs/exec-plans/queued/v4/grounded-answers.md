@@ -4,7 +4,7 @@
 > **Version:** v4
 > **Area:** assistant, MCP, citation validation
 > **Created:** 2026-06-11
-> **Depends on:** [document-anchors.md](document-anchors.md) (final
+> **Depends on:** [document-anchors.md](../../completed/v4/document-anchors.md) (final
 > `GroundedSource` shape), [`completed/v3/cited-retrieval.md`](../../completed/v3/cited-retrieval.md)
 > (m1 contract + prompt rules),
 > [`completed/v2/in-app-assistant.md`](../../completed/v2/in-app-assistant.md)

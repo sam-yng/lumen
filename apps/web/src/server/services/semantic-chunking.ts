@@ -4,6 +4,7 @@ export const CHUNK_OVERLAP_CHARS = 150;
 export type DocumentChunkInput = {
   documentId: string;
   text: string | null;
+  blocks?: Array<{ blockIndex: number; text: string | null }>;
 };
 
 export type TranscriptSegmentChunkInput = {
@@ -22,6 +23,7 @@ export type SearchChunk =
       recordingId: null;
       startMs: null;
       endMs: null;
+      documentAnchor: { blockStart: number; blockEnd: number } | null;
       chunkIndex: number;
       content: string;
     }
@@ -32,6 +34,7 @@ export type SearchChunk =
       recordingId: string;
       startMs: number;
       endMs: number;
+      documentAnchor: null;
       chunkIndex: number;
       content: string;
     };
@@ -103,14 +106,98 @@ function splitText(text: string) {
   return chunks;
 }
 
+type IndexedDocumentText = {
+  text: string;
+  blockByChar: number[];
+};
+
+function buildIndexedDocumentText(
+  blocks: Array<{ blockIndex: number; text: string | null }>,
+): IndexedDocumentText {
+  const normalizedBlocks = blocks
+    .map((block) => ({
+      blockIndex: block.blockIndex,
+      text: normalizeText(block.text),
+    }))
+    .filter((block) => block.text.length > 0);
+  const parts: string[] = [];
+  const blockByChar: number[] = [];
+
+  normalizedBlocks.forEach((block, index) => {
+    if (index > 0) {
+      parts.push(" ");
+      blockByChar.push(block.blockIndex);
+    }
+    parts.push(block.text);
+    for (let i = 0; i < block.text.length; i += 1) {
+      blockByChar.push(block.blockIndex);
+    }
+  });
+
+  return { text: parts.join(""), blockByChar };
+}
+
+function splitIndexedDocumentText(indexed: IndexedDocumentText) {
+  const chunks: Array<{
+    content: string;
+    documentAnchor: { blockStart: number; blockEnd: number };
+  }> = [];
+  let start = 0;
+
+  while (start < indexed.text.length) {
+    const end = findChunkEnd(indexed.text, start);
+    const rawContent = indexed.text.slice(start, end);
+    const content = rawContent.trim();
+
+    if (content.length > 0) {
+      const leadingWhitespace =
+        rawContent.length - rawContent.trimStart().length;
+      const trailingWhitespace =
+        rawContent.length - rawContent.trimEnd().length;
+      const firstContentIndex = Math.min(
+        start + leadingWhitespace,
+        indexed.blockByChar.length - 1,
+      );
+      const lastContentIndex = Math.max(
+        firstContentIndex,
+        end - trailingWhitespace - 1,
+      );
+      chunks.push({
+        content,
+        documentAnchor: {
+          blockStart: indexed.blockByChar[firstContentIndex] ?? 0,
+          blockEnd: indexed.blockByChar[lastContentIndex] ?? 0,
+        },
+      });
+    }
+
+    if (end >= indexed.text.length) {
+      break;
+    }
+
+    start = findNextChunkStart(indexed.text, start, end);
+  }
+
+  return chunks;
+}
+
 export function chunkDocument(input: DocumentChunkInput): SearchChunk[] {
-  return splitText(normalizeText(input.text)).map((content, chunkIndex) => ({
+  const chunks =
+    input.blocks !== undefined
+      ? splitIndexedDocumentText(buildIndexedDocumentText(input.blocks))
+      : splitText(normalizeText(input.text)).map((content) => ({
+          content,
+          documentAnchor: { blockStart: 0, blockEnd: 0 },
+        }));
+
+  return chunks.map(({ content, documentAnchor }, chunkIndex) => ({
     sourceType: "document",
     documentId: input.documentId,
     transcriptId: null,
     recordingId: null,
     startMs: null,
     endMs: null,
+    documentAnchor,
     chunkIndex,
     content,
   }));
@@ -159,6 +246,7 @@ export function chunkTranscript(
       recordingId: firstSegment.recordingId,
       startMs,
       endMs,
+      documentAnchor: null,
       chunkIndex: chunks.length,
       content: currentSegments.map((segment) => segment.text).join(" "),
     });

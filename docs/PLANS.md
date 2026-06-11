@@ -36,8 +36,6 @@ same rule when it gains content.
 
 - **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
   - [index.md](exec-plans/queued/v4/index.md)
-  - [document-anchors.md](exec-plans/queued/v4/document-anchors.md) — m1,
-    paragraph anchors for document citations
   - [grounded-answers.md](exec-plans/queued/v4/grounded-answers.md) — m2,
     server-side citation validation
   - [retrieval-quality-reranking.md](exec-plans/queued/v4/retrieval-quality-reranking.md)
@@ -117,6 +115,12 @@ same rule when it gains content.
   (2026-06-11) — milestone 4; clickable [S#] citations, source cards, and
   transcript deep links; manual click-through carried by the assistant
   verification gate
+
+### v4 shipped
+
+- [document-anchors.md](exec-plans/completed/v4/document-anchors.md)
+  (2026-06-11) — milestone 1; document semantic chunks carry optional
+  paragraph anchors and document citations open highlighted note blocks
 
 ## Archive
 

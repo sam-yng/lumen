@@ -9,6 +9,10 @@ import { serializeEmbedding } from "@/server/services/semantic-index";
 
 export type GroundedDocumentSource = {
   documentId: string;
+  anchor?: {
+    blockStart: number;
+    blockEnd: number;
+  };
 };
 
 export type GroundedTranscriptSource = {
@@ -40,7 +44,15 @@ const groundedSourceSchema: z.ZodType<GroundedSource> = z.object({
   snippet: z.string(),
   score: z.number().nullable(),
   source: z.union([
-    z.object({ documentId: z.string() }),
+    z.object({
+      documentId: z.string(),
+      anchor: z
+        .object({
+          blockStart: z.number().int().nonnegative(),
+          blockEnd: z.number().int().nonnegative(),
+        })
+        .optional(),
+    }),
     z.object({
       transcriptId: z.string(),
       recordingId: z.string(),
@@ -137,6 +149,10 @@ export type GroundedSemanticRow = {
 
 export type GroundedSemanticDoc = {
   documentId: string;
+  anchor?: {
+    blockStart: number;
+    blockEnd: number;
+  };
   content: string;
   similarity: number;
 };
@@ -167,8 +183,10 @@ export function parseGroundedSemanticRows(rows: GroundedSemanticRow[]): {
     if (row.source_type === "document") {
       const documentId = row.source.documentId;
       if (typeof documentId !== "string") continue;
+      const anchor = parseDocumentAnchor(row.source.anchor);
       documents.push({
         documentId,
+        ...(anchor ? { anchor } : {}),
         content: row.content,
         similarity: row.similarity,
       });
@@ -205,6 +223,10 @@ type RawCandidate = {
   snippet: string;
   score: number | null;
   documentId?: string;
+  documentAnchor?: {
+    blockStart: number;
+    blockEnd: number;
+  };
   transcript?: {
     transcriptId: string;
     recordingId: string;
@@ -336,6 +358,7 @@ async function collectSemanticCandidates(
         snippet: hit.content,
         score: hit.similarity,
         documentId: hit.documentId,
+        documentAnchor: hit.anchor,
       }),
     ),
     ...transcripts.map(
@@ -391,7 +414,12 @@ async function hydrateGroundedSources(
         title,
         snippet: candidate.snippet,
         score: candidate.score,
-        source: { documentId: candidate.documentId },
+        source: {
+          documentId: candidate.documentId,
+          ...(candidate.documentAnchor
+            ? { anchor: candidate.documentAnchor }
+            : {}),
+        },
       });
       continue;
     }
@@ -543,4 +571,20 @@ function uniqueStrings(values: string[]): string[] {
 
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+function parseDocumentAnchor(value: unknown) {
+  if (!isRecord(value)) return null;
+  const { blockStart, blockEnd } = value;
+  if (
+    typeof blockStart !== "number" ||
+    typeof blockEnd !== "number" ||
+    !Number.isInteger(blockStart) ||
+    !Number.isInteger(blockEnd) ||
+    blockStart < 0 ||
+    blockEnd < blockStart
+  ) {
+    return null;
+  }
+  return { blockStart, blockEnd };
 }
