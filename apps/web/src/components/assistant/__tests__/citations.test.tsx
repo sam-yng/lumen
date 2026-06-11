@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  citationHref,
   CitedText,
+  citationHref,
   SourceCards,
   splitCitations,
 } from "@/components/assistant/citations";
@@ -123,9 +123,7 @@ describe("SourceCards", () => {
   });
 
   it("renders document and transcript cards with title, snippet, timestamp", () => {
-    render(
-      <SourceCards sources={[documentSource(), transcriptSource()]} />,
-    );
+    render(<SourceCards sources={[documentSource(), transcriptSource()]} />);
     expect(screen.getByText("Biology notes")).toBeInTheDocument();
     expect(screen.getByText("the powerhouse of the cell")).toBeInTheDocument();
     expect(screen.getByText("Lecture 3.wav")).toBeInTheDocument();

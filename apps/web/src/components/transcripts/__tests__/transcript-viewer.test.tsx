@@ -16,15 +16,15 @@ const segments = [
 
 describe("resolveDeepLinkMs", () => {
   it("resolves a known segment id to its start", () => {
-    expect(
-      resolveDeepLinkMs({ segmentId: "seg-2", tMs: null }, segments),
-    ).toBe(65_000);
+    expect(resolveDeepLinkMs({ segmentId: "seg-2", tMs: null }, segments)).toBe(
+      65_000,
+    );
   });
 
   it("prefers the segment over a timestamp when both are present", () => {
-    expect(
-      resolveDeepLinkMs({ segmentId: "seg-2", tMs: 1000 }, segments),
-    ).toBe(65_000);
+    expect(resolveDeepLinkMs({ segmentId: "seg-2", tMs: 1000 }, segments)).toBe(
+      65_000,
+    );
   });
 
   it("falls back to the timestamp for an unknown segment id", () => {
@@ -98,9 +98,7 @@ describe("TranscriptViewer deep links", () => {
     const target = await screen.findByRole("button", {
       name: /segment seg-2 text/,
     });
-    await waitFor(() =>
-      expect(target.className).toContain("border-l-primary"),
-    );
+    await waitFor(() => expect(target.className).toContain("border-l-primary"));
     expect(Element.prototype.scrollTo).toHaveBeenCalled();
     // currentTime jumped to the segment start: 1:05 of 2:00.
     expect(screen.getByText("1:05 / 2:00")).toBeInTheDocument();
@@ -111,9 +109,7 @@ describe("TranscriptViewer deep links", () => {
     const target = await screen.findByRole("button", {
       name: /segment seg-3 text/,
     });
-    await waitFor(() =>
-      expect(target.className).toContain("border-l-primary"),
-    );
+    await waitFor(() => expect(target.className).toContain("border-l-primary"));
     expect(screen.getByText("1:30 / 2:00")).toBeInTheDocument();
   });
 

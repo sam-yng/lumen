@@ -213,7 +213,9 @@ export async function runAssistant(
 }
 
 /** S2 sorts after S1 and before S10 regardless of Map insertion order. */
-function orderedSources(byLabel: Map<string, GroundedSource>): GroundedSource[] {
+function orderedSources(
+  byLabel: Map<string, GroundedSource>,
+): GroundedSource[] {
   return [...byLabel.values()].sort(
     (a, b) =>
       Number(a.citationId.replace(/\D/g, "")) -

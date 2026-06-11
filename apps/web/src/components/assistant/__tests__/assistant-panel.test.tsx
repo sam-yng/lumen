@@ -91,9 +91,7 @@ describe("AssistantPanel", () => {
     const body = JSON.parse(
       String(vi.mocked(fetchSpy).mock.calls[0]?.[1]?.body),
     );
-    expect(body.messages).toEqual([
-      { role: "user", content: "powerhouse?" },
-    ]);
+    expect(body.messages).toEqual([{ role: "user", content: "powerhouse?" }]);
   });
 
   it("prompts to add a key on no_api_key", async () => {
