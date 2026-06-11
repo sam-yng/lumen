@@ -116,13 +116,14 @@
     z-index: 0;
   }
 
-  .l-product-frame {
+  /* Commented out: remove shimmer effect on product frame */
+  /* .l-product-frame {
     position: relative;
     transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
   }
   .l-product-frame--compact {
     transform: perspective(1200px) rotateX(2deg) rotateY(-4deg);
-  }
+  } */
   .l-live-dot {
     width: 8px;
     height: 8px;

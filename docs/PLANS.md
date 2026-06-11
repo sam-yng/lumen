@@ -36,13 +36,15 @@ same rule when it gains content.
 
 - **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
   - [index.md](exec-plans/queued/v4/index.md)
-  - [streaming-diarization.md](exec-plans/queued/v4/streaming-diarization.md)
-    — m4, speaker labels on the live path
   - [stale-live-sessions.md](exec-plans/queued/v4/stale-live-sessions.md) — m5,
     sweep recordings stranded in `live`
 
 ## Active
 
+- **v4** — Grounded answers & capture hardening group
+  - [streaming-diarization.md](exec-plans/active/v4/streaming-diarization.md)
+    — m4, speaker labels on the live path (spike resolved 2026-06-11:
+    post-finalize batch labeling)
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))

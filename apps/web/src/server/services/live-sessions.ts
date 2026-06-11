@@ -247,13 +247,17 @@ export async function finalizeLiveSession(
       speaker: segment.speaker,
     }));
 
-    return await writeRecordingTranscript(ctx, {
+    const written = await writeRecordingTranscript(ctx, {
       recordingId: recording.id,
       fullText: segmentInputs.map((segment) => segment.text).join(" "),
       language: input.language,
       segments: segmentInputs,
       embeddingProvider: input.embeddingProvider,
     });
+
+    // The file row lets callers enqueue follow-up jobs (e.g. v4 speaker
+    // labeling) without re-querying for the uploaded audio's storage key.
+    return { ...written, file };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown live session error.";

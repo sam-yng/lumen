@@ -98,8 +98,8 @@ turbo.json               workspace task pipeline
   `apps/web/worker/` with a sherpa-onnx implementation (local ONNX models via
   `worker:diarization-models`), env-gated by `DIARIZATION_ENABLED` and
   degrade-never-fail (errors → null speakers, job still `done`). Diarization
-  runs before transcription because Whisper deletes its WAV input. Live path
-  never labels speakers.
+  runs before transcription because Whisper deletes its WAV input. Live
+  sessions are never labeled mid-session (v4 m4 labels them post-finalize).
 - Shipped in v3 m4 (2026-06-11): citation experience —
   assistant turns carry `GroundedSource[]` (`AssistantResult.sources`), `[S#]`
   renders as clickable chips + source cards (`components/assistant/citations.tsx`),
@@ -113,6 +113,13 @@ turbo.json               workspace task pipeline
   `invalidCitations` + `citationSummary`, and invalid labels render as degraded
   non-link chips. No new MCP surface — the module is pure so a thin adapter can
   be added if an external-host use case appears.
+- Shipped in v4 m4: live-session speaker labels — a post-finalize
+  `label-speakers` pg-boss job (same worker process) reuses the batch
+  `DiarizationProvider` + `speaker-merge` over the uploaded session audio,
+  converting webm→WAV via ffmpeg (`worker/audio-convert.ts`,
+  `worker/speaker-label-worker.ts`). Env-gated by `DIARIZATION_ENABLED`;
+  enqueue and labeling are degrade-never-fail (any error keeps null speakers,
+  recording stays `done`). In-browser live labeling was spike-rejected.
 - Still not built: realtime collab. Seams, not stubs.
 
 ## Docs

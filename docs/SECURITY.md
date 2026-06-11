@@ -62,6 +62,19 @@ M4 implementation notes:
   and `transcripts` include `eq("user_id", userId)`; segment inserts use the
   transcript id created by that user-scoped transcript insert.
 
+V4 m4 speaker-labeling notes:
+
+- Post-finalize speaker labeling (`worker/speaker-label-worker.ts`) is a second
+  service-role write path: it **updates** `transcript_segments.speaker` after a
+  live session finalizes. `transcript_segments` has no `user_id` column, so
+  ownership is established transitively — the job first loads the `files` row
+  and the `transcripts` row with explicit `eq("user_id", userId)` (payload
+  `userId` comes from the authenticated finalize route, like transcription
+  jobs), and only then updates segments by the owned `transcript_id`. It also
+  refuses jobs whose `storageKey` doesn't match the user-scoped file row.
+- The job never touches `recordings`: labeling failure cannot change a
+  finalized recording's status (degrade-never-fail).
+
 V3 m2 live-session notes:
 
 - Live capture adds no service-role surface. The live-session route handlers

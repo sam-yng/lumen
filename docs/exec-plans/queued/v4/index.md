@@ -62,10 +62,11 @@ Implement as separate plans so each can ship and be reviewed on its own:
    **milestone 3 (completed)**: measurement-first — build a small local retrieval-quality
    harness, then add a local reranker **only if** the measurements show hybrid
    ranking misses sources. A recorded "no reranker needed" is a valid outcome.
-4. [streaming-diarization.md](streaming-diarization.md) — **milestone 4**:
-   speaker labels for live-captured sessions. Spike decides between true
-   in-browser labeling and post-finalize labeling that reuses the batch
-   `DiarizationProvider` on the uploaded session audio.
+4. [streaming-diarization.md](../../active/v4/streaming-diarization.md) —
+   **milestone 4 (active)**: speaker labels for live-captured sessions. Spike
+   resolved 2026-06-11: post-finalize labeling reusing the batch
+   `DiarizationProvider` on the uploaded session audio (in-browser labeling
+   recorded as not-measured, rejected on cost).
 5. [stale-live-sessions.md](stale-live-sessions.md) — **milestone 5** (small,
    may be pulled forward to any point): sweep recordings stranded in `live`,
    finalizing from the already-stored segments where possible. Clears the

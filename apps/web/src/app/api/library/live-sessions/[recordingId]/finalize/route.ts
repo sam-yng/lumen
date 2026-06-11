@@ -4,6 +4,8 @@ import {
 } from "@/app/api/library/http";
 import { getServerEnv } from "@/server/config/env";
 import { createServerSupabase } from "@/server/db/client";
+import { getTranscriptionBoss } from "@/server/queue/runtime";
+import { enqueueSpeakerLabelJob } from "@/server/queue/transcription-jobs";
 import type { ServiceSupabaseClient } from "@/server/services/context";
 import { finalizeLiveSession } from "@/server/services/live-sessions";
 import { SupabaseStorageProvider } from "@/server/services/storage-provider";
@@ -42,7 +44,8 @@ export async function POST(request: Request, context: RouteContext) {
       : null;
 
   try {
-    const result = await finalizeLiveSession(
+    const env = getServerEnv();
+    const { file, ...result } = await finalizeLiveSession(
       {
         userId: user.id,
         supabase: supabase as unknown as ServiceSupabaseClient,
@@ -54,10 +57,22 @@ export async function POST(request: Request, context: RouteContext) {
           contentType: audio.type || "audio/webm",
         },
         language,
-        bucket: getServerEnv().TRANSCRIPTION_STORAGE_BUCKET,
+        bucket: env.TRANSCRIPTION_STORAGE_BUCKET,
         storage: new SupabaseStorageProvider(supabase.storage),
       },
     );
+
+    // Post-finalize speaker labeling (v4 m4): never blocks or fails finalize.
+    await enqueueSpeakerLabelJob({
+      enabled: env.DIARIZATION_ENABLED,
+      getBoss: getTranscriptionBoss,
+      payload: {
+        userId: user.id,
+        recordingId,
+        fileId: file.id,
+        storageKey: file.storage_key,
+      },
+    });
 
     return Response.json(result);
   } catch (error) {
