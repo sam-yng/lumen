@@ -90,7 +90,7 @@ chips rather than today's silent plain text.
 - Semantic entailment / NLI-style "does the source really support the claim"
   scoring — existence + optional snippet overlap only.
 - Retrieval changes (that's
-  [retrieval-quality-reranking.md](../../queued/v4/retrieval-quality-reranking.md)).
+  [retrieval-quality-reranking.md](retrieval-quality-reranking.md)).
 - Streaming-token-level validation; validation runs on the completed answer.
 - Any paid or non-BYO-key LLM call.
 

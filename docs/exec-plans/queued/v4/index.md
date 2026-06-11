@@ -58,8 +58,8 @@ Implement as separate plans so each can ship and be reviewed on its own:
    "to v4 once the citation UX shows where validation is actually needed" —
    it shipped, so this is due), with an `answer_question` service shape decided
    by spike.
-3. [retrieval-quality-reranking.md](retrieval-quality-reranking.md) —
-   **milestone 3**: measurement-first — build a small local retrieval-quality
+3. [retrieval-quality-reranking.md](../../completed/v4/retrieval-quality-reranking.md) —
+   **milestone 3 (completed)**: measurement-first — build a small local retrieval-quality
    harness, then add a local reranker **only if** the measurements show hybrid
    ranking misses sources. A recorded "no reranker needed" is a valid outcome.
 4. [streaming-diarization.md](streaming-diarization.md) — **milestone 4**:
