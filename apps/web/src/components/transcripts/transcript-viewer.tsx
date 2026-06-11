@@ -18,6 +18,10 @@ import {
   retryRecording,
   transcriptQueryKey,
 } from "@/components/library/library-api";
+import {
+  resolveDeepLinkMs,
+  type TranscriptDeepLink,
+} from "@/components/transcripts/transcript-deep-link";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/server/db/database.types";
 
@@ -47,27 +51,6 @@ function activeSegmentIndex(segments: SegmentRow[], currentTime: number) {
     if (segments[index]?.start_ms <= currentMs) active = index;
   }
   return active;
-}
-
-export type TranscriptDeepLink = {
-  segmentId: string | null;
-  tMs: number | null;
-};
-
-/**
- * Resolve a citation deep link to the millisecond position to open at.
- * A known segment id wins (its exact start); otherwise the raw timestamp;
- * otherwise null — open at the top, nothing to seek.
- */
-export function resolveDeepLinkMs(
-  deepLink: TranscriptDeepLink,
-  segments: Pick<SegmentRow, "id" | "start_ms">[],
-): number | null {
-  if (deepLink.segmentId !== null) {
-    const segment = segments.find((row) => row.id === deepLink.segmentId);
-    if (segment) return segment.start_ms;
-  }
-  return deepLink.tMs;
 }
 
 function StatusState({
@@ -168,10 +151,10 @@ export function TranscriptViewer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const segmentListRef = useRef<HTMLOListElement | null>(null);
   const segmentRefs = useRef(new Map<string, HTMLButtonElement>());
-  const deepLinkApplied = useRef(false);
-  // Seek target waiting for the audio element to have metadata.
-  const pendingSeekMs = useRef<number | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
+  // Audio seek (in seconds) waiting for the media element to have metadata.
+  const pendingSeekSec = useRef<number | null>(null);
+  // Time the media has actually reported (handlers only); null until then.
+  const [mediaTimeSec, setMediaTimeSec] = useState<number | null>(null);
   const [duration, setDuration] = useState(recording.duration_sec ?? 0);
   const [playing, setPlaying] = useState(false);
   const [rateIndex, setRateIndex] = useState(0);
@@ -188,7 +171,20 @@ export function TranscriptViewer({
       });
     },
   });
-  const segments = data?.segments ?? [];
+  // Stable identity so the memos/effects below only re-run when the
+  // transcript actually changes, not on every render.
+  const segments = useMemo(() => data?.segments ?? [], [data?.segments]);
+
+  // A citation deep link resolves to a target position; until the media
+  // element reports its own time, the displayed time (highlight, playhead,
+  // clock) is derived from it — nothing is copied into state.
+  const deepLinkMs = useMemo(
+    () => (deepLink ? resolveDeepLinkMs(deepLink, segments) : null),
+    [deepLink, segments],
+  );
+  const currentTime =
+    mediaTimeSec ?? (deepLinkMs !== null ? deepLinkMs / 1000 : 0);
+
   const activeIndex = useMemo(
     () => activeSegmentIndex(segments, currentTime),
     [segments, currentTime],
@@ -196,22 +192,18 @@ export function TranscriptViewer({
   const progress = duration > 0 ? currentTime / duration : 0;
   const rate = RATES[rateIndex] ?? 1;
 
-  // Apply a citation deep link once, as soon as segments exist: setting
-  // currentTime drives the existing active-segment highlight + scroll effect,
-  // and the audio seek lands immediately or on loadedmetadata.
+  // Push the deep-link position into the media element (an external system):
+  // directly when it already has metadata (a new citation clicked into an
+  // already-open transcript), otherwise queued for onLoadedMetadata.
   useEffect(() => {
-    if (deepLinkApplied.current || !deepLink || segments.length === 0) return;
-    deepLinkApplied.current = true;
-    const targetMs = resolveDeepLinkMs(deepLink, segments);
-    if (targetMs === null) return;
-    setCurrentTime(targetMs / 1000);
+    if (deepLinkMs === null) return;
     const audio = audioRef.current;
     if (audio && audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      audio.currentTime = targetMs / 1000;
+      audio.currentTime = deepLinkMs / 1000;
     } else {
-      pendingSeekMs.current = targetMs;
+      pendingSeekSec.current = deepLinkMs / 1000;
     }
-  }, [deepLink, segments]);
+  }, [deepLinkMs]);
 
   useEffect(() => {
     const activeSegment = activeIndex >= 0 ? segments[activeIndex] : null;
@@ -248,7 +240,7 @@ export function TranscriptViewer({
     const audio = audioRef.current;
     if (!audio) return;
     audio.currentTime = Math.max(0, Math.min(seconds, duration || seconds));
-    setCurrentTime(audio.currentTime);
+    setMediaTimeSec(audio.currentTime);
   }
 
   return (
@@ -362,10 +354,9 @@ export function TranscriptViewer({
                 src={`/api/library/files/${data.file.id}`}
                 onLoadedMetadata={(event) => {
                   setDuration(event.currentTarget.duration);
-                  if (pendingSeekMs.current !== null) {
-                    event.currentTarget.currentTime =
-                      pendingSeekMs.current / 1000;
-                    pendingSeekMs.current = null;
+                  if (pendingSeekSec.current !== null) {
+                    event.currentTarget.currentTime = pendingSeekSec.current;
+                    pendingSeekSec.current = null;
                   }
                 }}
                 onPause={() => setPlaying(false)}
@@ -374,7 +365,7 @@ export function TranscriptViewer({
                   if (audioRef.current) audioRef.current.playbackRate = rate;
                 }}
                 onTimeUpdate={(event) =>
-                  setCurrentTime(event.currentTarget.currentTime)
+                  setMediaTimeSec(event.currentTarget.currentTime)
                 }
               />
             </div>

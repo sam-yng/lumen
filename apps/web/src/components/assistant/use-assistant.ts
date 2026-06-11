@@ -6,13 +6,19 @@ import type { GroundedSource } from "@/server/services/grounded-retrieval";
 // Turns are plain text. Prior assistant turns are re-sent as strings, so the
 // model sees a coherent transcript but not earlier tool_use/tool_result blocks
 // — a deliberate v2 tradeoff (no tool context carried across turns).
-// Assistant turns also carry the citation sources from their run; sources are
-// a display concern only and are stripped before turns go back to the API.
+// Assistant turns also carry the citation sources from their run; id and
+// sources are display concerns only and are stripped before turns go back to
+// the API.
 export type ChatTurn = {
+  id: string;
   role: "user" | "assistant";
   content: string;
   sources?: GroundedSource[];
 };
+
+export function newTurnId(): string {
+  return crypto.randomUUID();
+}
 export type AssistantResponse =
   | {
       state: "ok";

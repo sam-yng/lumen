@@ -2,66 +2,13 @@
 
 import { FileText, Mic } from "lucide-react";
 import Link from "next/link";
-import type {
-  GroundedSource,
-  GroundedTranscriptSource,
-} from "@/server/services/grounded-retrieval";
-
-export type CitationPart =
-  | { kind: "text"; text: string }
-  | { kind: "citation"; label: string };
-
-const CITATION_PATTERN = /\[(S\d+)\]/g;
-
-/** Split assistant text into plain runs and [S#] citation labels. */
-export function splitCitations(text: string): CitationPart[] {
-  const parts: CitationPart[] = [];
-  let lastIndex = 0;
-  for (const match of text.matchAll(CITATION_PATTERN)) {
-    if (match.index > lastIndex) {
-      parts.push({ kind: "text", text: text.slice(lastIndex, match.index) });
-    }
-    parts.push({ kind: "citation", label: match[1] ?? "" });
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < text.length) {
-    parts.push({ kind: "text", text: text.slice(lastIndex) });
-  }
-  return parts;
-}
-
-function isTranscriptSource(
-  source: GroundedSource["source"],
-): source is GroundedTranscriptSource {
-  return "transcriptId" in source;
-}
-
-/**
- * Where a citation clicks through to.
- * - Documents open the note.
- * - Transcripts deep-link the viewer: ?segment=<id> when the cited segment is
- *   known, else ?t=<startMs> for a timestamp-only span, else the plain
- *   transcript page (null timing opens at the top).
- */
-export function citationHref(source: GroundedSource): string {
-  if (!isTranscriptSource(source.source)) {
-    return `/library/notes/${source.source.documentId}`;
-  }
-  const transcript = source.source;
-  const base = `/library/transcripts/${transcript.recordingId}`;
-  if (transcript.segmentId !== null) {
-    return `${base}?segment=${transcript.segmentId}`;
-  }
-  if (transcript.startMs !== null) return `${base}?t=${transcript.startMs}`;
-  return base;
-}
-
-function formatTime(milliseconds: number) {
-  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
+import {
+  citationHref,
+  formatTime,
+  isTranscriptSource,
+  splitCitations,
+} from "@/components/assistant/citation-format";
+import type { GroundedSource } from "@/server/services/grounded-retrieval";
 
 /** Assistant text with known [S#] labels rendered as clickable chips. */
 export function CitedText({
@@ -74,21 +21,18 @@ export function CitedText({
   const byLabel = new Map(sources.map((source) => [source.citationId, source]));
   return (
     <p>
-      {splitCitations(text).map((part, index) => {
+      {splitCitations(text).map((part) => {
         if (part.kind === "text") {
-          // biome-ignore lint/suspicious/noArrayIndexKey: static split of one string
-          return <span key={index}>{part.text}</span>;
+          return <span key={part.start}>{part.text}</span>;
         }
         const source = byLabel.get(part.label);
         if (!source) {
           // Unknown label (model invented it, or sources were lost): plain text.
-          // biome-ignore lint/suspicious/noArrayIndexKey: static split of one string
-          return <span key={index}>[{part.label}]</span>;
+          return <span key={part.start}>[{part.label}]</span>;
         }
         return (
           <Link
-            // biome-ignore lint/suspicious/noArrayIndexKey: static split of one string
-            key={index}
+            key={part.start}
             href={citationHref(source)}
             title={source.title}
             className="mx-0.5 inline-flex items-center rounded bg-[var(--accent-soft)] px-1 align-baseline font-mono text-[11px] text-[var(--accent-text)] hover:underline"

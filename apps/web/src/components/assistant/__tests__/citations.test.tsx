@@ -1,11 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  CitedText,
   citationHref,
-  SourceCards,
   splitCitations,
-} from "@/components/assistant/citations";
+} from "@/components/assistant/citation-format";
+import { CitedText, SourceCards } from "@/components/assistant/citations";
 import type { GroundedSource } from "@/server/services/grounded-retrieval";
 
 function documentSource(over: Partial<GroundedSource> = {}): GroundedSource {
@@ -45,27 +44,27 @@ function transcriptSource(
 }
 
 describe("splitCitations", () => {
-  it("splits text around [S#] labels, keeping duplicates", () => {
+  it("splits text around [S#] labels, keeping duplicates and offsets", () => {
     expect(splitCitations("Cells [S1] divide [S2] and grow [S1].")).toEqual([
-      { kind: "text", text: "Cells " },
-      { kind: "citation", label: "S1" },
-      { kind: "text", text: " divide " },
-      { kind: "citation", label: "S2" },
-      { kind: "text", text: " and grow " },
-      { kind: "citation", label: "S1" },
-      { kind: "text", text: "." },
+      { kind: "text", text: "Cells ", start: 0 },
+      { kind: "citation", label: "S1", start: 6 },
+      { kind: "text", text: " divide ", start: 10 },
+      { kind: "citation", label: "S2", start: 18 },
+      { kind: "text", text: " and grow ", start: 22 },
+      { kind: "citation", label: "S1", start: 32 },
+      { kind: "text", text: ".", start: 36 },
     ]);
   });
 
   it("returns plain text untouched", () => {
     expect(splitCitations("No citations here.")).toEqual([
-      { kind: "text", text: "No citations here." },
+      { kind: "text", text: "No citations here.", start: 0 },
     ]);
   });
 
   it("ignores non-citation brackets", () => {
     expect(splitCitations("[note] [S] [s1] [1]")).toEqual([
-      { kind: "text", text: "[note] [S] [s1] [1]" },
+      { kind: "text", text: "[note] [S] [s1] [1]", start: 0 },
     ]);
   });
 });

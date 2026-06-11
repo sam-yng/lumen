@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CitedText, SourceCards } from "@/components/assistant/citations";
 import {
   type ChatTurn,
+  newTurnId,
   useAssistant,
 } from "@/components/assistant/use-assistant";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,10 @@ export function AssistantPanel() {
     if (assistant.isPending) return;
     const text = draft.trim();
     if (text.length === 0) return;
-    const next: ChatTurn[] = [...turns, { role: "user", content: text }];
+    const next: ChatTurn[] = [
+      ...turns,
+      { id: newTurnId(), role: "user", content: text },
+    ];
     setTurns(next);
     setDraft("");
     assistant.mutate(next, {
@@ -30,6 +34,7 @@ export function AssistantPanel() {
           setTurns((current) => [
             ...current,
             {
+              id: newTurnId(),
               role: "assistant",
               content: response.message,
               sources: response.sources,
@@ -55,15 +60,13 @@ export function AssistantPanel() {
             Ask about your notes, transcripts, or documents.
           </p>
         ) : (
-          turns.map((turn, index) =>
+          turns.map((turn) =>
             turn.role === "user" ? (
-              // biome-ignore lint/suspicious/noArrayIndexKey: append-only chat list
-              <p key={index} className="font-medium">
+              <p key={turn.id} className="font-medium">
                 {turn.content}
               </p>
             ) : (
-              // biome-ignore lint/suspicious/noArrayIndexKey: append-only chat list
-              <div key={index}>
+              <div key={turn.id}>
                 <CitedText text={turn.content} sources={turn.sources ?? []} />
                 <SourceCards sources={turn.sources ?? []} />
               </div>

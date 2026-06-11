@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   resolveDeepLinkMs,
   type TranscriptDeepLink,
-  TranscriptViewer,
-} from "@/components/transcripts/transcript-viewer";
+} from "@/components/transcripts/transcript-deep-link";
+import { TranscriptViewer } from "@/components/transcripts/transcript-viewer";
 import type { Tables } from "@/server/db/database.types";
 
 const segments = [
@@ -67,19 +67,23 @@ const detail = {
   })),
 };
 
-function renderViewer(deepLink?: TranscriptDeepLink) {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(
+function viewerTree(client: QueryClient, deepLink?: TranscriptDeepLink) {
+  return (
     <QueryClientProvider client={client}>
       <TranscriptViewer
         recording={recording}
         deepLink={deepLink}
         onClose={() => {}}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+}
+
+function renderViewer(deepLink?: TranscriptDeepLink) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return { client, ...render(viewerTree(client, deepLink)) };
 }
 
 describe("TranscriptViewer deep links", () => {
@@ -102,6 +106,22 @@ describe("TranscriptViewer deep links", () => {
     expect(Element.prototype.scrollTo).toHaveBeenCalled();
     // currentTime jumped to the segment start: 1:05 of 2:00.
     expect(screen.getByText("1:05 / 2:00")).toBeInTheDocument();
+  });
+
+  it("re-seeks when a new citation targets the already-open transcript", async () => {
+    const { client, rerender } = renderViewer({
+      segmentId: "seg-2",
+      tMs: null,
+    });
+    await waitFor(() =>
+      expect(screen.getByText("1:05 / 2:00")).toBeInTheDocument(),
+    );
+    rerender(viewerTree(client, { segmentId: "seg-3", tMs: null }));
+    await waitFor(() =>
+      expect(screen.getByText("1:30 / 2:00")).toBeInTheDocument(),
+    );
+    const target = screen.getByRole("button", { name: /segment seg-3 text/ });
+    expect(target.className).toContain("border-l-primary");
   });
 
   it("seeks by timestamp via ?t when no segment was resolved", async () => {
