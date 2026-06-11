@@ -1,6 +1,7 @@
 # Streaming Diarization Plan (v4 Milestone 4)
 
-> **Status:** queued
+> **Status:** active — spike resolved 2026-06-11 (see Decision), build in progress.
+> Promoted `queued/v4/ → active/v4/` 2026-06-11.
 > **Version:** v4
 > **Area:** live transcription path, worker
 > **Created:** 2026-06-11
@@ -46,6 +47,58 @@ Evaluation criteria: label quality vs the batch path on the same audio, time
 to labels after session end, browser resource cost (option 2), and how much
 new code the live path takes on. Record the decision and rejected
 alternatives here, then build.
+
+### Decision (2026-06-11): post-finalize batch labeling (option 1)
+
+Code spike over the shipped v3 seams resolved every open question — and
+surfaced one constraint the scoping missed:
+
+- **`finalizeLiveSession` uploads the full session audio** to the file's
+  `storage_key` (`services/live-sessions.ts`), so the labeling job can reuse
+  the exact `{ userId, recordingId, fileId, storageKey }` payload shape and
+  download path the batch transcription job uses.
+- **The audio is always webm, and sherpa-onnx reads WAV only.** Live capture
+  records `audio/webm` (MediaRecorder), and the v3 m3 provider's accepted
+  input constraint is WAV (`sherpa.readWave`; non-WAV degrades to null).
+  Without a conversion step, option 1 would never label anything. ffmpeg is
+  already a hard host/runtime dependency of the worker (`nodejs-whisper`
+  converts non-WAV uploads with it; the prod worker Dockerfile installs it),
+  so the labeling job converts to 16 kHz mono WAV via ffmpeg — **zero new
+  host dependencies**, degrade-never-fail wraps the conversion.
+- **`speaker` is not embedded — verified.** `chunkTranscript`
+  (`services/semantic-chunking.ts`, called from `semantic-index.ts`) consumes
+  only segment text + times. Updating `speaker` post-finalize requires no
+  re-chunking or re-embedding, and the finalize path doesn't index live
+  segments' speaker either way.
+- **User-scoped worker updates resolve transitively.** `transcript_segments`
+  has no `user_id` column; the job loads the transcript by `recording_id` +
+  `user_id` (payload `userId` comes from the authenticated enqueue path, as
+  with transcription jobs) and only then updates segments by `transcript_id`.
+  Same pattern as existing worker reads; documented in `docs/SECURITY.md`.
+- **No race with finalize.** `writeRecordingTranscript` deletes and reinserts
+  segment rows during finalize; the labeling job is enqueued only after
+  finalize succeeds and reads fresh segment rows at job time.
+- **Label quality vs batch:** identical by construction — same provider, same
+  models, same overlap-merge (`speaker-merge.ts`), same audio (modulo the
+  webm→WAV decode). Time-to-labels is one queue poll (~2 s) plus diarization
+  runtime (~¼× realtime on the v3 spike hardware).
+
+**Rejected — option 2 (true in-browser live labeling):** not spiked, and
+recorded honestly as *not measured* rather than "infeasible". Assessed as not
+worth the cost while option 1 closes the entire user-visible gap: it would add
+a second in-browser model download (pyannote segmentation + ERes2Net speaker
+embedding, ~75 MB combined) beside live Whisper, contend for CPU/WebGPU with
+ASR mid-session, and require online (incremental, label-stable) clustering of
+speaker embeddings — a genuinely hard problem the batch path sidesteps
+entirely. Revisit only if post-finalize labels prove insufficient in use.
+
+**Build shape:** new pg-boss queue `label-speakers` handled by the existing
+worker process; the finalize route enqueues after `finalizeLiveSession`
+succeeds, gated by `DIARIZATION_ENABLED` (enqueue failure logs and never
+fails the finalize response). The optional "labeling speakers…" UI state is
+**omitted deliberately**: it would need job-state tracking (schema or
+polling surface) this milestone doesn't justify — labels appear on the next
+transcript view.
 
 ## Scope
 
