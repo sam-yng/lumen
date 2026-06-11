@@ -34,7 +34,18 @@ same rule when it gains content.
 
 ## Queued
 
-- _(nothing queued)_
+- **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
+  - [index.md](exec-plans/queued/v4/index.md)
+  - [document-anchors.md](exec-plans/queued/v4/document-anchors.md) — m1,
+    paragraph anchors for document citations
+  - [grounded-answers.md](exec-plans/queued/v4/grounded-answers.md) — m2,
+    server-side citation validation
+  - [retrieval-quality-reranking.md](exec-plans/queued/v4/retrieval-quality-reranking.md)
+    — m3, measurement-first reranking decision
+  - [streaming-diarization.md](exec-plans/queued/v4/streaming-diarization.md)
+    — m4, speaker labels on the live path
+  - [stale-live-sessions.md](exec-plans/queued/v4/stale-live-sessions.md) — m5,
+    sweep recordings stranded in `live`
 
 ## Active
 
