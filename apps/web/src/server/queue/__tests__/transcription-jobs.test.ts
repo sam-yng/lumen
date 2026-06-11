@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  enqueueSpeakerLabelJob,
   enqueueTranscriptionJob,
+  SPEAKER_LABEL_QUEUE_NAME,
   TRANSCRIPTION_QUEUE_NAME,
   type TranscriptionJobPayload,
   type TranscriptionJobQueue,
@@ -57,5 +59,76 @@ describe("transcription jobs", () => {
     await expect(enqueueTranscriptionJob(boss, validPayload)).rejects.toThrow(
       "Failed to enqueue transcription job.",
     );
+  });
+});
+
+describe("speaker label jobs", () => {
+  it("sends a valid payload to the label-speakers queue when enabled", async () => {
+    const send = vi
+      .fn<TranscriptionJobQueue["send"]>()
+      .mockResolvedValue("job-2");
+    const getBoss = vi.fn(async () => ({ send }));
+
+    await expect(
+      enqueueSpeakerLabelJob({
+        enabled: true,
+        getBoss,
+        payload: validPayload,
+      }),
+    ).resolves.toBe("job-2");
+
+    expect(send).toHaveBeenCalledExactlyOnceWith(
+      SPEAKER_LABEL_QUEUE_NAME,
+      validPayload,
+      {
+        expireInSeconds: 60 * 60,
+        retryBackoff: true,
+        retryDelay: 30,
+        retryLimit: 3,
+      },
+    );
+  });
+
+  it("does not enqueue or touch the queue when diarization is disabled", async () => {
+    const getBoss = vi.fn();
+
+    await expect(
+      enqueueSpeakerLabelJob({
+        enabled: false,
+        getBoss,
+        payload: validPayload,
+      }),
+    ).resolves.toBeNull();
+
+    expect(getBoss).not.toHaveBeenCalled();
+  });
+
+  it("degrades to null instead of throwing when enqueueing fails", async () => {
+    const send = vi
+      .fn<TranscriptionJobQueue["send"]>()
+      .mockRejectedValue(new Error("queue unavailable"));
+    const getBoss = vi.fn(async () => ({ send }));
+
+    await expect(
+      enqueueSpeakerLabelJob({
+        enabled: true,
+        getBoss,
+        payload: validPayload,
+      }),
+    ).resolves.toBeNull();
+  });
+
+  it("degrades to null on an invalid payload", async () => {
+    const getBoss = vi.fn(async () => ({
+      send: vi.fn<TranscriptionJobQueue["send"]>(),
+    }));
+
+    await expect(
+      enqueueSpeakerLabelJob({
+        enabled: true,
+        getBoss,
+        payload: { ...validPayload, fileId: "not-a-uuid" },
+      }),
+    ).resolves.toBeNull();
   });
 });

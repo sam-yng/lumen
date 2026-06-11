@@ -5,6 +5,8 @@ import type { Job } from "pg-boss";
 import { getServerEnv } from "@/server/config/env";
 import {
   createTranscriptionBoss,
+  SPEAKER_LABEL_QUEUE_NAME,
+  type SpeakerLabelJobPayload,
   TRANSCRIPTION_QUEUE_NAME,
   type TranscriptionJobPayload,
   transcriptionJobPayloadSchema,
@@ -18,6 +20,7 @@ import {
 import { writeRecordingTranscript } from "@/server/services/transcripts";
 import type { DiarizationProvider, SpeakerTurn } from "./diarization-provider";
 import { SherpaOnnxDiarizationProvider } from "./sherpa-diarization-provider";
+import { processSpeakerLabelJob } from "./speaker-label-worker";
 import { assignSpeakers } from "./speaker-merge";
 import { createWorkerSupabase } from "./supabase";
 import type { TranscriptionProvider } from "./transcription-provider";
@@ -246,6 +249,22 @@ export async function startTranscriptionWorker() {
         supabase: supabase as unknown as WorkerSupabaseClient,
         storage,
         provider,
+        diarization,
+        tempDir: env.TRANSCRIPTION_TMP_DIR,
+      });
+    },
+  );
+
+  // Post-finalize speaker labeling for live sessions (v4 m4).
+  await boss.work<SpeakerLabelJobPayload & { bucket?: string }>(
+    SPEAKER_LABEL_QUEUE_NAME,
+    { batchSize: 1, pollingIntervalSeconds: 2 },
+    async ([job]) => {
+      if (!job) return undefined;
+      return processSpeakerLabelJob(job, {
+        bucket: env.TRANSCRIPTION_STORAGE_BUCKET,
+        supabase: supabase as unknown as WorkerSupabaseClient,
+        storage,
         diarization,
         tempDir: env.TRANSCRIPTION_TMP_DIR,
       });
