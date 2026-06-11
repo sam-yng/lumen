@@ -1,11 +1,15 @@
 # Citation Experience Plan (v3 Milestone 4)
 
-> **Status:** active — promoted `queued/v3/ → active/v3/` 2026-06-11;
-> implementation on `feat/v3-citation-experience`.
+> **Status:** completed — built on `feat/v3-citation-experience`, accepted on
+> human review 2026-06-11; promoted `active/v3/ → completed/v3/` in the same
+> change. The Claude-key manual click-through is carried by the consolidated
+> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> (launch blocker, not unfinished build work).
 > **Version:** v3
 > **Area:** assistant UI, transcript viewer, citations
 > **Created:** 2026-06-10
-> **Depends on:** [`completed/v3/cited-retrieval.md`](../../completed/v3/cited-retrieval.md)
+> **Completed:** 2026-06-11
+> **Depends on:** [`completed/v3/cited-retrieval.md`](cited-retrieval.md)
 > (m1 — supplies `GroundedSource[]` and `[S#]` labels). Independent of m2/m3;
 > may run in parallel with them.
 > **Supersedes:** none
@@ -106,5 +110,6 @@ timestamp. Document citations open the note.
   `components/assistant/citations.tsx`, deep-link props through
   `transcript-route.tsx` → `transcript-viewer.tsx`. MCP wire contract
   unchanged; `/api/assistant` response gains `sources` (additive).
-- Status: build complete, pending milestone review (working rule #4). The
-  Claude-key manual click-through lives in the consolidated gate above.
+- Status: build accepted on human review 2026-06-11 (working rule #4); plan
+  completed. The Claude-key manual click-through lives in the consolidated
+  gate above.

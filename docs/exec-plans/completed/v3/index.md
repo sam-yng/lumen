@@ -48,7 +48,8 @@ semantic-search + MCP + assistant seams without reshaping them.
    so both external MCP hosts and the in-app assistant inherit citations.
 2. _Future milestones — scoped 2026-06-10:_ the remaining v3 work (streaming
    transcription, diarization, clickable citation experience) is scoped as a
-   fresh group in [`queued/v3/index.md`](../../queued/v3/index.md); the other
+   fresh group in [`index-m2-plus.md`](index-m2-plus.md) (completed
+   2026-06-11; lived at `queued/v3/index.md` while open); the other
    candidates from the design spec's out-of-scope list (`answer_question` with
    citation validation, document text offsets, reranking) are explicitly
    deferred beyond v3 there.
@@ -70,8 +71,8 @@ semantic-search + MCP + assistant seams without reshaping them.
 Completed 2026-06-09: m1 was the only scoped v3 milestone and its build is
 accepted, so this group moved `active/v3/ → completed/v3/` with
 [`PLANS.md`](../../../PLANS.md) updated in the same change. The remaining v3
-milestones (m2+) were scoped 2026-06-10 as a fresh group at
-[`queued/v3/index.md`](../../queued/v3/index.md) rather than by reopening this
+milestones (m2+) were scoped 2026-06-10 as a fresh group, now completed at
+[`index-m2-plus.md`](index-m2-plus.md), rather than by reopening this
 group. The one carried-forward item — the
 manual assistant happy-path — lives in the consolidated
 [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md),

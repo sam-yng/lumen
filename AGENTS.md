@@ -100,7 +100,7 @@ turbo.json               workspace task pipeline
   degrade-never-fail (errors → null speakers, job still `done`). Diarization
   runs before transcription because Whisper deletes its WAV input. Live path
   never labels speakers.
-- Built in v3 m4 (2026-06-11, pending milestone review): citation experience —
+- Shipped in v3 m4 (2026-06-11): citation experience —
   assistant turns carry `GroundedSource[]` (`AssistantResult.sources`), `[S#]`
   renders as clickable chips + source cards (`components/assistant/citations.tsx`),
   and the transcript viewer deep-links via `?segment=<id>` / `?t=<ms>`

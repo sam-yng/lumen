@@ -52,7 +52,7 @@ and point at this gate for the carried-forward verification.
 
 ### v3 m4 — citation experience happy-path (added 2026-06-11)
 
-See [`active/v3/citation-experience.md`](../../v3/citation-experience.md);
+See [`completed/v3/citation-experience.md`](../../../completed/v3/citation-experience.md);
 build verified via fixture-driven tests, only this browser pass is key-gated.
 
 - [ ] Ask a question answered by a real transcript → the answer renders `[S#]`
