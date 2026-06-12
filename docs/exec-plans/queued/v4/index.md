@@ -67,10 +67,11 @@ Implement as separate plans so each can ship and be reviewed on its own:
    resolved 2026-06-11: post-finalize labeling reusing the batch
    `DiarizationProvider` on the uploaded session audio (in-browser labeling
    recorded as not-measured, rejected on cost).
-5. [stale-live-sessions.md](stale-live-sessions.md) — **milestone 5** (small,
-   may be pulled forward to any point): sweep recordings stranded in `live`,
-   finalizing from the already-stored segments where possible. Clears the
-   tech-debt row.
+5. [stale-live-sessions.md](../../active/v4/stale-live-sessions.md) —
+   **milestone 5 (active)**: sweep recordings stranded in `live`, finalizing
+   from the already-stored segments where possible. Clears the tech-debt
+   row. Spike resolved 2026-06-12: worker cron sweep + segment `created_at`
+   heartbeat.
 
 ## Sequencing
 

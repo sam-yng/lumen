@@ -7,6 +7,7 @@ import {
   createTranscriptionBoss,
   SPEAKER_LABEL_QUEUE_NAME,
   type SpeakerLabelJobPayload,
+  STALE_LIVE_SWEEP_QUEUE_NAME,
   TRANSCRIPTION_QUEUE_NAME,
   type TranscriptionJobPayload,
   transcriptionJobPayloadSchema,
@@ -22,6 +23,7 @@ import type { DiarizationProvider, SpeakerTurn } from "./diarization-provider";
 import { SherpaOnnxDiarizationProvider } from "./sherpa-diarization-provider";
 import { processSpeakerLabelJob } from "./speaker-label-worker";
 import { assignSpeakers } from "./speaker-merge";
+import { sweepStaleLiveSessions } from "./stale-live-sweeper";
 import { createWorkerSupabase } from "./supabase";
 import type { TranscriptionProvider } from "./transcription-provider";
 import { WhisperTranscriptionProvider } from "./whisper-provider";
@@ -270,6 +272,22 @@ export async function startTranscriptionWorker() {
       });
     },
   );
+
+  // Stale live-session sweep (v4 m5): cron-scheduled in this process so the
+  // queue owner also owns lifecycle hygiene. The threshold is env-tunable;
+  // the cadence is fixed well under it.
+  await boss.work(
+    STALE_LIVE_SWEEP_QUEUE_NAME,
+    { batchSize: 1, pollingIntervalSeconds: 60 },
+    async ([job]) => {
+      if (!job) return undefined;
+      return sweepStaleLiveSessions({
+        supabase: supabase as unknown as WorkerSupabaseClient,
+        staleAfterMinutes: env.LIVE_SESSION_STALE_MINUTES,
+      });
+    },
+  );
+  await boss.schedule(STALE_LIVE_SWEEP_QUEUE_NAME, "*/15 * * * *");
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {

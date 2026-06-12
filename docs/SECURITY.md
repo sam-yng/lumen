@@ -75,6 +75,21 @@ V4 m4 speaker-labeling notes:
 - The job never touches `recordings`: labeling failure cannot change a
   finalized recording's status (degrade-never-fail).
 
+V4 m5 stale-live-sweep notes:
+
+- The stale-live sweep (`worker/stale-live-sweeper.ts`) is the one worker path
+  with **no authenticated enqueue payload** — it runs on a cron schedule, so
+  there is no user-provided `userId` at all. Its single intentionally
+  cross-user query is the `recordings` scan filtered to `status = 'live'`;
+  every subsequent read and write derives `user_id` from the scanned row
+  itself and passes it explicitly (`eq("user_id", recording.user_id)`,
+  including through `writeRecordingTranscript`, which scopes everything by
+  the per-user context it is given). Segment reads use the transcript id from
+  that user-scoped transcript load, mirroring the labeling job.
+- Disposition writes are confined to the scanned row's owner: finalize goes
+  through the standard user-scoped transcript write; expiry updates only
+  `recordings` rows matched on both `id` and `user_id`.
+
 V3 m2 live-session notes:
 
 - Live capture adds no service-role surface. The live-session route handlers

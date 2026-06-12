@@ -283,93 +283,107 @@ export function TranscriptViewer({
         </div>
       ) : (
         <>
-          <div className="sticky top-0 z-10 border-b border-[var(--border-soft)] bg-[var(--surface)] p-3">
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                size="icon-lg"
-                className="size-11 rounded-full"
-                title={playing ? "Pause" : "Play"}
-                onClick={() => {
-                  const audio = audioRef.current;
-                  if (!audio) return;
-                  if (audio.paused) void audio.play();
-                  else audio.pause();
-                }}
-              >
-                <span className="sr-only">{playing ? "Pause" : "Play"}</span>
-                {playing ? (
-                  <Pause className="size-4" />
-                ) : (
-                  <Play className="size-4" />
-                )}
-              </Button>
-              <button
-                type="button"
-                className="relative flex h-14 min-w-0 flex-1 items-center gap-px overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-2"
-                aria-label="Seek audio"
-                onClick={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const ratio = (event.clientX - rect.left) / rect.width;
-                  seek(ratio * duration);
-                }}
-              >
-                {WAVEFORM_BARS.map((bar, index) => {
-                  const filled = index / WAVEFORM_BARS.length <= progress;
-                  return (
-                    <span
-                      key={bar.id}
-                      className={`flex-1 rounded-full ${filled ? "bg-primary" : "bg-[var(--border-strong)]"}`}
-                      style={{ height: `${bar.height}%` }}
-                    />
-                  );
-                })}
-                <span
-                  className="absolute top-1 bottom-1 w-px rounded-full bg-primary shadow-[0_0_18px_var(--accent-glow)]"
-                  style={{
-                    left: `${Math.max(0, Math.min(100, progress * 100))}%`,
-                  }}
-                />
-              </button>
-              <p className="shrink-0 text-right font-mono text-[11.5px] text-[var(--text-3)] sm:w-[92px]">
-                {formatTime(currentTime * 1000)} / {formatTime(duration * 1000)}
+          {data.file.size_bytes === 0 ? (
+            // A live session swept after interruption: the transcript was
+            // finalized from stored segments but no audio object was ever
+            // uploaded, so there is nothing to play. The segment list below
+            // still renders (deep links highlight; seeks no-op).
+            <div className="border-b border-[var(--border-soft)] p-3">
+              <p className="text-center font-mono text-[11.5px] text-[var(--text-3)]">
+                No audio — this session was interrupted and recovered from its
+                live transcript.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const next = (rateIndex + 1) % RATES.length;
-                  setRateIndex(next);
-                  if (audioRef.current) {
-                    audioRef.current.playbackRate = RATES[next] ?? 1;
-                  }
-                }}
-              >
-                {rate}x
-              </Button>
-              {/* biome-ignore lint/a11y/useMediaCaption: Transcript segments are rendered directly below as the synchronized caption text. */}
-              <audio
-                ref={audioRef}
-                src={`/api/library/files/${data.file.id}`}
-                onLoadedMetadata={(event) => {
-                  setDuration(event.currentTarget.duration);
-                  if (pendingSeekSec.current !== null) {
-                    event.currentTarget.currentTime = pendingSeekSec.current;
-                    pendingSeekSec.current = null;
-                  }
-                }}
-                onPause={() => setPlaying(false)}
-                onPlay={() => {
-                  setPlaying(true);
-                  if (audioRef.current) audioRef.current.playbackRate = rate;
-                }}
-                onTimeUpdate={(event) =>
-                  setMediaTimeSec(event.currentTarget.currentTime)
-                }
-              />
             </div>
-          </div>
+          ) : (
+            <div className="sticky top-0 z-10 border-b border-[var(--border-soft)] bg-[var(--surface)] p-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  title={playing ? "Pause" : "Play"}
+                  onClick={() => {
+                    const audio = audioRef.current;
+                    if (!audio) return;
+                    if (audio.paused) void audio.play();
+                    else audio.pause();
+                  }}
+                >
+                  <span className="sr-only">{playing ? "Pause" : "Play"}</span>
+                  {playing ? (
+                    <Pause className="size-4" />
+                  ) : (
+                    <Play className="size-4" />
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  className="relative flex h-14 min-w-0 flex-1 items-center gap-px overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-2"
+                  aria-label="Seek audio"
+                  onClick={(event) => {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const ratio = (event.clientX - rect.left) / rect.width;
+                    seek(ratio * duration);
+                  }}
+                >
+                  {WAVEFORM_BARS.map((bar, index) => {
+                    const filled = index / WAVEFORM_BARS.length <= progress;
+                    return (
+                      <span
+                        key={bar.id}
+                        className={`flex-1 rounded-full ${filled ? "bg-primary" : "bg-[var(--border-strong)]"}`}
+                        style={{ height: `${bar.height}%` }}
+                      />
+                    );
+                  })}
+                  <span
+                    className="absolute top-1 bottom-1 w-px rounded-full bg-primary shadow-[0_0_18px_var(--accent-glow)]"
+                    style={{
+                      left: `${Math.max(0, Math.min(100, progress * 100))}%`,
+                    }}
+                  />
+                </button>
+                <p className="shrink-0 text-right font-mono text-[11.5px] text-[var(--text-3)] sm:w-[92px]">
+                  {formatTime(currentTime * 1000)} /{" "}
+                  {formatTime(duration * 1000)}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const next = (rateIndex + 1) % RATES.length;
+                    setRateIndex(next);
+                    if (audioRef.current) {
+                      audioRef.current.playbackRate = RATES[next] ?? 1;
+                    }
+                  }}
+                >
+                  {rate}x
+                </Button>
+                {/* biome-ignore lint/a11y/useMediaCaption: Transcript segments are rendered directly below as the synchronized caption text. */}
+                <audio
+                  ref={audioRef}
+                  src={`/api/library/files/${data.file.id}`}
+                  onLoadedMetadata={(event) => {
+                    setDuration(event.currentTarget.duration);
+                    if (pendingSeekSec.current !== null) {
+                      event.currentTarget.currentTime = pendingSeekSec.current;
+                      pendingSeekSec.current = null;
+                    }
+                  }}
+                  onPause={() => setPlaying(false)}
+                  onPlay={() => {
+                    setPlaying(true);
+                    if (audioRef.current) audioRef.current.playbackRate = rate;
+                  }}
+                  onTimeUpdate={(event) =>
+                    setMediaTimeSec(event.currentTarget.currentTime)
+                  }
+                />
+              </div>
+            </div>
+          )}
           <ol
             ref={segmentListRef}
             className="mx-auto max-h-[62dvh] max-w-3xl space-y-1 overflow-auto p-4"

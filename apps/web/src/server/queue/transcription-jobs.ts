@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const TRANSCRIPTION_QUEUE_NAME = "transcribe-recording";
 export const SPEAKER_LABEL_QUEUE_NAME = "label-speakers";
+export const STALE_LIVE_SWEEP_QUEUE_NAME = "sweep-stale-live-sessions";
 
 const postgresUuidSchema = z
   .string()
@@ -50,6 +51,7 @@ export async function createTranscriptionBoss(
   await boss.start();
   await boss.createQueue(TRANSCRIPTION_QUEUE_NAME);
   await boss.createQueue(SPEAKER_LABEL_QUEUE_NAME);
+  await boss.createQueue(STALE_LIVE_SWEEP_QUEUE_NAME);
   return boss;
 }
 

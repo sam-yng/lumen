@@ -354,6 +354,7 @@ export type Database = {
       }
       transcript_segments: {
         Row: {
+          created_at: string
           end_ms: number
           id: string
           speaker: string | null
@@ -362,6 +363,7 @@ export type Database = {
           transcript_id: string
         }
         Insert: {
+          created_at?: string
           end_ms: number
           id?: string
           speaker?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           transcript_id: string
         }
         Update: {
+          created_at?: string
           end_ms?: number
           id?: string
           speaker?: string | null
