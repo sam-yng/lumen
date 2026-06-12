@@ -81,6 +81,7 @@ export async function writeRecordingTranscript(
   assertFound(transcript, "Transcript not found.");
 
   const segments = orderedSegments(input.segments);
+  const writtenAt = new Date().toISOString();
   const segmentRows: SegmentRow[] = segments.map((segment) => ({
     id: randomUUID(),
     transcript_id: transcript.id,
@@ -88,6 +89,7 @@ export async function writeRecordingTranscript(
     end_ms: segment.endMs,
     text: segment.text,
     speaker: segment.speaker,
+    created_at: writtenAt,
   }));
 
   if (segments.length > 0) {

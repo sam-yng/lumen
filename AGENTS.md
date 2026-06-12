@@ -120,6 +120,14 @@ turbo.json               workspace task pipeline
   `worker/speaker-label-worker.ts`). Env-gated by `DIARIZATION_ENABLED`;
   enqueue and labeling are degrade-never-fail (any error keeps null speakers,
   recording stays `done`). In-browser live labeling was spike-rejected.
+- Shipped in v4 m5 (2026-06-12): stale live-session sweep — a cron-scheduled
+  `sweep-stale-live-sessions` pg-boss job (same worker process,
+  `worker/stale-live-sweeper.ts`) finalizes abandoned `live` recordings from
+  their stored segments or expires segmentless husks after
+  `LIVE_SESSION_STALE_MINUTES` (default 45) of inactivity, using
+  `transcript_segments.created_at` as the activity signal. The cross-user
+  scan is the `status='live'` query only; every write is scoped by the owning
+  `user_id` (see `docs/SECURITY.md`).
 - Still not built: realtime collab. Seams, not stubs.
 
 ## Docs

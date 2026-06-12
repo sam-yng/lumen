@@ -148,6 +148,7 @@ RLS: enabled
 | `end_ms` | integer not null |
 | `text` | text not null |
 | `speaker` | text |
+| `created_at` | timestamptz not null default now() |
 
 Policies: `transcript_segments_select_own`, `transcript_segments_insert_own`, `transcript_segments_update_own`, `transcript_segments_delete_own`
 

@@ -36,8 +36,6 @@ same rule when it gains content.
 
 - **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
   - [index.md](exec-plans/queued/v4/index.md)
-  - [stale-live-sessions.md](exec-plans/queued/v4/stale-live-sessions.md) — m5,
-    sweep recordings stranded in `live`
 
 ## Active
 
@@ -45,6 +43,9 @@ same rule when it gains content.
   - [streaming-diarization.md](exec-plans/active/v4/streaming-diarization.md)
     — m4, speaker labels on the live path (spike resolved 2026-06-11:
     post-finalize batch labeling)
+  - [stale-live-sessions.md](exec-plans/active/v4/stale-live-sessions.md) —
+    m5, sweep recordings stranded in `live` (spike resolved 2026-06-12:
+    worker cron sweep + segment `created_at` heartbeat)
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))

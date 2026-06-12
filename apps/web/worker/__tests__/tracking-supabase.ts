@@ -49,6 +49,11 @@ export class TrackingQuery {
   }
 
   async single() {
+    // insert(...).select().single() resolves to the inserted row, matching
+    // the real client; filters only apply to reads/updates/deletes.
+    if (this.inserted.length > 0) {
+      return { data: this.inserted[0] ?? null, error: null };
+    }
     const matchingRows = this.applyFilters(this.rows);
     if (this.pendingUpdate) {
       for (const row of matchingRows) Object.assign(row, this.pendingUpdate);

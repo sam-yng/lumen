@@ -34,6 +34,9 @@ const serverSchema = z.object({
   DIARIZATION_CLUSTER_THRESHOLD: z.coerce.number().gt(0).lt(1).default(0.9),
   // -1 lets the clustering threshold decide how many speakers there are.
   DIARIZATION_NUM_SPEAKERS: z.coerce.number().int().default(-1),
+  // Stale live-session sweep (v4 m5): a live recording with no activity for
+  // this many minutes is finalized from its stored segments or expired.
+  LIVE_SESSION_STALE_MINUTES: z.coerce.number().int().positive().default(45),
 });
 
 type PublicEnv = z.infer<typeof publicSchema>;
@@ -69,6 +72,7 @@ export function getServerEnv(): ServerEnv {
         process.env.DIARIZATION_EMBEDDING_MODEL_PATH,
       DIARIZATION_CLUSTER_THRESHOLD: process.env.DIARIZATION_CLUSTER_THRESHOLD,
       DIARIZATION_NUM_SPEAKERS: process.env.DIARIZATION_NUM_SPEAKERS,
+      LIVE_SESSION_STALE_MINUTES: process.env.LIVE_SESSION_STALE_MINUTES,
     });
   }
   return serverEnv;
