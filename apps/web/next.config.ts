@@ -26,8 +26,15 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
+  // Upload a larger set of source maps for prettier stack traces (increases build time
+  // and memory). Only widen in CI; constrained build hosts (e.g. Railway) OOM otherwise.
+  widenClientFileUpload: !!process.env.CI,
+
+  // Source-map generation + upload is the heaviest part of the build. Skip it where
+  // there's no Sentry auth token (e.g. Railway deploy build); keep it in CI.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
 
   // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   // This can increase your server load as well as your hosting bill.

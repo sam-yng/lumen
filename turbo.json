@@ -3,7 +3,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_APP_URL",
+        "SUPABASE_SECRET_KEY",
+        "PG_BOSS_DATABASE_URL",
+        "TRANSCRIPTION_STORAGE_BUCKET",
+        "WHISPER_MODEL",
+        "TRANSCRIPTION_TMP_DIR",
+        "DIARIZATION_ENABLED",
+        "DIARIZATION_SEGMENTATION_MODEL_PATH",
+        "DIARIZATION_EMBEDDING_MODEL_PATH",
+        "DIARIZATION_CLUSTER_THRESHOLD",
+        "DIARIZATION_NUM_SPEAKERS",
+        "LIVE_SESSION_STALE_MINUTES"
+      ]
     },
     "typecheck": {
       "dependsOn": ["^build"]

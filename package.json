@@ -28,6 +28,7 @@
     "unrs-resolver"
   ],
   "dependencies": {
+    "@railway/cli": "^5.12.1",
     "@sentry/node": "^10.57.0"
   }
 }
