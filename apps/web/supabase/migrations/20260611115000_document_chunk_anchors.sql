@@ -27,7 +27,7 @@ alter table public.semantic_search_chunks
   );
 
 create or replace function public.match_semantic_search_chunks(
-  query_embedding vector(384),
+  query_embedding extensions.vector(384),
   query_text text,
   match_user_id uuid,
   match_count integer default 8
