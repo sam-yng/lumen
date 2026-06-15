@@ -5,6 +5,7 @@ import {
   assertNoDatabaseError,
   ServiceError,
 } from "@/server/services/errors";
+import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
 import type { EnqueueTranscriptionPayload } from "@/server/services/uploads";
 
 type FileRow = Tables<"files">;
@@ -35,6 +36,10 @@ export async function retryRecordingTranscription(
       "Only failed recordings can be retried.",
     );
   }
+
+  // A retry re-enqueues transcription — count it against the same cap, before
+  // we flip the recording back to pending.
+  await enforceRateLimit(ctx, LIMITS.transcriptionEnqueue);
 
   const { data: file, error: fileError } = await ctx.supabase
     .from<FileRow>("files")

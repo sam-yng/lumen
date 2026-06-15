@@ -69,6 +69,19 @@ RLS: enabled
 
 Policies: `profiles_select_own`, `profiles_insert_own`, `profiles_update_own`
 
+### rate_limits
+
+RLS: enabled
+
+| Column | Definition |
+| --- | --- |
+| `user_id` | uuid not null references auth.users (id) on delete cascade |
+| `action` | text not null |
+| `window_start` | timestamptz not null |
+| `count` | integer not null default 0 |
+
+Policies: `own rate limits`
+
 ### recordings
 
 RLS: enabled
@@ -102,7 +115,7 @@ RLS: enabled
 | `chunk_index` | integer not null |
 | `content` | text not null |
 | `content_tsv` | tsvector generated always as (to_tsvector('english', coalesce(content, ''))) stored |
-| `embedding` | vector(384) not null |
+| `embedding` | extensions.vector(384) not null |
 | `created_at` | timestamptz not null default now() |
 | `updated_at` | timestamptz not null default now() |
 | `document_anchor_block_start` | integer |

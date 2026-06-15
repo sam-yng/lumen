@@ -2,7 +2,8 @@ export type ServiceErrorCode =
   | "database"
   | "not_found"
   | "invalid_input"
-  | "conflict";
+  | "conflict"
+  | "rate_limited";
 
 export class ServiceError extends Error {
   readonly code: ServiceErrorCode;

@@ -7,6 +7,7 @@ import {
   assertNoDatabaseError,
   ServiceError,
 } from "@/server/services/errors";
+import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
 import {
   type StorageProvider,
   storageKeyForUpload,
@@ -97,6 +98,10 @@ export async function startLiveSession(
   if (name.length === 0) {
     throw new ServiceError("invalid_input", "Session name is required.");
   }
+
+  // The live path mints recordings without touching the upload/retry seams,
+  // so cap session starts to keep an abuser from minting unlimited recordings.
+  await enforceRateLimit(ctx, LIMITS.liveSessionStart);
 
   await assertFolderOwned(ctx, input.folderId);
 
