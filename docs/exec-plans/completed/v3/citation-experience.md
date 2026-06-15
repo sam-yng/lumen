@@ -3,7 +3,7 @@
 > **Status:** completed — built on `feat/v3-citation-experience`, accepted on
 > human review 2026-06-11; promoted `active/v3/ → completed/v3/` in the same
 > change. The Claude-key manual click-through is carried by the consolidated
-> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> [assistant verification gate](../../queued/post-prod/assistant-launch.md)
 > (launch blocker, not unfinished build work).
 > **Version:** v3
 > **Area:** assistant UI, transcript viewer, citations
@@ -85,7 +85,7 @@ timestamp. Document citations open the note.
 - [ ] Manual happy path: ask the assistant a question over a real transcript and
   click a citation through to the highlighted segment at the right timestamp.
   **Requires a real Claude key** — joins the consolidated
-  [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+  [assistant verification gate](../../queued/post-prod/assistant-launch.md)
   (m4 flow added there 2026-06-11); the build itself is verified via the
   fixture-driven tests above.
 

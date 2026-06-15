@@ -11,6 +11,24 @@ Work through the steps in order — they're sequenced so DNS/SMTP propagation
 (the only multi-hour waits) starts first, and each step lists the values to
 copy into a scratch note for later steps.
 
+> **Where env vars live (read first).** None of these go in a local `.env.local`
+> — that file is for local dev against local Supabase only, and the deployed
+> hosts never read it. Each var has exactly one production home:
+>
+> | Var(s) | Destination |
+> | --- | --- |
+> | App runtime vars (`NEXT_PUBLIC_SUPABASE_*`, `NEXT_PUBLIC_APP_URL`, `SUPABASE_SECRET_KEY`, `PG_BOSS_DATABASE_URL`, `NEXT_PUBLIC_SENTRY_DSN`) | **Vercel → app project (root `apps/web`) → Settings → Environment Variables → Production** |
+> | Marketing vars (`NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SITE_URL`) | **Vercel → marketing project (root `apps/marketing`) → Settings → Environment Variables → Production** |
+> | Worker vars (all of step 6, incl. `SENTRY_DSN`) | **Railway → worker service → Variables** |
+> | SMTP + Auth URLs | **Supabase dashboard** (Authentication settings — not an env var anywhere) |
+>
+> The Claude API key is **not** part of launch setup — the AI assistant is
+> descoped to [`queued/post-prod/assistant-launch.md`](../../../queued/post-prod/assistant-launch.md)
+> and enabled post-launch (BYO-key, per-user Supabase Vault, no env var).
+>
+> Steps 1–3 only *collect* values into a scratch note; steps 4–7 are where you
+> paste them into the right dashboard. Each step below restates its destination.
+
 ## Suggested schedule
 
 | When | Steps |
@@ -18,7 +36,7 @@ copy into a scratch note for later steps.
 | Today (Thu) | 1–3: domain/DNS, Supabase project + push, Resend + SMTP |
 | Fri | 4–6: Vercel (both apps), Railway worker — once the env/deploy code has landed |
 | Sat/Sun | 7–8: Sentry, smoke test, fix fallout |
-| Mon | Seminar test. 9 (Claude key + assistant gate) any time after deploy |
+| Mon | Seminar test |
 
 ---
 
@@ -29,9 +47,14 @@ copy into a scratch note for later steps.
    marketing links out to the app via `NEXT_PUBLIC_APP_URL`.
 2. In your DNS provider, be ready to add records for: Vercel (two
    CNAME/A records, step 4), Resend (SPF + DKIM TXT records, step 3).
-3. **Collect:** the two final origins, e.g.
+3. **Collect into scratch note** (not yet pasted anywhere) — the two final
+   origins, e.g.
    - `NEXT_PUBLIC_APP_URL = https://app.lumen.example`
    - `NEXT_PUBLIC_SITE_URL = https://lumen.example`
+
+   > Destination later: `NEXT_PUBLIC_APP_URL` → Vercel **app** project (step 4)
+   > + Railway worker (step 6) + Supabase Auth Site URL (step 3);
+   > `NEXT_PUBLIC_SITE_URL` → Vercel **marketing** project (step 5).
 
 > No custom domain by Monday? `*.vercel.app` URLs work fine for the seminar
 > test — set `NEXT_PUBLIC_APP_URL` to the app's `*.vercel.app` origin and move
@@ -55,12 +78,17 @@ copy into a scratch note for later steps.
    `user_ai_credentials` (assistant BYO keys), rate-limit-ready functions —
    no manual bucket or extension clicking. Verify in the dashboard: Table
    Editor shows `recordings` etc.; Storage shows `library-files` (private).
-3. **Collect** from Project Settings → API:
+3. **Collect into scratch note** from Project Settings → API:
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - Publishable key (`sb_publishable_…`) → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
    - Secret key (`sb_secret_…`) → `SUPABASE_SECRET_KEY`
-4. **Collect** from Project Settings → Database → Connection string, for
-   `PG_BOSS_DATABASE_URL`:
+
+   > Destination later: all three → Vercel **app** project (step 4) **and**
+   > Railway worker (step 6). `SUPABASE_SECRET_KEY` is server-only — never put
+   > it in the marketing project. None of these go in `.env.local`.
+4. **Collect into scratch note** from Project Settings → Database → Connection
+   string, for `PG_BOSS_DATABASE_URL` (destination: Vercel **app** project +
+   Railway worker):
    - Preferred: **session-mode pooler** (Supavisor,
      `…pooler.supabase.com:5432`). pg-boss holds long-lived connections;
      session mode supports that, **transaction mode (port 6543) does not** —
@@ -78,7 +106,9 @@ few emails/hour, dev-only).
 
 1. [resend.com](https://resend.com) → create account → Domains → add your
    domain → add the SPF/DKIM DNS records it shows → wait for "Verified".
-2. Resend → API Keys → create one (this doubles as the SMTP password).
+2. Resend → API Keys → create one (this doubles as the SMTP password). It is
+   entered directly into the Supabase dashboard below — **it is not an app env
+   var** and goes in no Vercel/Railway project.
 3. Supabase → Authentication → Emails/SMTP → enable custom SMTP:
    - Host `smtp.resend.com`, port `465`, username `resend`,
      password = the API key, sender = `no-reply@lumen.example`.
@@ -99,7 +129,8 @@ few emails/hour, dev-only).
    repo.
 2. Settings: **Root Directory = `apps/web`**, framework Next.js. Vercel
    detects Bun from `bun.lock`; build command stays `bun run build`.
-3. Environment variables (Production):
+3. Paste these into **this app project → Settings → Environment Variables →
+   Production scope** (not `.env.local`, not the marketing project):
 
    | Var | Value |
    | --- | --- |
@@ -116,7 +147,9 @@ few emails/hour, dev-only).
 ## Step 5 — Vercel: marketing project
 
 1. Add New Project → same repo again → **Root Directory = `apps/marketing`**.
-2. Env vars: `NEXT_PUBLIC_APP_URL` (step 1), `NEXT_PUBLIC_SITE_URL` (step 1).
+2. Paste into **this marketing project → Settings → Environment Variables →
+   Production**: `NEXT_PUBLIC_APP_URL` (step 1), `NEXT_PUBLIC_SITE_URL`
+   (step 1). Only these two — no Supabase keys or DB URL here.
 3. Domains → apex `lumen.example` (+ `www` redirect).
 4. Not Monday-blocking — do it whenever; nothing else depends on it.
 
@@ -130,7 +163,8 @@ Needs the worker Dockerfile from `prod-env-and-deploy.md` Task 3 merged first.
      root, which is Railway's default).
    - Start command: leave empty (Dockerfile `CMD`).
    - Sizing: start 2 vCPU / 2 GB.
-3. Environment variables:
+3. Paste these into **this Railway worker service → Variables** (not Vercel,
+   not `.env.local`):
 
    | Var | Value |
    | --- | --- |
@@ -142,8 +176,8 @@ Needs the worker Dockerfile from `prod-env-and-deploy.md` Task 3 merged first.
    | `WHISPER_MODEL` | `base.en` |
    | `TRANSCRIPTION_TMP_DIR` | `/tmp/lumen-transcription` |
    | `DIARIZATION_ENABLED` | `true` (speaker labels for the seminar test) |
-   | `DIARIZATION_SEGMENTATION_MODEL_PATH` | baked image path (from `DEPLOY.md` once Task 3 lands) |
-   | `DIARIZATION_EMBEDDING_MODEL_PATH` | baked image path (ditto) |
+   | `DIARIZATION_SEGMENTATION_MODEL_PATH` | `/app/apps/web/.models/diarization/segmentation.onnx` (baked into the image at build) |
+   | `DIARIZATION_EMBEDDING_MODEL_PATH` | `/app/apps/web/.models/diarization/embedding.onnx` (baked into the image at build) |
    | `LIVE_SESSION_STALE_MINUTES` | `45` (default; set explicitly for visibility) |
    | `SENTRY_DSN` | step 7 (add later) |
 
@@ -177,14 +211,10 @@ Needs the worker Dockerfile from `prod-env-and-deploy.md` Task 3 merged first.
 7. Break something on purpose (e.g. upload an absurd file) → the error shows
    up in Sentry.
 
-## Step 9 — Claude API key (assistant verification gate)
-
-1. [console.anthropic.com](https://console.anthropic.com) → API key.
-2. Enter it **in the app's assistant settings** (BYO-key, stored per-user via
-   Supabase Vault) — there is no server env var for it.
-3. Run the flows in
-   [`prod-assistant-verification.md`](prod-assistant-verification.md) and tick
-   them off; on pass, move that gate to `completed/production/`.
+> **Step 9 (Claude key / assistant) was removed from launch setup.** The AI
+> assistant is descoped from launch and tracked in
+> [`queued/post-prod/assistant-launch.md`](../../../queued/post-prod/assistant-launch.md);
+> its BYO-key entry + verification flows run post-launch (Phase 2).
 
 ---
 
@@ -200,4 +230,3 @@ Needs the worker Dockerfile from `prod-env-and-deploy.md` Task 3 merged first.
 - [ ] Railway: worker service building from `apps/web/worker/Dockerfile` · all
       env vars from step 6
 - [ ] Sentry: two DSNs set · test event received from each runtime
-- [ ] Claude key entered in-app · assistant gate run

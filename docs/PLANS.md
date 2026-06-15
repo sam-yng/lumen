@@ -34,27 +34,26 @@ same rule when it gains content.
 
 ## Queued
 
-_(Empty — nothing queued.)_
+- **post-prod** — AI assistant standalone page + post-launch enablement
+  - [assistant-launch.md](exec-plans/queued/post-prod/assistant-launch.md)
+    — Phase 1 (relocate the assistant to its own gated `/assistant` page) is
+    do-now; Phase 2 (flip the enable flag + run the Claude-key verification
+    flows) is deferred past launch. Absorbs the former
+    `prod-assistant-verification` gate so the launch path carries no Claude-key
+    dependency.
 
 ## Active
 
-- **cross-cutting** — Frontend overhaul (mobile-first + component quality)
-  - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
-    (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
-- **cross-cutting** — CI/CD hardening
-  - [ci-cd-hardening.md](exec-plans/active/cross-cutting/ci-cd-hardening.md)
-- **cross-cutting** — Planning lifecycle enforcement (implemented; pending review)
-  - [planning-lifecycle-enforcement.md](exec-plans/active/cross-cutting/planning-lifecycle-enforcement.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [EXTERNAL-SETUP.md](exec-plans/active/production/prod-readiness/EXTERNAL-SETUP.md)
     — dashboard/DNS/accounts runbook for the Mon 2026-06-15 launch target
+  - [DEPLOY.md](exec-plans/active/production/prod-readiness/DEPLOY.md)
+    — deploy runbook + prod env matrix (created by prod-env-and-deploy Task 2)
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
   - [prod-auth.md](exec-plans/active/production/prod-readiness/prod-auth.md)
   - [prod-sentry.md](exec-plans/active/production/prod-readiness/prod-sentry.md)
   - [prod-legal-pages.md](exec-plans/active/production/prod-readiness/prod-legal-pages.md)
-  - [prod-assistant-verification.md](exec-plans/active/production/prod-readiness/prod-assistant-verification.md)
-    — Claude-key launch gate for the v2 assistant + v3 cited retrieval
 
 ## Completed
 
@@ -138,6 +137,16 @@ _(Empty — nothing queued.)_
   (2026-06-12) — landing redesign Tasks 1–13 shipped and verified
   (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md));
   deployment rides the prod-readiness env-and-deploy plan
+
+### Cross-cutting shipped
+
+- [frontend-overhaul.md](exec-plans/completed/cross-cutting/frontend-overhaul.md)
+  (PR #30, 2026-06-10) — mobile-first responsive sweep + component-quality pass
+  (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
+- [ci-cd-hardening.md](exec-plans/completed/cross-cutting/ci-cd-hardening.md)
+  — PR-triggered `quality-gate` + Supabase-backed `e2e-smoke` CI jobs; dirty-kitchen rule
+- [planning-lifecycle-enforcement.md](exec-plans/completed/cross-cutting/planning-lifecycle-enforcement.md)
+  — `check:plans` gate enforcing the exec-plan-before-build rule
 
 ## Archive
 

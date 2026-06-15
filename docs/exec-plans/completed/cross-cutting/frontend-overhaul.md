@@ -1,5 +1,7 @@
 # Frontend Overhaul Implementation Plan (mobile-first + component quality)
 
+> **Status:** completed — shipped via PR #30, merged 2026-06-10.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **Design spec:** [`docs/superpowers/specs/2026-06-10-frontend-overhaul-design.md`](../../../superpowers/specs/2026-06-10-frontend-overhaul-design.md)

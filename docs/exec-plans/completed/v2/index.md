@@ -7,7 +7,7 @@
 > assistant's manual browser happy-path needs a real Claude key — an
 > environmental/launch blocker, not unfinished build work. Carried forward to the
 > consolidated
-> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> [assistant verification gate](../../queued/post-prod/assistant-launch.md)
 > (production-readiness).
 > **Version:** v2
 > **Area:** AI/MCP, semantic search, assistant

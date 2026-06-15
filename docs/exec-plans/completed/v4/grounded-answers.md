@@ -103,7 +103,7 @@ chips rather than today's silent plain text.
 - Integration test: assistant turn with a fake MCP bridge yields only
   validated sources in `AssistantResult`.
 - Manual happy path: gated on the same real-Claude-key launch gate as v2/v3
-  ([prod-assistant-verification.md](../../active/production/prod-readiness/prod-assistant-verification.md))
+  ([assistant-launch.md](../../queued/post-prod/assistant-launch.md))
   — extend that gate's checklist with one validated-citation check rather
   than duplicating it here.
 

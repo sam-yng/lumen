@@ -70,7 +70,7 @@ Implement as separate plans so each can ship and be reviewed on its own:
    pulled forward or run in parallel if capture work stalls. Note: its full
    manual happy-path requires a working assistant, i.e. the same real-Claude-key
    gate tracked in
-   [prod-assistant-verification.md](../../active/production/prod-readiness/prod-assistant-verification.md);
+   [assistant-launch.md](../../queued/post-prod/assistant-launch.md);
    build verification (tests with fixture turns) does not.
 
 Each child plan opens with a **decision spike** (engine/transport choices are
@@ -134,7 +134,7 @@ updated in the same change, mirroring the m1 group's completion. The v3
 release scope is now fully shipped. The one carried-forward item — the
 Claude-key manual happy-paths (m1 retrieval citations + m4 click-through) —
 lives in the consolidated
-[assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md),
+[assistant verification gate](../../queued/post-prod/assistant-launch.md),
 not unfinished milestone work. Deferred-beyond-v3 items above remain decided
 and recorded here.
 

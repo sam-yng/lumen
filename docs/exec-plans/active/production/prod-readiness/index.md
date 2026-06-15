@@ -42,7 +42,12 @@ plans into a critical path and a deferrable tail:
 | 2 | prod-auth | **Partially** | Tasks 1–3 (confirmation, callback, reset) + Task 5 (rate limit) yes — SMTP (**Resend**, decided 2026-06-12) is the external long pole. Task 4 (Google OAuth) is deferrable; password auth suffices for the seminar test. |
 | 3 | prod-sentry | **Yes (cheap)** | Small; the whole point of the seminar test is finding gaps, and a silent remote worker hides them. |
 | 4 | prod-legal-pages | No | Required before *public* users, not for a private seminar test. Schedule immediately after. |
-| 5 | prod-assistant-verification | No (but unblocked) | A prod instance + a real Claude key finally unblocks this gate — run it the same week. |
+
+The AI assistant is **descoped from launch** — it needs a Claude key (BYO,
+per-user via Vault) that isn't available at launch, so it ships relocated to its
+own gated `/assistant` page and is enabled + verified post-launch. That work
+lives in [`queued/post-prod/assistant-launch.md`](../../../queued/post-prod/assistant-launch.md),
+**not** on this critical path.
 
 The seminar test exercises **live capture** (browser-side Whisper — needs only
 the Vercel app + HTTPS) and the **post-finalize pipeline** (worker:
@@ -71,17 +76,17 @@ Each plan is independently shippable and leaves `bun run check` green.
 
 Some launch blockers are **verification**, not code — the build is done and
 accepted, but a manual check needs prod-only inputs (an API key, an external
-account). These live here so a build-complete milestone can move to `completed/`
-instead of being pinned in `active/` for the whole dev cycle.
-
-- **[prod-assistant-verification.md](prod-assistant-verification.md)** — the
-  Claude-key-dependent manual happy-paths for the v2 in-app assistant and v3
-  cited retrieval. Both builds shipped; this gate is the single place the
-  outstanding verification is tracked. **Lumen must not ship until it passes.**
+account). The one Claude-key-dependent gate (the v2 assistant + v3/v4 cited
+retrieval happy-paths) is **no longer on the launch path**: it moved, with the
+assistant relocation work, to
+[`queued/post-prod/assistant-launch.md`](../../../queued/post-prod/assistant-launch.md)
+(Phase 2). The assistant is descoped from launch, so nothing here blocks on a
+Claude key.
 
 > **Lifecycle rule:** when a milestone's only remaining item is an
 > environmental/launch blocker, complete the milestone on build acceptance and
-> record the blocker here — do not hold the milestone group open in `active/`.
+> record the blocker in its own plan — do not hold the milestone group open in
+> `active/`.
 
 ## Nice-to-have recommendations (not yet planned)
 
