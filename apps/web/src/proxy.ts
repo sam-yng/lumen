@@ -20,6 +20,8 @@ const PUBLIC_PREFIXES = [
   "/signup",
   "/auth",
   "/forgot-password",
+  "/privacy",
+  "/terms",
   "/api/mcp",
 ];
 

@@ -1,4 +1,5 @@
 import { BookOpenText, LockKeyhole, Mic, Sparkles } from "lucide-react";
+import { LegalFooter } from "@/components/legal-footer";
 
 const FEATURES = [
   { label: "Nested study folders", icon: BookOpenText },
@@ -46,8 +47,11 @@ export default function AuthLayout({
           Private by default · your recordings never leave your machine
         </p>
       </section>
-      <section className="grid min-h-dvh place-items-center p-4 py-8 sm:p-6">
-        {children}
+      <section className="flex min-h-dvh flex-col p-4 py-8 sm:p-6">
+        <div className="flex flex-1 items-center justify-center">
+          {children}
+        </div>
+        <LegalFooter />
       </section>
     </main>
   );
