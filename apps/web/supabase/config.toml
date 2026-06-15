@@ -255,6 +255,13 @@ otp_expiry = 3600
 subject = "Your Lumen confirmation code"
 content_path = "./supabase/templates/confirmation.html"
 
+# Password recovery uses the @supabase/ssr token_hash flow: the link points at
+# our /auth/confirm route (verifyOtp) which establishes a session and forwards
+# to /reset-password. See src/app/auth/confirm/route.ts and prod-auth.md.
+[auth.email.template.recovery]
+subject = "Reset your Lumen password"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
