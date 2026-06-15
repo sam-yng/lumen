@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ASSISTANT_ENABLED } from "@/lib/assistant-flags";
 
 export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
+  const gated = !ASSISTANT_ENABLED;
   const [keySet, setKeySet] = useState(initialKeySet);
   const [value, setValue] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
@@ -41,7 +43,12 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
 
   return (
     <div className="mt-4 space-y-3">
-      {keySet ? (
+      {gated ? (
+        <p className="text-sm text-amber-600">
+          The assistant is enabling after launch — key entry is disabled for
+          now.
+        </p>
+      ) : keySet ? (
         <p className="text-sm text-emerald-600">A key is set.</p>
       ) : (
         <p className="text-sm text-amber-600">
@@ -55,11 +62,12 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         autoComplete="off"
+        disabled={gated}
       />
       <div className="flex gap-2">
         <Button
           onClick={save}
-          disabled={value.trim().length === 0 || status === "saving"}
+          disabled={gated || value.trim().length === 0 || status === "saving"}
         >
           {keySet ? "Replace key" : "Save key"}
         </Button>
@@ -67,7 +75,7 @@ export function SettingsKeyForm({ initialKeySet }: { initialKeySet: boolean }) {
           <Button
             variant="outline"
             onClick={remove}
-            disabled={status === "saving"}
+            disabled={gated || status === "saving"}
           >
             Remove
           </Button>

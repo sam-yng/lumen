@@ -26,5 +26,8 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "dependencies": {
+    "@sentry/node": "^10.57.0"
+  }
 }
