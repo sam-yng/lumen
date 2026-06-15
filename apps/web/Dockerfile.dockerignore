@@ -1,0 +1,11 @@
+# Build context is the repo root (see Dockerfile header).
+**/node_modules
+**/.next
+**/.turbo
+**/.git
+**/*.test.ts
+**/__tests__
+**/playwright-report
+**/test-results
+**/.models
+**/.env*
