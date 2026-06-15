@@ -54,6 +54,14 @@
 - Supabase → Auth → **URL Configuration**: Site URL = `NEXT_PUBLIC_APP_URL`;
   add `${NEXT_PUBLIC_APP_URL}/auth/confirm` and `${NEXT_PUBLIC_APP_URL}/auth/callback`
   to the redirect allowlist.
+- Supabase → Auth → **Emails → templates**: hosted Supabase ignores
+  `config.toml`'s `[auth.email.template.*]` (CLI-only) and defaults **Confirm
+  signup** to a `{{ .ConfirmationURL }}` link. Our signup is the 6-digit
+  `verifyOtp` code flow, so a link email dead-ends the user. Paste the repo
+  templates into the dashboard by hand — **Confirm signup** =
+  `supabase/templates/confirmation.html` (`{{ .Token }}`), **Reset password** =
+  `supabase/templates/recovery.html`. Full steps in
+  [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md) step 3.5.
 - Supabase → Auth → Providers → **Google**: enable, paste the OAuth client
   ID/secret from the [Google Cloud console](https://console.cloud.google.com/apis/credentials);
   set the authorized redirect URI to the Supabase project's

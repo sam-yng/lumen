@@ -117,6 +117,22 @@ few emails/hour, dev-only).
    - Redirect allowlist: `<APP_URL>/auth/confirm`, `<APP_URL>/auth/callback`
    (Routes land with [`prod-auth.md`](prod-auth.md); setting the allowlist
    early is harmless.)
+5. Supabase → Authentication → Emails → **edit the email templates**. This is
+   **required**, not cosmetic: `supabase/config.toml`'s
+   `[auth.email.template.*]` blocks apply to the **local CLI only**. Hosted
+   Supabase ignores them and ships its own defaults, whose **Confirm signup**
+   template is a `{{ .ConfirmationURL }}` **link**. But our signup is a
+   **6-digit code** flow (`verifyOtp` in [`src/server/auth/actions.ts`](../../../../apps/web/src/server/auth/actions.ts)),
+   and the UI sits on a code-entry screen — a link email leaves the user with
+   no code and a dead end. Mirror the repo templates by hand:
+   - **Confirm signup** → subject `Your Lumen confirmation code`, body =
+     [`supabase/templates/confirmation.html`](../../../../apps/web/supabase/templates/confirmation.html)
+     (uses `{{ .Token }}`, the 6-digit OTP — **not** `{{ .ConfirmationURL }}`).
+   - **Reset password** → subject `Reset your Lumen password`, body =
+     [`supabase/templates/recovery.html`](../../../../apps/web/supabase/templates/recovery.html)
+     (link flow via `/auth/confirm`, intentional).
+   Re-paste whenever those repo files change — there is no sync; the dashboard
+   is the source of truth in prod.
 
 > **Monday fallback:** if domain verification drags, leave
 > `enable_confirmations` off for launch-test week, sign up your own account,
@@ -198,8 +214,9 @@ Needs the worker Dockerfile from `prod-env-and-deploy.md` Task 3 merged first.
 ## Step 8 — Smoke test (end-to-end, in prod)
 
 1. Visit the app URL logged out → redirected to `/login`.
-2. Sign up → (if confirmations on) receive the Resend email → confirm → land
-   in the app.
+2. Sign up → (if confirmations on) receive the Resend email containing a
+   **6-digit code** (not a link — see Step 3.5) → enter it on the code screen →
+   land in the app.
 3. Upload a short audio file → status `pending` → Railway log shows the job →
    status `done`, transcript renders, speakers labeled (diarization on).
 4. Start a **live session** in the browser, speak a few lines, finalize →
