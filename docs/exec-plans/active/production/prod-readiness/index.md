@@ -39,7 +39,7 @@ plans into a critical path and a deferrable tail:
 | Order | Plan | Monday-blocking? | Notes |
 | --- | --- | --- | --- |
 | 1 | prod-env-and-deploy | **Yes** | Everything else needs real prod env. See its refinement section — the worker image must now also carry diarization models + ffmpeg for the v4 live-label + sweep jobs. |
-| 2 | prod-auth | **Partially** | Tasks 1–3 (confirmation, callback, reset) + Task 5 (rate limit) yes — SMTP is the external long pole. Task 4 (Google OAuth) is deferrable; password auth suffices for the seminar test. |
+| 2 | prod-auth | **Partially** | Tasks 1–3 (confirmation, callback, reset) + Task 5 (rate limit) yes — SMTP (**Resend**, decided 2026-06-12) is the external long pole. Task 4 (Google OAuth) is deferrable; password auth suffices for the seminar test. |
 | 3 | prod-sentry | **Yes (cheap)** | Small; the whole point of the seminar test is finding gaps, and a silent remote worker hides them. |
 | 4 | prod-legal-pages | No | Required before *public* users, not for a private seminar test. Schedule immediately after. |
 | 5 | prod-assistant-verification | No (but unblocked) | A prod instance + a real Claude key finally unblocks this gate — run it the same week. |

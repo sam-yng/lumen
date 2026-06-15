@@ -38,16 +38,19 @@
    `label-speakers` enqueue needs no separate limit (1:1 with session start).
 4. **Monday-target cut:** Tasks 1–3 + 5 are on the launch-test critical path;
    Task 4 (Google OAuth) is deferrable — password auth suffices for the
-   seminar test. SMTP (Resend or similar) is the external long pole: without
-   it, confirmations ON makes prod signup impossible. Wire it before flipping
-   `enable_confirmations`.
+   seminar test. SMTP (**Resend**, decided 2026-06-12) is the external long
+   pole: without it, confirmations ON makes prod signup impossible. Wire it
+   before flipping `enable_confirmations`.
 
 ---
 
 ## External prerequisites (dashboard, not code)
 
-- **SMTP provider** wired in Supabase → Auth → SMTP (e.g. Resend). Built-in
-  email is rate-limited to a few/hour and won't work for real signups.
+- **SMTP provider: Resend** (decided 2026-06-12) wired in Supabase → Auth →
+  SMTP. Built-in email is rate-limited to a few/hour and won't work for real
+  signups. Provider choice is dashboard-only (host/port/user/pass) — no code
+  depends on it. Setup walkthrough: [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md)
+  step 3.
 - Supabase → Auth → **URL Configuration**: Site URL = `NEXT_PUBLIC_APP_URL`;
   add `${NEXT_PUBLIC_APP_URL}/auth/confirm` and `${NEXT_PUBLIC_APP_URL}/auth/callback`
   to the redirect allowlist.

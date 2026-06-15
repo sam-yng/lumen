@@ -261,7 +261,7 @@ export default function PrivacyPage() {
         <li><strong>Railway</strong> — the background transcription worker.</li>
         <li><strong>Sentry</strong> — error monitoring (does not receive your content).</li>
         <li><strong>Google</strong> — optional sign-in.</li>
-        <li>Our email provider — to deliver account emails.</li>
+        <li><strong>Resend</strong> — to deliver account emails (confirmation and password-reset links).</li>
       </ul>
       <p>
         Audio recordings are transcribed by a speech-to-text process we run

@@ -72,8 +72,9 @@ copy into a scratch note for later steps.
 
 ## Step 3 — SMTP (Resend) + Supabase Auth config
 
-Without SMTP, email confirmation + password reset can't send to real
-addresses (Supabase's built-in mailer is a few emails/hour, dev-only).
+Provider decided 2026-06-12: **Resend**. Without SMTP, email confirmation +
+password reset can't send to real addresses (Supabase's built-in mailer is a
+few emails/hour, dev-only).
 
 1. [resend.com](https://resend.com) → create account → Domains → add your
    domain → add the SPF/DKIM DNS records it shows → wait for "Verified".
