@@ -15,7 +15,8 @@
     "db:types": "supabase gen types typescript --local > src/server/db/database.types.ts",
     "docs:db-schema": "bun run scripts/gen-db-schema.ts",
     "worker:transcribe": "bun run worker/transcription-worker.ts",
-    "worker:diarization-models": "bun run scripts/fetch-diarization-models.ts"
+    "worker:diarization-models": "bun run scripts/fetch-diarization-models.ts",
+    "worker:download-model": "bun run scripts/download-whisper-model.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
