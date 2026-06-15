@@ -21,6 +21,24 @@
 
 ---
 
+## Scope refinement — 2026-06-12 (binding; corrects drift since 2026-06-04)
+
+1. **All app-side files live under `apps/web/`** (the path note applies to
+   `instrumentation.ts`, `sentry.*.config.ts`, `next.config.ts` too — "repo
+   root" in Task 2 means the `apps/web` package root). The current
+   `next.config.ts` already has `transpilePackages` + `turbopack.root`; wrap
+   it, don't replace it.
+2. **The worker is now three jobs, one process.** Besides
+   `processTranscriptionJob`, capture failures in
+   `worker/speaker-label-worker.ts` (label-speakers, v4 m4) and
+   `worker/stale-live-sweeper.ts` (cron sweep, v4 m5) — tag
+   `area: "speaker-labeling"` / `area: "stale-live-sweep"`. Both paths are
+   degrade-never-fail by design, so without explicit capture their errors are
+   *swallowed*, which is exactly what Sentry is here to prevent. The
+   import-first init in `transcription-worker.ts` covers the shared process.
+
+---
+
 ## External prerequisites (dashboard, not code)
 
 - Create a Sentry account + two projects (or one project, two DSNs):

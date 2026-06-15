@@ -103,7 +103,7 @@ before building — rule #1 still applies per milestone.
 
 > _Scoped 2026-06-11:_ these items are now picked up (or re-deferred with
 > rationale) by the v4 group at
-> [`queued/v4/index.md`](../../queued/v4/index.md); this list remains the
+> [`completed/v4/index.md`](../v4/index.md); this list remains the
 > historical record of the v3 decision.
 
 - **Server-built `answer_question` service with citation validation** — m1

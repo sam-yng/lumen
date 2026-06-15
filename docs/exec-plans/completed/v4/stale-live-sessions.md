@@ -1,6 +1,7 @@
 # Stale Live Sessions Sweep Plan (v4 Milestone 5)
 
-> **Status:** active (promoted 2026-06-12; decision spike resolved below)
+> **Status:** completed — shipped 2026-06-12 (PR #37); see Verification
+> Record. Promoted 2026-06-12; moved to `completed/v4/` 2026-06-12.
 > **Version:** v4
 > **Area:** live transcription path, lifecycle hygiene
 > **Created:** 2026-06-11

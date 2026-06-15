@@ -24,6 +24,27 @@
 > See [studentprivacy.ed.gov](https://studentprivacy.ed.gov/) and the FTC
 > [COPPA rule](https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa).
 
+## Scope refinement — 2026-06-12 (binding; corrects drift since 2026-06-04)
+
+1. **The privacy copy is no longer accurate about third-party AI.** Since v2,
+   the in-app assistant sends question context (note/transcript excerpts) to
+   **Anthropic's Claude API**, under a user-supplied API key stored in
+   Supabase Vault. The drafted "audio is not sent to a third-party
+   transcription service" stays true, but the policy must add Anthropic as a
+   sub-processor *for users who enable the assistant*, state that assistant
+   queries include content excerpts, and note the key is the user's own.
+   Without this the policy materially misdescribes data flows.
+2. **Layout snippets predate the frontend overhaul** (mobile-first,
+   2026-06-11). Re-derive the footer insertions against the current
+   `(app)`/`(auth)` layouts; treat the JSX as intent.
+3. **`PUBLIC_PREFIXES` now contains `"/api/mcp"`** — add `/privacy` +
+   `/terms` to the existing array; don't paste the snippet literally.
+4. **`apps/marketing` exists now** — its footer should link to the app's
+   `/privacy` and `/terms` (absolute, via the site's `appUrl`). One-line
+   addition to `apps/marketing/src/components/site-footer.tsx`.
+5. **Sequencing:** not on the Monday launch-test critical path (private
+   seminar test, no public users) — required before opening to anyone else.
+
 ## Placeholders a human MUST fill (search for `{{…}}`)
 
 - `{{LEGAL_ENTITY}}` — the operating company / individual name.

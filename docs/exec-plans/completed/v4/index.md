@@ -1,6 +1,7 @@
 # v4 Grounded Answers & Capture Hardening Planning Group
 
-> **Status:** queued
+> **Status:** completed — all five children shipped; group closed 2026-06-12
+> (m5 merged via PR #37). Moved `queued/v4/ → completed/v4/` 2026-06-12.
 > **Version:** v4
 > **Area:** retrieval/citations, assistant, live transcription pipeline
 > **Created:** 2026-06-11
@@ -47,31 +48,31 @@ Deepen what v3 started, in both directions:
 
 Implement as separate plans so each can ship and be reviewed on its own:
 
-1. [document-anchors.md](../../completed/v4/document-anchors.md) — **milestone 1
+1. [document-anchors.md](document-anchors.md) — **milestone 1
    (completed)**: paragraph anchors for document chunks (re-chunking pass + anchor metadata), so
    document citations deep-link to the cited paragraph the way transcript
    citations deep-link to the segment. Finalizes the `GroundedSource` shape
    the rest of the group consumes.
-2. [grounded-answers.md](../../completed/v4/grounded-answers.md) — **milestone 2
+2. [grounded-answers.md](grounded-answers.md) — **milestone 2
    (completed)**: server-side
    citation validation for assistant answers (the item v3 explicitly deferred
    "to v4 once the citation UX shows where validation is actually needed" —
    it shipped, so this is due), with an `answer_question` service shape decided
    by spike.
-3. [retrieval-quality-reranking.md](../../completed/v4/retrieval-quality-reranking.md) —
+3. [retrieval-quality-reranking.md](retrieval-quality-reranking.md) —
    **milestone 3 (completed)**: measurement-first — build a small local retrieval-quality
    harness, then add a local reranker **only if** the measurements show hybrid
    ranking misses sources. A recorded "no reranker needed" is a valid outcome.
-4. [streaming-diarization.md](../../active/v4/streaming-diarization.md) —
-   **milestone 4 (active)**: speaker labels for live-captured sessions. Spike
-   resolved 2026-06-11: post-finalize labeling reusing the batch
-   `DiarizationProvider` on the uploaded session audio (in-browser labeling
-   recorded as not-measured, rejected on cost).
-5. [stale-live-sessions.md](../../active/v4/stale-live-sessions.md) —
-   **milestone 5 (active)**: sweep recordings stranded in `live`, finalizing
-   from the already-stored segments where possible. Clears the tech-debt
-   row. Spike resolved 2026-06-12: worker cron sweep + segment `created_at`
-   heartbeat.
+4. [streaming-diarization.md](streaming-diarization.md) —
+   **milestone 4 (completed, PR #36)**: speaker labels for live-captured
+   sessions. Spike resolved 2026-06-11: post-finalize labeling reusing the
+   batch `DiarizationProvider` on the uploaded session audio (in-browser
+   labeling recorded as not-measured, rejected on cost).
+5. [stale-live-sessions.md](stale-live-sessions.md) —
+   **milestone 5 (completed, PR #37)**: sweep recordings stranded in `live`,
+   finalizing from the already-stored segments where possible. Clears the
+   tech-debt row. Spike resolved 2026-06-12: worker cron sweep + segment
+   `created_at` heartbeat.
 
 ## Sequencing
 
@@ -136,7 +137,8 @@ into the same-named `v4` bucket, updating [`PLANS.md`](../../../PLANS.md) in
 the same change so the index remains trustworthy. Do not reopen the completed
 v3 groups; when all children here ship, complete this group the same way
 [`completed/v3/index-m2-plus.md`](../../completed/v3/index-m2-plus.md) was
-completed.
+completed. **Done 2026-06-12:** all five children shipped and this group moved
+to `completed/v4/`.
 
 ## Self-Review
 

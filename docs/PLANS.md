@@ -34,18 +34,10 @@ same rule when it gains content.
 
 ## Queued
 
-- **v4** — Grounded answers & capture hardening group (scoped 2026-06-11)
-  - [index.md](exec-plans/queued/v4/index.md)
+_(Empty — nothing queued.)_
 
 ## Active
 
-- **v4** — Grounded answers & capture hardening group
-  - [streaming-diarization.md](exec-plans/active/v4/streaming-diarization.md)
-    — m4, speaker labels on the live path (spike resolved 2026-06-11:
-    post-finalize batch labeling)
-  - [stale-live-sessions.md](exec-plans/active/v4/stale-live-sessions.md) —
-    m5, sweep recordings stranded in `live` (spike resolved 2026-06-12:
-    worker cron sweep + segment `created_at` heartbeat)
 - **cross-cutting** — Frontend overhaul (mobile-first + component quality)
   - [frontend-overhaul.md](exec-plans/active/cross-cutting/frontend-overhaul.md)
     (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
@@ -55,15 +47,14 @@ same rule when it gains content.
   - [planning-lifecycle-enforcement.md](exec-plans/active/cross-cutting/planning-lifecycle-enforcement.md)
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
+  - [EXTERNAL-SETUP.md](exec-plans/active/production/prod-readiness/EXTERNAL-SETUP.md)
+    — dashboard/DNS/accounts runbook for the Mon 2026-06-15 launch target
   - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
   - [prod-auth.md](exec-plans/active/production/prod-readiness/prod-auth.md)
   - [prod-sentry.md](exec-plans/active/production/prod-readiness/prod-sentry.md)
   - [prod-legal-pages.md](exec-plans/active/production/prod-readiness/prod-legal-pages.md)
   - [prod-assistant-verification.md](exec-plans/active/production/prod-readiness/prod-assistant-verification.md)
     — Claude-key launch gate for the v2 assistant + v3 cited retrieval
-- **production** — Marketing landing redesign
-  - [marketing-landing-redesign.md](exec-plans/active/production/marketing-landing-redesign.md)
-    (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md))
 
 ## Completed
 
@@ -117,6 +108,8 @@ same rule when it gains content.
 
 ### v4 shipped
 
+- [index.md](exec-plans/completed/v4/index.md) — Grounded answers & capture
+  hardening group (all 5 children shipped; group closed 2026-06-12)
 - [document-anchors.md](exec-plans/completed/v4/document-anchors.md)
   (2026-06-11) — milestone 1; document semantic chunks carry optional
   paragraph anchors and document citations open highlighted note blocks
@@ -129,6 +122,22 @@ same rule when it gains content.
   shipped (`__tests__/retrieval-eval/`), recorded **NO-GO** on a reranker:
   hybrid recall@8 misses are paraphrase-only and mostly out-of-pool, which
   reranking cannot recover
+- [streaming-diarization.md](exec-plans/completed/v4/streaming-diarization.md)
+  (2026-06-11, PR #36) — milestone 4; post-finalize speaker labels for live
+  sessions via a `label-speakers` worker job reusing the batch
+  `DiarizationProvider` (webm→WAV via ffmpeg), env-gated, degrade-never-fail
+- [stale-live-sessions.md](exec-plans/completed/v4/stale-live-sessions.md)
+  (2026-06-12, PR #37) — milestone 5; cron-scheduled worker sweep finalizes
+  abandoned `live` recordings from stored segments or expires segmentless
+  husks after `LIVE_SESSION_STALE_MINUTES`, using segment `created_at` as
+  the activity signal; clears the stale-live tech-debt row
+
+### production shipped
+
+- [marketing-landing-redesign.md](exec-plans/completed/production/marketing-landing-redesign.md)
+  (2026-06-12) — landing redesign Tasks 1–13 shipped and verified
+  (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md));
+  deployment rides the prod-readiness env-and-deploy plan
 
 ## Archive
 

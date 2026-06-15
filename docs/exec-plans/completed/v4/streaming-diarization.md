@@ -1,7 +1,8 @@
 # Streaming Diarization Plan (v4 Milestone 4)
 
-> **Status:** active — spike resolved 2026-06-11 (see Decision), build in progress.
-> Promoted `queued/v4/ → active/v4/` 2026-06-11.
+> **Status:** completed — shipped 2026-06-11 (PR #36); see Verification Gate.
+> Spike resolved 2026-06-11 (see Decision). Promoted `queued/v4/ → active/v4/`
+> 2026-06-11; moved to `completed/v4/` 2026-06-12.
 > **Version:** v4
 > **Area:** live transcription path, worker
 > **Created:** 2026-06-11

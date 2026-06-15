@@ -2,9 +2,13 @@
 
 > **Status:** active. Written 2026-06-04, parallel to other in-flight work.
 > These plans are **additive** and live in their own folder so they don't
-> collide with whatever else is editing `docs/`. **`docs/PLANS.md` was
-> intentionally NOT updated** (another agent owns it right now) — whoever lands
-> the first of these should add a row there.
+> collide with whatever else is editing `docs/`. (The original "PLANS.md not
+> updated" note is resolved — these plans are indexed in
+> [`docs/PLANS.md`](../../../../PLANS.md) under **production**.)
+> **Scope refreshed 2026-06-12** against the post-v4 codebase — each child plan
+> now carries a dated "Scope refinement" section that corrects drift; those
+> sections are binding on implementers where they conflict with the original
+> task snippets.
 
 > **Path note after the monorepo migration:** these plans were written before
 > the app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
@@ -15,10 +19,36 @@
 
 Goal: get Lumen from "v1 feature-complete" to "safe to put in front of the
 public," covering only the **codebase** work. Codebase-external setup (Railway,
-Supabase prod project, SMTP, DNS, Sentry account, etc.) is tracked separately —
-see the deploy plan's "External prerequisites" section.
+Supabase prod project, SMTP, DNS, Sentry account, etc.) has its own
+step-by-step runbook: **[EXTERNAL-SETUP.md](EXTERNAL-SETUP.md)** (added
+2026-06-12; supersedes the per-plan "External prerequisites" sections as the
+working checklist — those sections remain as per-plan context).
 
 Hosting decision (locked): **app → Vercel, worker → Railway.**
+**Addendum (2026-06-12):** the monorepo now also contains `apps/marketing`
+(public static site, port 3001 locally). It deploys as a **second Vercel
+project** (root directory `apps/marketing`, env: `NEXT_PUBLIC_APP_URL` +
+`NEXT_PUBLIC_SITE_URL`). Not on the launch-test critical path.
+
+## Launch target (added 2026-06-12)
+
+**A working prod instance by Mon 2026-06-15**, so live transcription can be
+tested in a real seminar and real-world gaps surfaced. That target splits the
+plans into a critical path and a deferrable tail:
+
+| Order | Plan | Monday-blocking? | Notes |
+| --- | --- | --- | --- |
+| 1 | prod-env-and-deploy | **Yes** | Everything else needs real prod env. See its refinement section — the worker image must now also carry diarization models + ffmpeg for the v4 live-label + sweep jobs. |
+| 2 | prod-auth | **Partially** | Tasks 1–3 (confirmation, callback, reset) + Task 5 (rate limit) yes — SMTP is the external long pole. Task 4 (Google OAuth) is deferrable; password auth suffices for the seminar test. |
+| 3 | prod-sentry | **Yes (cheap)** | Small; the whole point of the seminar test is finding gaps, and a silent remote worker hides them. |
+| 4 | prod-legal-pages | No | Required before *public* users, not for a private seminar test. Schedule immediately after. |
+| 5 | prod-assistant-verification | No (but unblocked) | A prod instance + a real Claude key finally unblocks this gate — run it the same week. |
+
+The seminar test exercises **live capture** (browser-side Whisper — needs only
+the Vercel app + HTTPS) and the **post-finalize pipeline** (worker:
+`label-speakers`, `sweep-stale-live-sessions`, batch transcription) — so the
+Railway worker with `DIARIZATION_ENABLED=true` is part of the Monday target,
+not a nice-to-have.
 
 ## The plans (split per subsystem, build in this order)
 

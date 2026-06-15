@@ -17,6 +17,58 @@
 
 ---
 
+## Scope refinement — 2026-06-12 (binding; corrects drift since 2026-06-04)
+
+The codebase moved under this plan (v3 m2–m4, v4 m1–m5 shipped). Where the
+task snippets below conflict with this section, this section wins.
+
+1. **Task 1 is an additive edit, not a file replacement.**
+   `apps/web/src/server/config/env.ts` has since gained `DIARIZATION_ENABLED`,
+   `DIARIZATION_SEGMENTATION_MODEL_PATH`, `DIARIZATION_EMBEDDING_MODEL_PATH`,
+   `DIARIZATION_CLUSTER_THRESHOLD`, `DIARIZATION_NUM_SPEAKERS` (v3 m3) and
+   `LIVE_SESSION_STALE_MINUTES` (v4 m5). Do **not** paste the plan's
+   replacement body — it would delete them. The change is: export
+   `parsePublicEnv`/`parseServerEnv`, add `NEXT_PUBLIC_APP_URL`, keep
+   everything else.
+2. **The worker is now a three-job process.** `transcription-worker.ts`
+   registers batch transcription, `label-speakers` (v4 m4,
+   `speaker-label-worker.ts`) and the cron-scheduled
+   `sweep-stale-live-sessions` (v4 m5, `stale-live-sweeper.ts`) in one
+   process — one Railway service still suffices; no extra service or external
+   cron. But the image needs more than the plan's Dockerfile ships:
+   - **ffmpeg** is needed at runtime by `worker/audio-convert.ts` (webm→WAV
+     for live-session labeling), not just by `nodejs-whisper`. (Already
+     installed by the plan's Dockerfile — keep it.)
+   - **sherpa-onnx diarization models** must be baked at build:
+     `bun run worker:diarization-models`
+     (`scripts/fetch-diarization-models.ts` exists) and the two
+     `DIARIZATION_*_MODEL_PATH` vars pointed at the baked paths.
+   - `sherpa-onnx` is a native module — verify it loads in the
+     `oven/bun:1-debian` image during the local build check.
+3. **The Dockerfile must be workspace-aware.** The COPY lines predate the
+   monorepo. Build context is the repo root; you need the root `package.json`
+   + `bun.lock` + `turbo.json`, `apps/web/package.json`, `packages/ui`
+   (the app depends on `@lumen/ui`), then `bun install`, then
+   `apps/web/{tsconfig.json,src,worker,scripts}`. The Dockerfile lives at
+   `apps/web/worker/Dockerfile`; CMD runs `bun run worker:transcribe` from
+   `apps/web`.
+4. **Vercel is two projects, each with its own root directory** — `apps/web`
+   (the app) and `apps/marketing` (public site; env `NEXT_PUBLIC_APP_URL`,
+   `NEXT_PUBLIC_SITE_URL`, no Supabase vars). The original "root dir = repo
+   root" instruction is wrong post-monorepo.
+5. **Env matrix additions (worker / Railway):** `DIARIZATION_ENABLED=true`,
+   `DIARIZATION_SEGMENTATION_MODEL_PATH`, `DIARIZATION_EMBEDDING_MODEL_PATH`
+   (baked image paths), optional `DIARIZATION_CLUSTER_THRESHOLD` /
+   `DIARIZATION_NUM_SPEAKERS`, `LIVE_SESSION_STALE_MINUTES` (default 45).
+   Include them in `DEPLOY.md`'s matrix when writing it.
+6. **The assistant needs no server API key.** Claude access is BYO-key
+   per-user via Supabase Vault (`user_ai_credentials`,
+   `supabase_vault` extension) — confirm the Vault extension is enabled on
+   the prod project when pushing migrations; there is no `ANTHROPIC_API_KEY`
+   env var to set.
+
+---
+
 ## External prerequisites (codebase-EXTERNAL — do these in the dashboards, not in code)
 
 These are the human setup steps this plan assumes. Not code; listed so the env

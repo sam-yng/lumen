@@ -19,6 +19,31 @@
 
 ---
 
+## Scope refinement — 2026-06-12 (binding; corrects drift since 2026-06-04)
+
+1. **`PUBLIC_PREFIXES` now contains `"/api/mcp"`** (v2 MCP server). Every
+   snippet below that rewrites the array predates that — when editing
+   `src/proxy.ts`, **add** to the existing array; never paste a literal that
+   drops `/api/mcp`.
+2. **`auth-form.tsx` and the `(auth)`/`(app)` layouts were rewritten by the
+   frontend overhaul** (mobile-first, 2026-06-11). Treat the JSX snippets in
+   Tasks 1, 3, 4 as intent, not literal patches — re-derive the insertions
+   against the current components and match their idiom.
+3. **Rate-limit seam (Task 5) — one addition.** The enqueue seams in
+   `services/uploads.ts` / `services/recordings.ts` still exist as described.
+   But the **live path** (v3 m2) creates recordings and appends segments via
+   `services/live-sessions.ts` without touching either — an abuser can mint
+   unlimited live sessions. Add a second limit at live-session start (e.g.
+   `liveSessionStart`, same `bump_rate_limit` RPC, ~10/hour/user). Finalize's
+   `label-speakers` enqueue needs no separate limit (1:1 with session start).
+4. **Monday-target cut:** Tasks 1–3 + 5 are on the launch-test critical path;
+   Task 4 (Google OAuth) is deferrable — password auth suffices for the
+   seminar test. SMTP (Resend or similar) is the external long pole: without
+   it, confirmations ON makes prod signup impossible. Wire it before flipping
+   `enable_confirmations`.
+
+---
+
 ## External prerequisites (dashboard, not code)
 
 - **SMTP provider** wired in Supabase → Auth → SMTP (e.g. Resend). Built-in

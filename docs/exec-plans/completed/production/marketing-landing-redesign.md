@@ -1,5 +1,12 @@
 # Marketing Landing Redesign Implementation Plan
 
+> **Status:** completed — Tasks 1–13 shipped and verified (final pass
+> 2026-06-10: react-doctor 100/100, build + browser checks green; shimmer-tilt
+> polish landed 2026-06-12). Moved `active/production/ → completed/production/`
+> 2026-06-12. Deployment of `apps/marketing` is tracked by
+> [`prod-readiness/prod-env-and-deploy.md`](../../active/production/prod-readiness/prod-env-and-deploy.md).
+> **Version:** production
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **Design spec:** [`docs/superpowers/specs/2026-06-04-marketing-landing-redesign-design.md`](../../../superpowers/specs/2026-06-04-marketing-landing-redesign-design.md)
