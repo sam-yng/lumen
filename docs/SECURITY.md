@@ -12,7 +12,7 @@
   than trusting routing alone.
 - **Sign-up email confirmation (OTP):** new accounts must confirm with a
   six-digit code before the session is usable. Locally, `bunx supabase start`
-  serves the code through Inbucket (`http://127.0.0.1:54324`). Production
+  serves the code through Mailpit (`http://127.0.0.1:54324`). Production
   requires Supabase Auth email confirmations enabled, SMTP configured in the
   Supabase dashboard, and a confirmation template that includes `{{ .Token }}`
   so users can enter the one-time code in Lumen.

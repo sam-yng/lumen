@@ -27,6 +27,18 @@ export function SiteFooter() {
           >
             Get started
           </a>
+          <a
+            href={`${siteConfig.appUrl}/privacy`}
+            className="text-text-3 text-sm transition-colors hover:text-foreground"
+          >
+            Privacy
+          </a>
+          <a
+            href={`${siteConfig.appUrl}/terms`}
+            className="text-text-3 text-sm transition-colors hover:text-foreground"
+          >
+            Terms
+          </a>
         </nav>
       </div>
       <div className="border-border-soft border-t">

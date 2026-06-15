@@ -1,6 +1,5 @@
 "use client";
 
-import { Code2 } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type AuthState, verifySignUpOtp } from "@/server/auth/actions";
+import {
+  type AuthState,
+  signInWithGoogle,
+  verifySignUpOtp,
+} from "@/server/auth/actions";
 
 type AuthAction = (prev: AuthState, formData: FormData) => Promise<AuthState>;
 
@@ -49,6 +52,10 @@ function isOtpSentState(
   return Boolean(state && "status" in state && state.status === "otp-sent");
 }
 
+function errorOf(state: AuthState): string | undefined {
+  return state && "error" in state ? state.error : undefined;
+}
+
 export function AuthForm({ mode, action, initialState }: AuthFormProps) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     action,
@@ -62,7 +69,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
   const pendingOtpState = isOtpSentState(otpState)
     ? otpState
     : isOtpSentState(state)
-      ? { ...state, error: otpState?.error ?? state.error }
+      ? { ...state, error: errorOf(otpState) ?? state.error }
       : undefined;
 
   if (pendingOtpState) {
@@ -141,6 +148,17 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
           {copy.description}
         </CardDescription>
       </CardHeader>
+      {/* Sibling form (not nested) so the OAuth submit is valid HTML. */}
+      <form action={signInWithGoogle} className="flex flex-col gap-3 px-6">
+        <Button type="submit" variant="outline" className="w-full">
+          Continue with Google
+        </Button>
+        <div className="flex w-full items-center gap-3 text-xs text-[var(--text-4)]">
+          <span className="h-px flex-1 bg-[var(--border-soft)]" />
+          <span>or</span>
+          <span className="h-px flex-1 bg-[var(--border-soft)]" />
+        </div>
+      </form>
       <form action={formAction}>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -192,9 +210,9 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
               />
             </div>
           ) : null}
-          {state?.error ? (
+          {errorOf(state) ? (
             <p className="text-sm text-destructive" role="alert">
-              {state.error}
+              {errorOf(state)}
             </p>
           ) : null}
         </CardContent>
@@ -202,21 +220,16 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "…" : copy.submit}
           </Button>
-          <div className="flex w-full items-center gap-3 text-xs text-[var(--text-4)]">
-            <span className="h-px flex-1 bg-[var(--border-soft)]" />
-            <span>or</span>
-            <span className="h-px flex-1 bg-[var(--border-soft)]" />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled
-            title="GitHub authentication is not enabled in v1."
-          >
-            <Code2 className="size-4" />
-            Continue with GitHub
-          </Button>
+          {mode === "login" ? (
+            <p className="text-sm text-[var(--text-3)]">
+              <Link
+                href="/forgot-password"
+                className="font-medium text-[var(--accent-text)] underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </p>
+          ) : null}
           <p className="text-sm text-[var(--text-3)]">
             {copy.altPrompt}{" "}
             <Link

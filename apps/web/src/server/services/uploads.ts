@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Database, Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
+import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
 import {
   type StorageProvider,
   storageKeyForUpload,
@@ -112,6 +113,12 @@ export async function createUploadedFile(
   const fileId = randomUUID();
   const storageKey = storageKeyForUpload(ctx.userId, input.name, fileId);
   const kind: FileKind = isAudioMimeType(input.mimeType) ? "audio" : "other";
+
+  // Cap audio enqueues per user (transcription is the cost-sensitive path).
+  // Enforce before any storage/DB write so a limited upload leaves no orphans.
+  if (kind === "audio") {
+    await enforceRateLimit(ctx, LIMITS.transcriptionEnqueue);
+  }
 
   await input.storage.upload({
     bucket: input.bucket,

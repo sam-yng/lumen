@@ -4,6 +4,7 @@ import {
   type TranscriptSegmentInput,
   writeRecordingTranscript,
 } from "@/server/services/transcripts";
+import { Sentry } from "./instrumentation";
 
 type RecordingRow = Tables<"recordings">;
 type TranscriptRow = Tables<"transcripts">;
@@ -180,6 +181,12 @@ export async function sweepStaleLiveSessions(
       if (outcome === "finalized") result.finalized += 1;
       if (outcome === "expired") result.expired += 1;
     } catch (sweepError) {
+      // Per-recording failure is swallowed so the sweep continues — capture so
+      // it isn't silent.
+      Sentry.captureException(sweepError, {
+        tags: { area: "stale-live-sweep" },
+        extra: { recordingId: recording.id },
+      });
       console.error(
         `Stale live sweep failed for recording ${recording.id}: ${
           sweepError instanceof Error ? sweepError.message : String(sweepError)

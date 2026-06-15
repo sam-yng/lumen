@@ -13,6 +13,10 @@ import { z } from "zod";
 const publicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  // Absolute origin of the deployed app, e.g. https://lumen.app. Used to build
+  // absolute redirect URLs for email confirmation / password reset / OAuth.
+  // Falls back to localhost ONLY in development.
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 });
 
 const serverSchema = z.object({
@@ -39,19 +43,28 @@ const serverSchema = z.object({
   LIVE_SESSION_STALE_MINUTES: z.coerce.number().int().positive().default(45),
 });
 
-type PublicEnv = z.infer<typeof publicSchema>;
-type ServerEnv = z.infer<typeof serverSchema>;
+export type PublicEnv = z.infer<typeof publicSchema>;
+export type ServerEnv = z.infer<typeof serverSchema>;
+
+export function parsePublicEnv(source: Record<string, unknown>): PublicEnv {
+  return publicSchema.parse(source);
+}
+
+export function parseServerEnv(source: Record<string, unknown>): ServerEnv {
+  return serverSchema.parse(source);
+}
 
 let publicEnv: PublicEnv | undefined;
 let serverEnv: ServerEnv | undefined;
 
 export function getPublicEnv(): PublicEnv {
   if (!publicEnv) {
-    publicEnv = publicSchema.parse({
+    publicEnv = parsePublicEnv({
       // Literal accesses so Next.js inlines these in the browser bundle.
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     });
   }
   return publicEnv;
@@ -59,7 +72,7 @@ export function getPublicEnv(): PublicEnv {
 
 export function getServerEnv(): ServerEnv {
   if (!serverEnv) {
-    serverEnv = serverSchema.parse({
+    serverEnv = parseServerEnv({
       SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
       PG_BOSS_DATABASE_URL: process.env.PG_BOSS_DATABASE_URL,
       TRANSCRIPTION_STORAGE_BUCKET: process.env.TRANSCRIPTION_STORAGE_BUCKET,

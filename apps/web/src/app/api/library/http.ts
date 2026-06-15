@@ -31,6 +31,7 @@ export function serviceErrorResponse(error: unknown) {
       not_found: 404,
       invalid_input: 400,
       conflict: 409,
+      rate_limited: 429,
     } satisfies Record<ServiceError["code"], number>;
 
     return Response.json(

@@ -30,7 +30,7 @@ create table public.semantic_search_chunks (
   content text not null,
   content_tsv tsvector generated always as
     (to_tsvector('english', coalesce(content, ''))) stored,
-  embedding vector(384) not null,
+  embedding extensions.vector(384) not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint semantic_search_chunks_one_source check (
@@ -74,7 +74,7 @@ create index semantic_search_chunks_transcript_id_idx
 create index semantic_search_chunks_content_tsv_idx
   on public.semantic_search_chunks using gin (content_tsv);
 create index semantic_search_chunks_embedding_idx
-  on public.semantic_search_chunks using hnsw (embedding vector_cosine_ops);
+  on public.semantic_search_chunks using hnsw (embedding extensions.vector_cosine_ops);
 create trigger semantic_search_chunks_set_updated_at before update
   on public.semantic_search_chunks
   for each row execute function public.set_updated_at();
@@ -96,7 +96,7 @@ create policy "semantic_search_chunks_delete_own"
   using (auth.uid() = user_id);
 
 create function public.match_semantic_search_chunks(
-  query_embedding vector(384),
+  query_embedding extensions.vector(384),
   query_text text,
   match_user_id uuid,
   match_count integer default 8

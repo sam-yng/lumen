@@ -1,6 +1,7 @@
 # Planning Lifecycle Enforcement
 
-> **Status:** active — implemented, pending human review (working rule #4)
+> **Status:** completed — `scripts/check-plan-lifecycle.ts` is wired into the
+> `check:plans` gate and enforcing; review accepted 2026-06-15.
 > **Version:** cross-cutting
 > **Area:** docs / process governance
 > **Created:** 2026-06-09

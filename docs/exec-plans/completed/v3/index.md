@@ -7,7 +7,7 @@
 > assistant happy-path is unverified pending a real Claude key — an
 > environmental/launch blocker, not an m1 build task. Carried forward to the
 > consolidated
-> [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+> [assistant verification gate](../../queued/post-prod/assistant-launch.md)
 > (production-readiness; same gate as the v2 in-app assistant).
 > **Version:** v3
 > **Area:** retrieval, citations, MCP, in-app assistant
@@ -75,5 +75,5 @@ milestones (m2+) were scoped 2026-06-10 as a fresh group, now completed at
 [`index-m2-plus.md`](index-m2-plus.md), rather than by reopening this
 group. The one carried-forward item — the
 manual assistant happy-path — lives in the consolidated
-[assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md),
+[assistant verification gate](../../queued/post-prod/assistant-launch.md),
 not unfinished m1 work.

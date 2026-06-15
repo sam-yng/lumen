@@ -201,7 +201,7 @@ Expected: green (types must still compile with the new `AuthState` union).
 - [ ] **Step 6: Manual verification** (project rule: run the happy path)
 
 `bunx supabase start`, `bun run dev`, sign up with a new email → see "Check your
-email" → open the link in Inbucket (`http://127.0.0.1:54324`) → redirected to
+email" → open the link in Mailpit (`http://127.0.0.1:54324`) → redirected to
 `/` logged in.
 
 - [ ] **Step 7: Commit**
@@ -489,7 +489,7 @@ Expected: green.
 
 - [ ] **Step 8: Manual verification**
 
-Request reset → open link in Inbucket → land on `/reset-password` → set new
+Request reset → open link in Mailpit → land on `/reset-password` → set new
 password → redirected to `/`, logged in. Old password rejected on next login.
 
 - [ ] **Step 9: Commit**

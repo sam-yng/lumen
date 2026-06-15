@@ -116,4 +116,4 @@ useful content (live segments are written incrementally by
   message in the existing failure UI. Citations over swept transcripts ride
   the unchanged deep-link path; assistant-driven citation click-through
   remains under the existing Claude-key-gated verification gate
-  (`prod-assistant-verification.md`), same as every retrieval milestone.
+  (post-launch in `queued/post-prod/assistant-launch.md`), same as every retrieval milestone.

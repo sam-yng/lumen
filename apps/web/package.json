@@ -15,13 +15,16 @@
     "db:types": "supabase gen types typescript --local > src/server/db/database.types.ts",
     "docs:db-schema": "bun run scripts/gen-db-schema.ts",
     "worker:transcribe": "bun run worker/transcription-worker.ts",
-    "worker:diarization-models": "bun run scripts/fetch-diarization-models.ts"
+    "worker:diarization-models": "bun run scripts/fetch-diarization-models.ts",
+    "worker:download-model": "bun run scripts/download-whisper-model.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
     "@huggingface/transformers": "^3.8.1",
     "@lumen/ui": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@sentry/nextjs": "^10",
+    "@sentry/node": "^10",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@tanstack/react-query": "^5.101.0",

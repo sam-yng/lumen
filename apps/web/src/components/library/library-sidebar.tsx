@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { ASSISTANT_ENABLED } from "@/lib/assistant-flags";
 import type { Tables } from "@/server/db/database.types";
 import { TagPanel } from "./tag-panel";
 
@@ -178,17 +179,21 @@ export function LibrarySidebar({
             <Tag className="size-4" />
             Tags
           </Link>
-          <span
-            aria-disabled="true"
-            title="Ask Lumen ships in v2"
-            className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-60`}
-          >
-            <Sparkles className="size-4 text-[var(--accent-text)]" />
-            Ask Lumen
-            <span className="ml-auto font-mono text-[10px] text-[var(--text-4)]">
-              v2
+          {ASSISTANT_ENABLED ? (
+            <Link href="/assistant" className={`${navItem} ${navIdle}`}>
+              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              Ask Lumen
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              title="Ask Lumen — enabling after launch"
+              className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-60`}
+            >
+              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              Ask Lumen
             </span>
-          </span>
+          )}
         </nav>
         <div className="mb-2 flex items-center justify-between">
           <p className="font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">

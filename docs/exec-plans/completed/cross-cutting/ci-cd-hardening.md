@@ -1,5 +1,8 @@
 # CI/CD Hardening Implementation Plan
 
+> **Status:** completed — `ci.yml` runs the `quality-gate` + Supabase-backed
+> `e2e-smoke` jobs on PRs; the dirty-kitchen rule landed in `AGENTS.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Run lint, typecheck, unit/integration tests, and Supabase-backed Playwright smoke tests on every opened, reopened, or freshly updated pull request.

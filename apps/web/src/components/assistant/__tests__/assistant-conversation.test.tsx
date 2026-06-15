@@ -1,24 +1,24 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AssistantPanel } from "@/components/assistant/assistant-panel";
+import { AssistantConversation } from "@/components/assistant/assistant-conversation";
 
-function renderPanel() {
+function renderConversation() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <AssistantPanel />
+      <AssistantConversation />
     </QueryClientProvider>,
   );
 }
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("AssistantPanel", () => {
+describe("AssistantConversation", () => {
   it("shows the empty state initially", () => {
-    renderPanel();
+    renderConversation();
     expect(screen.getByText(/ask about your notes/i)).toBeInTheDocument();
   });
 
@@ -34,7 +34,7 @@ describe("AssistantPanel", () => {
         }),
       ),
     );
-    renderPanel();
+    renderConversation();
     fireEvent.change(screen.getByPlaceholderText(/ask/i), {
       target: { value: "hi" },
     });
@@ -73,7 +73,7 @@ describe("AssistantPanel", () => {
         }),
       ),
     );
-    renderPanel();
+    renderConversation();
     fireEvent.change(screen.getByPlaceholderText(/ask/i), {
       target: { value: "powerhouse?" },
     });
@@ -105,7 +105,7 @@ describe("AssistantPanel", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ state: "no_api_key" })),
     );
-    renderPanel();
+    renderConversation();
     fireEvent.change(screen.getByPlaceholderText(/ask/i), {
       target: { value: "hi" },
     });

@@ -47,7 +47,7 @@ the best-overlapping `transcript_segments` id.
   and confirming `[S#]` citations resolve to returned sources — needs a real
   Claude key. The build is accepted; this verification is carried forward to the
   consolidated
-  [assistant verification gate](../../active/production/prod-readiness/prod-assistant-verification.md)
+  [assistant verification gate](../../queued/post-prod/assistant-launch.md)
   (same gate as the v2 in-app assistant) and **must pass before Lumen goes to
   production**.
 

@@ -178,6 +178,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       recordings: {
         Row: {
           created_at: string
@@ -454,6 +475,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bump_rate_limit: {
+        Args: { p_action: string; p_window_start: string }
+        Returns: {
+          new_count: number
+        }[]
+      }
       delete_ai_api_key: { Args: never; Returns: undefined }
       get_ai_api_key: {
         Args: never

@@ -1,0 +1,12 @@
+<h2>Reset your Lumen password</h2>
+<p>Click below to choose a new password:</p>
+<p>
+  <a
+    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password"
+    >Reset password</a
+  >
+</p>
+<p>
+  If you didn't request this, you can ignore this email. The link expires in one
+  hour.
+</p>
