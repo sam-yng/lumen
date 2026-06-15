@@ -15,7 +15,13 @@ import { getPublicEnv } from "@/server/config/env";
 // MCP hosts with a bearer Supabase JWT (not the cookie session), so the proxy
 // must not redirect it to /login — the route handler enforces its own auth and
 // returns 401 on a missing/invalid token.
-const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/api/mcp"];
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/forgot-password",
+  "/api/mcp",
+];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
