@@ -1,3 +1,8 @@
+// Sentry must initialise before any other import loads (its auto-instrumentation
+// patches http/pg at init), so this import stays first and import sorting is
+// suppressed for this file.
+// biome-ignore assist/source/organizeImports: keep the Sentry init import first
+import { Sentry } from "./instrumentation";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -64,6 +69,8 @@ async function diarizeSafe(
   try {
     return await diarization.diarize(audioPath);
   } catch (error) {
+    // Degrade-never-fail swallows this — capture so it isn't silent.
+    Sentry.captureException(error, { tags: { area: "diarization" } });
     console.error(
       `Diarization failed; keeping null speakers: ${
         error instanceof Error ? error.message : String(error)
@@ -188,6 +195,10 @@ export async function processTranscriptionJob(
 
     return { recordingId: payload.recordingId };
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { area: "transcription" },
+      extra: { recordingId: payload.recordingId, userId: payload.userId },
+    });
     await markRecordingFailed(
       deps.supabase,
       payload.userId,
@@ -263,13 +274,24 @@ export async function startTranscriptionWorker() {
     { batchSize: 1, pollingIntervalSeconds: 2 },
     async ([job]) => {
       if (!job) return undefined;
-      return processSpeakerLabelJob(job, {
-        bucket: env.TRANSCRIPTION_STORAGE_BUCKET,
-        supabase: supabase as unknown as WorkerSupabaseClient,
-        storage,
-        diarization,
-        tempDir: env.TRANSCRIPTION_TMP_DIR,
-      });
+      try {
+        return await processSpeakerLabelJob(job, {
+          bucket: env.TRANSCRIPTION_STORAGE_BUCKET,
+          supabase: supabase as unknown as WorkerSupabaseClient,
+          storage,
+          diarization,
+          tempDir: env.TRANSCRIPTION_TMP_DIR,
+        });
+      } catch (error) {
+        // Labeling is degrade-never-fail: the recording is already `done`, so
+        // swallow to avoid retry-storms, but surface the error in Sentry.
+        Sentry.captureException(error, {
+          tags: { area: "speaker-labeling" },
+          extra: { recordingId: job.data.recordingId },
+        });
+        console.error("Speaker labeling failed; leaving null speakers:", error);
+        return undefined;
+      }
     },
   );
 
@@ -292,6 +314,7 @@ export async function startTranscriptionWorker() {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   startTranscriptionWorker().catch((error) => {
+    Sentry.captureException(error, { tags: { area: "worker-startup" } });
     console.error(error);
     process.exitCode = 1;
   });
