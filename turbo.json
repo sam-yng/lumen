@@ -18,7 +18,9 @@
         "DIARIZATION_EMBEDDING_MODEL_PATH",
         "DIARIZATION_CLUSTER_THRESHOLD",
         "DIARIZATION_NUM_SPEAKERS",
-        "LIVE_SESSION_STALE_MINUTES"
+        "LIVE_SESSION_STALE_MINUTES",
+        "SENTRY_AUTH_TOKEN",
+        "CI"
       ]
     },
     "typecheck": {
