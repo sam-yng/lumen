@@ -192,6 +192,10 @@ export function LibrarySidebar({
             >
               <Sparkles className="size-4 text-[var(--accent-text)]" />
               Ask Lumen
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-1.5 py-px font-mono text-[10px] tracking-wide text-[var(--accent-text)] uppercase">
+                <span className="size-[5px] rounded-full bg-[var(--accent)]" />
+                soon
+              </span>
             </span>
           )}
         </nav>
