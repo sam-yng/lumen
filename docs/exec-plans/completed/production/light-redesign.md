@@ -1,9 +1,26 @@
 # Lumen Light-Theme Redesign Implementation Plan
 
-> **Status:** active — written 2026-06-16. Web app first (priority), then
-> marketing. One branch (`design/light-redesign`). Pause at each milestone
-> boundary for human review (AGENTS rule 4).
+> **Status:** completed 2026-06-16 (branch `design/light-redesign`). All
+> milestones M0–M8 shipped; `bun run check` green (293 tests); browser
+> happy-path verified for both apps (marketing hero + coming-soon cards;
+> web-app two-column auth). Moved `active/production/ → completed/production/`.
 > **Version:** production
+>
+> **Retrospective.** The single highest-leverage finding: the repo's token
+> layer already named every token exactly as the handoff did (`--canvas`,
+> `--surface`, `--accent`, `--row-h`, …), so M0's value-swap in
+> `packages/ui/src/styles/tokens.css` + both `globals.css` cascaded the light
+> theme through nearly every surface automatically. M2 (auth), M5 (transcript),
+> and M6 (search) needed **no code change** — prior token-based work meant they
+> re-themed for free. The remaining milestones were surgical: hardcoded chrome
+> sizes (`280px`/`52px`/`38px`) swapped to the new chrome-size tokens, the
+> `dark` class dropped from each `<html>`, and the marketing coming-soon
+> treatment added. Two binding decisions held throughout: light-only with the
+> `@custom-variant dark` seam left in place (no toggle), and **no "Notify me" /
+> email capture anywhere** (marketing had none to begin with — it simply was
+> not added). Gotchas: Biome `check .` linted the vendored handoff prototypes
+> until the dir was added to `files.includes` ignore; the multi-line shadow
+> tokens needed `bun run format` to settle.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

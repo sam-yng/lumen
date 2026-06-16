@@ -44,12 +44,6 @@ same rule when it gains content.
 
 ## Active
 
-- **production** — Light-theme redesign
-  - [light-redesign.md](exec-plans/active/production/light-redesign.md)
-    — both apps dark→light (Notion-inspired, skinnier chrome); web-first then
-    marketing; binding decisions: light-only seam (no dark toggle) + no
-    "Notify me" capture
-    (design: [superpowers/specs](superpowers/specs/2026-06-16-light-redesign-design.md))
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [EXTERNAL-SETUP.md](exec-plans/active/production/prod-readiness/EXTERNAL-SETUP.md)
@@ -143,6 +137,12 @@ same rule when it gains content.
   (2026-06-12) — landing redesign Tasks 1–13 shipped and verified
   (design: [superpowers/specs](superpowers/specs/2026-06-04-marketing-landing-redesign-design.md));
   deployment rides the prod-readiness env-and-deploy plan
+- [light-redesign.md](exec-plans/completed/production/light-redesign.md)
+  (2026-06-16) — both apps dark→light (Notion-inspired light theme, skinnier
+  chrome); milestones M0–M8 shipped, both apps browser-verified; binding
+  decisions: light-only with the dark seam retained (no toggle) + no
+  "Notify me" capture anywhere
+  (design: [superpowers/specs](superpowers/specs/2026-06-16-light-redesign-design.md))
 
 ### Cross-cutting shipped
 
