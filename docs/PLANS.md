@@ -44,6 +44,12 @@ same rule when it gains content.
 
 ## Active
 
+- **production** — Light-theme redesign
+  - [light-redesign.md](exec-plans/active/production/light-redesign.md)
+    — both apps dark→light (Notion-inspired, skinnier chrome); web-first then
+    marketing; binding decisions: light-only seam (no dark toggle) + no
+    "Notify me" capture
+    (design: [superpowers/specs](superpowers/specs/2026-06-16-light-redesign-design.md))
 - **production** — Production readiness
   - [index.md](exec-plans/active/production/prod-readiness/index.md)
   - [EXTERNAL-SETUP.md](exec-plans/active/production/prod-readiness/EXTERNAL-SETUP.md)

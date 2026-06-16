@@ -1,0 +1,6 @@
+/* Lumen webfonts.
+ * Geist (UI), Geist Mono (meta/timestamps), Newsreader (reading surfaces).
+ * The Lumen repo ships Geist + Geist Mono via next/font and adds Newsreader;
+ * here they load from Google Fonts so any consumer linking styles.css gets them.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap");

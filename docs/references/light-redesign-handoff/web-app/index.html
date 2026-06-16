@@ -1,0 +1,115 @@
+<!-- Lumen study workspace — design reference (light theme). See ../README.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lumen — Workspace</title>
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--canvas); overflow: hidden; }
+  #root { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="app-data.jsx"></script>
+<script type="text/babel" src="app-screens.jsx"></script>
+<script type="text/babel" src="app-detail-screens.jsx"></script>
+<script type="text/babel" data-presets="react">
+  const { Sidebar, LibraryView, NoteEditor, TranscriptViewer, AuthScreen } = window.LumenScreens;
+  const { Button, IconButton } = window.LumenDesignSystem_d5dc26;
+  const Icon = window.LIcon;
+  const { FOLDERS, ITEMS } = window.LumenKit;
+  const folderName = (id) => id ? (FOLDERS.find((f) => f.id === id) || {}).name : "Library";
+  const folderPath = (id) => {
+    const path = []; let cur = id;
+    while (cur) { const f = FOLDERS.find((x) => x.id === cur); if (!f) break; path.unshift(f); cur = f.parent; }
+    return path;
+  };
+
+  function TopBar({ folder, onCrumb, onNewNote }) {
+    const crumbs = folderPath(folder);
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, height: "var(--topbar-h)", padding: "0 18px", borderBottom: "1px solid var(--border-soft)", background: "var(--canvas)", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, font: "var(--t-sm)", color: "var(--text-3)" }}>
+          <button onClick={() => onCrumb(null)} style={{ border: "none", background: "transparent", color: "var(--text-3)", cursor: "pointer", padding: 0, font: "inherit" }}>Library</button>
+          {crumbs.map((c, i) => (
+            <span key={c.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+              <Icon n="ChevronRight" size={14} color="var(--text-4)" />
+              <button onClick={() => onCrumb(c.id)} style={{ border: "none", background: "transparent", color: i === crumbs.length - 1 ? "var(--text)" : "var(--text-3)", cursor: "pointer", padding: 0, font: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</button>
+            </span>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <IconButton size="sm" title="Search"><Icon n="Search" size={15} /></IconButton>
+          <Button variant="outline" size="sm" iconStart={<Icon n="Upload" size={14} />}>Upload</Button>
+          <Button size="sm" iconStart={<Icon n="Plus" size={14} />} onClick={onNewNote}>New note</Button>
+        </div>
+      </div>
+    );
+  }
+
+  function App() {
+    const [view, setView] = React.useState("auth");
+    const [items, setItems] = React.useState(window.LumenKit.ITEMS);
+    const [folder, setFolder] = React.useState("f1");
+    const [tag, setTag] = React.useState(null);
+    const [expanded, setExpanded] = React.useState(new Set(["f1"]));
+    const [openTitle, setOpenTitle] = React.useState("");
+
+    const toggle = (id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    const go = (v) => { setView(v); };
+    const selectFolder = (id) => { setFolder(id); setTag(null); setView("library"); };
+
+    const open = (item) => {
+      if (item.type === "folder") { selectFolder(item.id); return; }
+      if (item.type === "document") { setOpenTitle(item.title); setView("note"); return; }
+      if (item.type === "recording") {
+        if (item.status === "done") { setOpenTitle(item.title); setView("transcript"); }
+        return;
+      }
+    };
+    const newNote = () => {
+      const t = "Untitled note";
+      setItems((arr) => [{ id: "new" + Date.now(), type: "document", folder, title: t, meta: "Rich-text note · just now", tags: [] }, ...arr]);
+      setOpenTitle("Cellular respiration"); setView("note");
+    };
+
+    if (view === "auth") return <AuthScreen onSignIn={() => setView("library")} />;
+
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "var(--canvas)", color: "var(--text)" }}>
+        <Sidebar view={view === "library" ? "library" : ""} selectedFolder={folder} selectedTag={tag} expanded={expanded}
+          onSelectFolder={selectFolder} onToggleFolder={toggle} onSelectTag={(t) => { setTag(t); setView("library"); }}
+          onNewNote={newNote} onGo={go} onSignOut={() => setView("auth")} />
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+          <TopBar folder={folder} onCrumb={selectFolder} onNewNote={newNote} />
+          <main style={{ flex: 1, overflowY: "auto" }}>
+            {view === "library" && (
+              <LibraryView items={items} folders={FOLDERS} folderName={folderName(folder)} selectedFolder={folder} selectedTag={tag} onSelectTag={setTag} onOpen={open} />
+            )}
+            {(view === "note" || view === "transcript") && (
+              <div style={{ padding: "20px 28px 60px" }}>
+                <button onClick={() => setView("library")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", background: "transparent", color: "var(--text-3)", cursor: "pointer", font: "var(--t-sm)", marginBottom: 16, padding: 0 }}>
+                  <Icon n="ArrowLeft" size={15} /> Back to library
+                </button>
+                {view === "note" ? <NoteEditor title={openTitle} onClose={() => setView("library")} /> : <TranscriptViewer title={openTitle} onClose={() => setView("library")} />}
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!-- Lumen marketing landing — design reference (light theme). See ../README.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lumen — Turn lectures into a study system</title>
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--text); }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .serif { font-family: var(--font-read); font-weight: 600; letter-spacing: -0.01em; }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 50; background: color-mix(in oklch, var(--canvas), transparent 18%); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-soft); }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .wm { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+  .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
+  .navlinks { display: flex; align-items: center; gap: 18px; font-size: 14px; color: var(--text-2); }
+
+  .btn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 15px; border-radius: var(--r); font-size: 13.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: background .16s, border-color .16s, color .16s; }
+  .btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-accent); }
+  .btn--primary:hover { background: var(--accent-bright); }
+  .btn--ghost { border-color: var(--border); background: var(--canvas); color: var(--text); }
+  .btn--ghost:hover { background: var(--surface-2); border-color: var(--border-strong); }
+  .btn--lg { height: 42px; padding: 0 20px; font-size: 14.5px; }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; }
+  .hero-copy { max-width: 760px; margin: 0 auto; text-align: center; padding: 76px 0 0; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; color: var(--text-2); margin-bottom: 24px; }
+  h1.hero-h { font-size: 54px; line-height: 1.08; margin: 0 auto 22px; max-width: 17ch; color: var(--text); }
+  .hero-sub { font-size: 18px; line-height: 1.6; color: var(--text-2); max-width: 54ch; margin: 0 auto 28px; }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; }
+  .proof { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 34px auto 0; max-width: 600px; }
+  .proof span { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--surface); font-size: 12.5px; color: var(--text-3); }
+  .proof i { width: 6px; height: 6px; border-radius: 999px; background: var(--ok); }
+  .hero-visual { max-width: 1000px; margin: 60px auto 0; padding-bottom: 84px; }
+  .aurora { position: absolute; top: -160px; right: -120px; width: 520px; height: 520px; border-radius: 999px; background: radial-gradient(circle, var(--accent-glow), transparent 66%); filter: blur(30px); pointer-events: none; }
+  .hero .aurora { top: -220px; left: 50%; right: auto; transform: translateX(-50%); width: 720px; height: 600px; }
+
+  /* product frame */
+  .frame { border: 1px solid var(--border); border-radius: var(--r-xl); background: var(--canvas); box-shadow: var(--shadow-pop); overflow: hidden; }
+  .frame-bar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--border-soft); background: var(--surface); }
+  .tl { width: 11px; height: 11px; border-radius: 999px; }
+  .frame-body { display: grid; grid-template-columns: 150px 1fr 200px; }
+  .fb-side { border-right: 1px solid var(--border-soft); padding: 12px; display: flex; flex-direction: column; gap: 3px; }
+  .fb-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--r); font-size: 12.5px; color: var(--text-3); }
+  .fb-row.active { background: var(--accent-soft); color: var(--accent-text); }
+  .sw { width: 12px; height: 12px; border-radius: 3px; background: currentColor; opacity: .55; }
+  .fb-main { padding: 18px; }
+  .fb-right { border-left: 1px solid var(--border-soft); padding: 14px; }
+  .tline { display: block; height: 9px; border-radius: 4px; background: var(--surface-2); margin-bottom: 8px; }
+  .seg { font-size: 12px; line-height: 1.5; color: var(--text-3); padding: 5px 7px; border-radius: var(--r); margin-bottom: 5px; }
+  .seg.active { background: var(--accent-soft); color: var(--text); }
+  .seg b { color: var(--accent-text); font-family: var(--font-mono); font-weight: 500; font-size: 10.5px; margin-right: 6px; }
+  .wave { display: flex; align-items: flex-end; gap: 2px; height: 40px; }
+  .wave i { flex: 1; background: var(--busy); opacity: .55; border-radius: 999px; }
+
+  /* sections */
+  section.band { padding: 76px 0; }
+  .lede { max-width: 640px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  h2.sec { font-size: 36px; line-height: 1.15; margin: 0; color: var(--text); }
+  .sec-sub { font-size: 16px; color: var(--text-2); line-height: 1.6; max-width: 100%; margin: 0; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 40px; }
+  .feat { position: relative; border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: var(--canvas); padding: 22px; transition: border-color .16s, box-shadow .16s, transform .16s; }
+  .feat:hover { border-color: var(--border-strong); box-shadow: var(--shadow-pop); transform: translateY(-2px); }
+  .feat .ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--r); background: var(--accent-soft); color: var(--accent-text); margin-bottom: 14px; }
+  .feat h3 { font-size: 15px; margin: 0 0 7px; color: var(--text); }
+  .feat p { font-size: 13.5px; line-height: 1.6; color: var(--text-3); margin: 0; }
+
+  /* coming-soon (Claude-key / AI) feature cards */
+  .feat--soon { border-style: dashed; border-color: var(--border); background: var(--surface-inset); }
+  .feat--soon .ico { background: transparent; border: 1.5px solid var(--accent-line); color: var(--accent-text); }
+  .feat--soon h3 { color: var(--text-2); }
+  .feat-badge { position: absolute; top: 16px; right: 16px; display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); font-family: var(--font-mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+  .feat-badge i { width: 5px; height: 5px; border-radius: 999px; background: var(--accent); }
+  .notify { margin-top: 16px; }
+  .notify-btn { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--canvas); color: var(--text); font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .16s, border-color .16s; }
+  .notify-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+  .notify-btn svg { width: 14px; height: 14px; }
+  .notify-form { display: flex; gap: 6px; }
+  .notify-form input { flex: 1; min-width: 0; height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--canvas); font-size: 12.5px; color: var(--text); outline: none; transition: border-color .16s, box-shadow .16s; }
+  .notify-form input:focus { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .notify-form button { height: 30px; padding: 0 12px; border: none; border-radius: var(--r); background: var(--accent); color: var(--on-accent); font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .notify-form button:hover { background: var(--accent-bright); }
+  .notify-done { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ok); }
+  .notify-done svg { width: 15px; height: 15px; }
+  /* large variant for the final CTA */
+  .cta .notify { max-width: 400px; margin: 0 auto; }
+  .notify-btn--lg { height: 42px; padding: 0 18px; font-size: 14px; }
+  .notify-btn--lg svg { width: 16px; height: 16px; }
+  .notify-form--lg input, .notify-form--lg button { height: 42px; font-size: 14px; }
+  .notify-form--lg input { padding: 0 14px; }
+  .notify-form--lg button { padding: 0 16px; }
+
+  .trust { border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); }
+  .trust-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 38px; padding: 26px 0; }
+  .trust-row span { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-3); }
+  .trust-row i { width: 6px; height: 6px; border-radius: 999px; background: var(--accent-line); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 40px; position: relative; }
+  .step { border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: var(--canvas); padding: 20px; }
+  .step .n { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-text); font-family: var(--font-read); font-weight: 600; font-size: 16px; margin-bottom: 18px; }
+  .step h3 { font-size: 15px; margin: 0 0 7px; }
+  .step p { font-size: 13.5px; line-height: 1.6; color: var(--text-3); margin: 0; }
+
+  .cta { text-align: center; padding: 96px 0; position: relative; overflow: hidden; }
+  .cta h2 { font-size: 44px; line-height: 1.12; margin: 0 auto 16px; max-width: 18ch; }
+  .cta p { font-size: 17px; color: var(--text-2); max-width: 40ch; margin: 0 auto 28px; }
+
+  footer { border-top: 1px solid var(--border-soft); }
+  .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 36px 0; }
+  .foot .links { display: flex; gap: 22px; font-size: 13.5px; color: var(--text-3); }
+  .copy { border-top: 1px solid var(--border-soft); font-size: 12px; color: var(--text-4); padding: 18px 0; }
+
+  @media (max-width: 900px) {
+    .features, .steps { grid-template-columns: 1fr; }
+    h1.hero-h { font-size: 38px; }
+    .frame-body { grid-template-columns: 1fr; }
+    .fb-side, .fb-right { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <span class="wm"><span class="dot"></span>Lumen</span>
+    <nav class="navlinks">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#" >Sign in</a>
+      <a href="#" class="btn btn--primary">Get started</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="aurora"></div>
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="eyebrow">Private, AI-ready study workspace</span>
+      <h1 class="hero-h serif">Turn lectures into a searchable study system.</h1>
+      <p class="hero-sub">Capture notes, files, and recordings in one private workspace, transcribe lectures locally or live, and search across everything with hybrid retrieval.</p>
+      <div class="hero-cta">
+        <a href="#" class="btn btn--primary btn--lg">Get started</a>
+        <a href="#" class="btn btn--ghost btn--lg">Sign in</a>
+      </div>
+      <div class="proof">
+        <span><i></i>Local + live transcription</span>
+        <span><i></i>Hybrid study retrieval</span>
+        <span><i style="background:var(--accent)"></i>Claude-key AI — coming soon</span>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+    <div class="frame">
+      <div class="frame-bar">
+        <span class="tl" style="background:var(--danger);opacity:.7"></span>
+        <span class="tl" style="background:var(--warn);opacity:.7"></span>
+        <span class="tl" style="background:var(--ok);opacity:.7"></span>
+        <span style="margin-left:8px; font-size:12px; color:var(--text-4)">Lumen — Biology 101 / Respiration lecture</span>
+      </div>
+      <div class="frame-body">
+        <div class="fb-side">
+          <div class="fb-row active"><span class="sw"></span>Biology 101</div>
+          <div class="fb-row"><span class="sw"></span>Lecture recordings</div>
+          <div class="fb-row"><span class="sw"></span>Essay drafts</div>
+          <div class="fb-row"><span class="sw"></span>Exam prep</div>
+        </div>
+        <div class="fb-main">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
+            <span class="l-chip">Lecture note</span>
+            <span class="l-chip" style="border-color:var(--accent-line); background:var(--accent-soft); color:var(--accent-text)">#midterm</span>
+          </div>
+          <p class="serif" style="font-size:20px; margin:0 0 14px; color:var(--text)">Cellular respiration</p>
+          <span class="tline" style="width:86%"></span>
+          <span class="tline" style="width:100%"></span>
+          <span class="tline" style="width:68%"></span>
+          <div style="margin-top:18px; border:1px solid var(--border-soft); border-radius:var(--r-lg); padding:12px; background:var(--surface)">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-3); margin-bottom:9px;"><span>Recording</span><span class="l-badge l-badge--ok" style="font-size:10px">local</span></div>
+            <div class="wave" id="wave"></div>
+          </div>
+        </div>
+        <div class="fb-right">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-4); margin-bottom:10px;">Transcript</div>
+          <div class="seg active"><b>0:12</b>so the mitochondrion is where respiration</div>
+          <div class="seg"><b>0:19</b>actually happens — that's the key takeaway</div>
+          <div class="seg"><b>0:26</b>for the exam. Note the inner membrane folds,</div>
+          <div class="seg"><b>0:33</b>called cristae, which increase surface area.</div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<div class="trust">
+  <div class="wrap trust-row">
+    <span><i></i>Local-first transcription</span>
+    <span><i></i>Hybrid retrieval</span>
+    <span><i></i>MCP-backed AI</span>
+    <span><i></i>Claude key required for AI</span>
+  </div>
+</div>
+
+<section class="band wrap" id="features">
+  <div class="lede">
+    <h2 class="sec serif">Built for the messy middle of real study.</h2>
+    <p class="sec-sub">Lectures, files, transcripts, search, and AI assistance all work from the same user-scoped workspace instead of becoming another pile of disconnected exports.</p>
+  </div>
+  <div class="features" id="features-grid"></div>
+</section>
+
+<section class="band wrap" id="how">
+  <div class="lede">
+    <h2 class="sec serif">From lecture capture to grounded answers.</h2>
+    <p class="sec-sub">Lumen keeps the workflow direct: capture the raw material, make it searchable, then retrieve the exact context you need.</p>
+  </div>
+  <div class="steps" id="steps"></div>
+</section>
+
+<section class="cta">
+  <div class="aurora" style="left:50%; right:auto; transform:translateX(-50%); top:-200px;"></div>
+  <div class="wrap" style="position:relative">
+    <h2 class="serif">Build a study workspace you'll be able to ask questions of.</h2>
+    <p>Your notes, recordings, and transcripts get organized today. The Claude-key assistant that reasons over them is coming soon — be the first to know when it ships.</p>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <a href="#" class="btn btn--primary btn--lg">Get started</a>
+      <div id="cta-notify"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <span class="wm"><span class="dot"></span>Lumen</span>
+      <p style="font-size:12px; color:var(--text-4); margin:8px 0 0">Private study capture, retrieval, transcription, and Claude-key AI.</p>
+    </div>
+    <nav class="links">
+      <a href="#">Sign in</a><a href="#">Get started</a><a href="#">Privacy</a><a href="#">Terms</a>
+    </nav>
+  </div>
+  <div class="copy"><div class="wrap">© 2026 Lumen. AI assistant features require your own Claude API key.</div></div>
+</footer>
+
+<script>
+  const FEATURES = [
+    ["Library", "One library for the whole course", "Nest folders, notes, files, recordings, transcripts, and tags together instead of scattering material across five tools."],
+    ["FileText", "Notes built for recall", "Write structured study notes with headings, lists, tables, and links — kept beside the lecture evidence they came from."],
+    ["Mic", "Local and live transcription", "Upload recorded audio for batch transcription, or capture live sessions in the browser. Audio processing stays local by design."],
+    ["Search", "Hybrid search over everything", "Combine full-text search with semantic retrieval across notes and transcript chunks, so the answer surfaces even when you remember the idea, not the wording."],
+    ["Sparkles", "Assistant over your workspace", "Ask about notes, transcripts, documents, and tags through the same MCP tool contract exposed to external hosts.", "Coming soon"],
+    ["KeyRound", "Bring your Claude key", "AI inference runs with your own Claude API key. Lumen stores it server-side, encrypted at rest, and never shows it again.", "Early access"],
+  ];
+  const STEPS = [
+    ["01", "Capture", "Drop in readings, lecture recordings, files, and notes — organised in nested folders from day one."],
+    ["02", "Transcribe", "Run batch transcription on your machine or capture live text in the browser, then finalize into the same transcript path."],
+    ["03", "Retrieve & reason", "Search lexically and semantically, then ask the Claude-key assistant to work through your own MCP-backed study tools."],
+  ];
+  const fg = document.getElementById("features-grid");
+  function makeNotify(label, large) {
+    const wrap = document.createElement("div"); wrap.className = "notify";
+    const btn = document.createElement("button"); btn.type = "button";
+    btn.className = "notify-btn" + (large ? " notify-btn--lg" : "");
+    btn.appendChild(lucide.createElement(lucide.Bell));
+    btn.appendChild(document.createTextNode(label || "Notify me"));
+    wrap.appendChild(btn);
+    btn.onclick = () => {
+      const form = document.createElement("form");
+      form.className = "notify-form" + (large ? " notify-form--lg" : "");
+      form.innerHTML = '<input type="email" placeholder="you@university.edu" required aria-label="Email address" /><button type="submit">Get updates</button>';
+      wrap.innerHTML = ""; wrap.appendChild(form);
+      form.querySelector("input").focus();
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const done = document.createElement("span"); done.className = "notify-done";
+        done.appendChild(lucide.createElement(lucide.Check));
+        done.appendChild(document.createTextNode(" You're on the list — we'll email you when it ships."));
+        wrap.innerHTML = ""; wrap.appendChild(done);
+      };
+    };
+    return wrap;
+  }
+  FEATURES.forEach(([ic, h, p, soon]) => {
+    const el = document.createElement("div"); el.className = "feat" + (soon ? " feat--soon" : "");
+    el.innerHTML = `<div class="ico"></div>${soon ? `<span class="feat-badge"><i></i>${soon}</span>` : ""}<h3>${h}</h3><p>${p}</p>`;
+    el.querySelector(".ico").appendChild(lucide.createElement(lucide[ic]));
+    if (soon) el.appendChild(makeNotify("Notify me"));
+    fg.appendChild(el);
+  });
+  document.getElementById("cta-notify").appendChild(makeNotify("Notify me when the assistant ships", true));
+  const st = document.getElementById("steps");
+  STEPS.forEach(([n, h, p]) => {
+    const el = document.createElement("div"); el.className = "step";
+    el.innerHTML = `<div class="n">${n}</div><h3>${h}</h3><p>${p}</p>`;
+    st.appendChild(el);
+  });
+  const wave = document.getElementById("wave");
+  for (let i = 0; i < 26; i++) { const b = document.createElement("i"); b.style.height = (28 + Math.abs(Math.sin(i * 0.5)) * 60) + "%"; wave.appendChild(b); }
+  lucide.createIcons && lucide.createIcons();
+</script>
+</body>
+</html>

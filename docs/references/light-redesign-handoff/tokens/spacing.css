@@ -1,0 +1,50 @@
+/* ============================================================================
+ * Lumen — Shape, spacing, motion & elevation tokens
+ *
+ * The redesign shrinks the chrome: a 240px sidebar, ~30px rows, skinnier
+ * controls, and a slightly smaller base radius. Elevation on light = a soft,
+ * low shadow plus a hairline ring — never heavy drops.
+ * ========================================================================== */
+
+:root {
+  /* ---- Radius (skinnier than dark v1) ---- */
+  --r: 5px;            /* base */
+  --r-sm: 3px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+  --r-pill: 999px;
+  --radius: var(--r);
+
+  /* ---- Spacing scale (density multiplier; compact 0.86 / comfy 1.16) ---- */
+  --density: 1; /* @kind other */
+  --s1: calc(4px * var(--density));
+  --s2: calc(8px * var(--density));
+  --s3: calc(12px * var(--density));
+  --s4: calc(16px * var(--density));
+  --s5: calc(22px * var(--density));
+  --s6: calc(30px * var(--density));
+  --s7: calc(44px * var(--density));
+
+  /* ---- Chrome sizing (the "skinnier" redesign) ---- */
+  --sidebar-w: 240px;        /* was 280px */
+  --sidebar-rail-w: 52px;
+  --row-h: calc(29px * (0.62 + (0.38 * var(--density))));  /* tree/list rows */
+  --topbar-h: 44px;          /* was 52px */
+  --control-h: 32px;         /* default control height (was 38px) */
+  --control-h-sm: 27px;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1); /* @kind other */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --dur-fast: 0.12s; /* @kind other */
+  --dur: 0.16s; /* @kind other */
+
+  /* ---- Elevation (light: soft low shadow + hairline ring) ---- */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 274 / 6%);
+  --shadow-card: 0 1px 2px oklch(0.2 0.02 274 / 5%), 0 0 0 1px var(--border-soft);
+  --shadow-pop:
+    0 14px 40px -12px oklch(0.2 0.02 274 / 18%),
+    0 2px 8px -2px oklch(0.2 0.02 274 / 8%),
+    0 0 0 1px var(--border);
+  --shadow-accent: 0 8px 22px -12px var(--accent-glow);
+}
