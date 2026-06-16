@@ -11,15 +11,17 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
   tokens live in `packages/ui` and are consumed as `@lumen/ui/tokens.css`.
 - Forms: React 19 `useActionState` + server actions; validate with zod.
 - Visual language: see [DESIGN.md](DESIGN.md) for the full token system,
-  per-screen specs, and interaction states. Implemented — the dark-first
-  restyle shipped in the post-v1 design pass and the 2026-06 frontend
-  overhaul added the responsive layer below.
+  per-screen specs, and interaction states. Implemented — the app is now a
+  **light** theme (the 2026-06-16 light redesign replaced the original
+  dark-first restyle); the 2026-06 frontend overhaul added the responsive layer
+  below. Tokens keep the OKLCH structure + `@custom-variant dark` seam so a dark
+  theme could be reintroduced, but no dark toggle ships today.
 
 ## Responsive conventions (2026-06 frontend overhaul)
 
 - **Mobile-first.** Base styles target ~375px phones; enhance with `sm` (640)
   / `md` (768) / `lg` (1024). No horizontal scroll at any width ≥320px.
-- **Shell:** `LibraryShell` renders the 280px sidebar column only at `lg+`;
+- **Shell:** `LibraryShell` renders the 240px (`--sidebar-w`) sidebar column only at `lg+`;
   below that the full sidebar lives in a left `Sheet` drawer
   (`components/ui/sheet.tsx`) opened by the top-bar hamburger. Any link/button
   activation inside the drawer closes it.
@@ -75,7 +77,7 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 - Icon toolbar controls use accessible labels and keep the workspace dense.
 
 Status: M3 editor conventions captured; upload/transcription UI arrives in M4.
-The dark-theme visual restyle (all milestones) specified in
+The light-theme visual language (all milestones) specified in
 [DESIGN.md](DESIGN.md) has shipped, including the mobile-first responsive
 pass above.
 
