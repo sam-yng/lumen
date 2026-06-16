@@ -220,12 +220,12 @@ function DocumentHeader({
   const statusTone = saveStatusTone(saveState);
 
   return (
-    <div className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4">
+    <div className="flex min-h-[var(--topbar-h)] flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4">
       <div className="min-w-0">
         <p className="font-mono text-[11.5px] text-[var(--text-3)]">
           Library / note
         </p>
-        <h3 className="truncate text-[17px] font-semibold">{title}</h3>
+        <h3 className="truncate text-[16px] font-semibold">{title}</h3>
       </div>
       <div className="inline-flex items-center gap-2 font-mono text-[11.5px] text-[var(--text-3)]">
         <span className={`size-2 rounded-full ${statusTone}`} />
@@ -244,7 +244,7 @@ function EditorToolbar({
   onOpenLinkDialog: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex min-h-[42px] items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
+    <div className="sticky top-0 z-10 flex min-h-[40px] items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
       <ToolbarButton
         label="Bold"
         active={editor.isActive("bold")}

@@ -17,7 +17,7 @@ export function LibraryShell({
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="grid h-dvh min-h-0 flex-1 grid-cols-1 overflow-hidden bg-background lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid h-dvh min-h-0 flex-1 grid-cols-1 overflow-hidden bg-background lg:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]">
       <div className="hidden min-h-0 lg:flex lg:flex-col">{sidebar}</div>
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent
@@ -43,7 +43,7 @@ export function LibraryShell({
         </SheetContent>
       </Sheet>
       <section className="flex min-h-0 flex-col overflow-hidden">
-        <div className="sticky top-0 z-20 flex min-h-[52px] items-center gap-1 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+        <div className="sticky top-0 z-20 flex min-h-[var(--topbar-h)] items-center gap-1 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
           <Button
             type="button"
             variant="ghost"

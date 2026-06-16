@@ -10,9 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[0_0_0_1px_var(--accent-line),0_8px_24px_-14px_var(--accent-glow)] hover:bg-[var(--accent-bright)]",
+          "bg-primary text-primary-foreground shadow-[var(--shadow-accent)] hover:bg-[var(--accent-bright)]",
         outline:
-          "border-border bg-[var(--surface-2)] text-foreground hover:border-[var(--border-strong)] hover:bg-[var(--surface-3)] aria-expanded:bg-[var(--surface-3)] aria-expanded:text-foreground",
+          "border-border bg-[var(--canvas)] text-foreground hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] aria-expanded:bg-[var(--surface-2)] aria-expanded:text-foreground",
         secondary:
           "border-border bg-secondary text-secondary-foreground hover:bg-[var(--surface-3)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
@@ -23,7 +23,7 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-[38px] gap-1.5 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+          "h-8 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",

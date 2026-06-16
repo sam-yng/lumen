@@ -1,0 +1,44 @@
+/* ============================================================================
+ * Lumen — Typography tokens
+ *
+ * Three families: Geist for all interface chrome, Newsreader (a screen serif)
+ * for reading surfaces (note bodies, transcript text, big taglines), and Geist
+ * Mono for the small structural meta — timestamps, counts, file sizes, keycaps.
+ *
+ * The redesign trims the scale a notch and tightens line-height so the app
+ * reads denser and skinnier, closer to Notion.
+ * ========================================================================== */
+
+:root {
+  --font-ui: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-read: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* shadcn-compatible aliases */
+  --font-sans: var(--font-ui);
+  --font-serif: var(--font-read);
+  --font-heading: var(--font-ui);
+
+  /* ---- Type scale: `font: weight size/line-height` (family applied separately) ---- */
+  --t-display: 600 28px/1.18 var(--font-ui);
+  --t-h1: 600 20px/1.25 var(--font-ui);
+  --t-h2: 600 16px/1.35 var(--font-ui);
+  --t-body: 400 14px/1.55 var(--font-ui);
+  --t-sm: 400 13px/1.5 var(--font-ui);
+  --t-xs: 500 12px/1.4 var(--font-ui);
+  --t-meta: 500 11.5px/1.35 var(--font-mono);
+
+  /* reading surfaces */
+  --t-read: 400 16.5px/1.7 var(--font-read);
+  --t-read-h1: 600 30px/1.2 var(--font-read);
+
+  /* tracking */
+  --tracking-body: -0.003em;
+  --tracking-heading: -0.014em;
+  --tracking-mono: 0.01em;
+
+  /* weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+}

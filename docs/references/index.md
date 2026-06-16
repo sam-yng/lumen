@@ -10,11 +10,15 @@ flagged as orphans. Mapped from [AGENTS.md](../../AGENTS.md).
 - [mcp-connect.md](mcp-connect.md) — How to connect an MCP host to Lumen (endpoint, bearer auth, example config).
 
 <a id="design-handoff"></a>
-> **Design handoff (`design_handoff_lumen_v1`):** the high-fidelity dark-theme
-> visual + interaction spec lives outside the repo in the handoff bundle
-> (`tokens.css`, `app.css`, JSX references, `README.md`). It is a **spec, not
-> code to paste**. Its decisions are distilled into [../DESIGN.md](../DESIGN.md);
-> consult the bundle only for pixel-level detail when implementing the restyle.
+> **Design handoff — light redesign (2026-06-16):** the high-fidelity
+> **light-theme** visual + interaction spec is vendored at
+> [light-redesign-handoff/](light-redesign-handoff/) (OKLCH `tokens/`, the
+> handoff `README.md` + `DESIGN_SYSTEM_README.md`, and interactive `web-app/` +
+> `marketing/` prototypes). It is a **spec, not code to paste**. Its decisions
+> are distilled into [../DESIGN.md](../DESIGN.md) and the design spec
+> [../superpowers/specs/2026-06-16-light-redesign-design.md](../superpowers/specs/2026-06-16-light-redesign-design.md);
+> consult the bundle for pixel-level detail. (The original
+> `design_handoff_lumen_v1` dark spec it supersedes lived outside the repo.)
 
 > For Next.js 16, the authoritative reference is the bundled docs at
 > `node_modules/next/dist/docs/` — this version has breaking changes (e.g.

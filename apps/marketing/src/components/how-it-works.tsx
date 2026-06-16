@@ -11,7 +11,7 @@ const miniWaveformBars = Array.from({ length: 9 }, (_, i) => ({
 export function HowItWorks() {
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
-      <Reveal className="reveal mb-12 max-w-xl">
+      <Reveal className="reveal mx-auto mb-12 max-w-2xl text-center">
         <h2 className="font-serif text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
           From lecture capture to grounded answers.
         </h2>

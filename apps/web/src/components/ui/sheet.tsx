@@ -21,7 +21,7 @@ export function SheetContent({
 }: React.ComponentProps<typeof SheetPrimitive.Content>) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/55 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 motion-reduce:animate-none" />
+      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 motion-reduce:animate-none" />
       <SheetPrimitive.Content
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex h-full w-[85vw] max-w-[320px] flex-col border-r border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)] outline-none",

@@ -1,0 +1,84 @@
+/* ============================================================================
+ * Lumen — Color tokens (LIGHT theme)
+ *
+ * v1 of Lumen shipped dark-first (cool, low-chroma canvas + luminous iris).
+ * This redesign moves the product to a clean, Notion-inspired LIGHT theme:
+ * a true-white canvas, a warm-cool off-white sidebar, near-black ink, hairline
+ * borders, and the iris accent re-weighted to read with confidence on white.
+ *
+ * Base values are the raw palette; semantic aliases below map them to roles.
+ * The whole system is still authored as OKLCH so a future dark theme can be
+ * reintroduced by overriding a single scope.
+ * ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* -- Accent hue knob (iris). The ONLY value that changes between accents. -- */
+  --accent-h: 282; /* @kind other */
+
+  /* ---- Neutral canvas (near-neutral cool gray, very low chroma) ---- */
+  --canvas: oklch(1 0 0);                 /* app background — pure white      */
+  --surface: oklch(0.985 0.0015 274);     /* sidebar / panels — off-white     */
+  --surface-2: oklch(0.971 0.002 274);    /* cards / inputs / raised          */
+  --surface-3: oklch(0.948 0.003 274);    /* hover / pressed raised           */
+  --surface-inset: oklch(0.992 0.001 274);/* faint inset wells                */
+
+  --border: oklch(0.916 0.003 274);       /* hairline                         */
+  --border-soft: oklch(0.94 0.0025 274);  /* subtle divider                   */
+  --border-strong: oklch(0.86 0.004 274); /* emphasis hairline / waveform off */
+
+  --text: oklch(0.285 0.008 274);         /* primary ink (warm charcoal-cool) */
+  --text-2: oklch(0.46 0.009 274);        /* secondary                        */
+  --text-3: oklch(0.6 0.009 274);         /* muted / meta                     */
+  --text-4: oklch(0.72 0.008 274);        /* faint / disabled                 */
+
+  /* ---- Accent ("lumen", luminous iris) — re-weighted for white ---- */
+  --accent: oklch(0.56 0.19 var(--accent-h));        /* fills, primary action */
+  --accent-bright: oklch(0.5 0.2 var(--accent-h));   /* hover (darkens)       */
+  --accent-deep: oklch(0.44 0.19 var(--accent-h));   /* pressed / ring        */
+  --accent-text: oklch(0.52 0.2 var(--accent-h));    /* accent as inline text */
+  --accent-soft: oklch(0.56 0.19 var(--accent-h) / 9%);  /* selection bg      */
+  --accent-softer: oklch(0.56 0.19 var(--accent-h) / 5%);/* faint tint        */
+  --accent-line: oklch(0.56 0.19 var(--accent-h) / 32%); /* focus border      */
+  --accent-glow: oklch(0.56 0.19 var(--accent-h) / 22%); /* soft aura         */
+  --on-accent: oklch(0.99 0 0);                       /* text on filled accent */
+
+  /* ---- Status (deeper than dark theme so they hold on white) ---- */
+  --ok: oklch(0.56 0.13 158);
+  --ok-soft: oklch(0.56 0.13 158 / 12%);
+  --busy: oklch(0.54 0.15 244);
+  --busy-soft: oklch(0.54 0.15 244 / 12%);
+  --warn: oklch(0.64 0.13 70);
+  --warn-soft: oklch(0.64 0.13 70 / 14%);
+  --danger: oklch(0.55 0.19 18);
+  --danger-soft: oklch(0.55 0.19 18 / 11%);
+
+  /* ---- Semantic aliases (shadcn-compatible names from the repo) ---- */
+  --background: var(--canvas);
+  --foreground: var(--text);
+  --card: var(--canvas);
+  --card-foreground: var(--text);
+  --popover: var(--canvas);
+  --popover-foreground: var(--text);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-3);
+  --accent-foreground: var(--on-accent);
+  --destructive: var(--danger);
+  --input: var(--surface-2);
+  --ring: var(--accent-line);
+
+  /* ---- Sidebar role tokens ---- */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--on-accent);
+  --sidebar-accent: var(--accent-soft);
+  --sidebar-accent-foreground: var(--accent-text);
+  --sidebar-border: var(--border-soft);
+  --sidebar-ring: var(--accent-line);
+}

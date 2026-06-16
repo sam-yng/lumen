@@ -13,32 +13,57 @@ export const siteConfig = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
 } as const;
 
-export const features = [
+/**
+ * `soon: true` features are not live yet (they need a user-supplied Claude
+ * key). They render with the "coming soon" treatment — dashed card, muted
+ * heading, and the `badge` pill — and intentionally carry no call to action /
+ * email capture.
+ */
+export type Feature = {
+  title: string;
+  body: string;
+  soon: boolean;
+  badge: string | null;
+};
+
+export const features: readonly Feature[] = [
   {
     title: "One library for the whole course",
     body: "Nest folders, notes, files, recordings, transcripts, and tags together instead of scattering study material across five tools.",
+    soon: false,
+    badge: null,
   },
   {
     title: "Notes built for recall",
     body: "Write structured study notes with headings, lists, tables, and links, then keep them beside the lecture evidence they came from.",
+    soon: false,
+    badge: null,
   },
   {
     title: "Local and live transcription",
     body: "Upload recorded audio for batch transcription, or capture live sessions in the browser. Audio processing stays local by design.",
+    soon: false,
+    badge: null,
   },
   {
     title: "Hybrid search over everything",
     body: "Combine full-text search with semantic retrieval across notes and transcript chunks, so the answer can surface even when you remember the idea, not the wording.",
+    soon: false,
+    badge: null,
   },
   {
     title: "Assistant over your workspace",
     body: "Ask about notes, transcripts, documents, and tags through the same MCP tool contract exposed to external hosts.",
+    soon: true,
+    badge: "Coming soon",
   },
   {
     title: "Bring your Claude key",
-    body: "AI inference currently runs with your own Claude API key. Lumen stores it server-side, encrypted at rest, and the key is never shown again.",
+    body: "AI inference runs with your own Claude API key. Lumen stores it server-side, encrypted at rest, and the key is never shown again.",
+    soon: true,
+    badge: "Early access",
   },
-] as const;
+];
 
 export const steps = [
   {

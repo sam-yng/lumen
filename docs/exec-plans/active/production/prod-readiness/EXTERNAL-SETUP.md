@@ -122,14 +122,14 @@ few emails/hour, dev-only).
    `[auth.email.template.*]` blocks apply to the **local CLI only**. Hosted
    Supabase ignores them and ships its own defaults, whose **Confirm signup**
    template is a `{{ .ConfirmationURL }}` **link**. But our signup is a
-   **6-digit code** flow (`verifyOtp` in [`src/server/auth/actions.ts`](../../../../apps/web/src/server/auth/actions.ts)),
+   **6-digit code** flow (`verifyOtp` in [`src/server/auth/actions.ts`](../../../../../apps/web/src/server/auth/actions.ts)),
    and the UI sits on a code-entry screen — a link email leaves the user with
    no code and a dead end. Mirror the repo templates by hand:
    - **Confirm signup** → subject `Your Lumen confirmation code`, body =
-     [`supabase/templates/confirmation.html`](../../../../apps/web/supabase/templates/confirmation.html)
+     [`supabase/templates/confirmation.html`](../../../../../apps/web/supabase/templates/confirmation.html)
      (uses `{{ .Token }}`, the 6-digit OTP — **not** `{{ .ConfirmationURL }}`).
    - **Reset password** → subject `Reset your Lumen password`, body =
-     [`supabase/templates/recovery.html`](../../../../apps/web/supabase/templates/recovery.html)
+     [`supabase/templates/recovery.html`](../../../../../apps/web/supabase/templates/recovery.html)
      (link flow via `/auth/confirm`, intentional).
    Re-paste whenever those repo files change — there is no sync; the dashboard
    is the source of truth in prod.
