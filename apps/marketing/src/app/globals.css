@@ -25,12 +25,12 @@
   /* Pill chip — marketing previously referenced this class without defining it. */
   .l-chip {
     display: inline-flex;
-    height: 24px;
+    height: 22px;
     align-items: center;
     gap: 6px;
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--border);
     border-radius: var(--r-pill);
-    background: color-mix(in oklch, var(--surface-2), transparent 18%);
+    background: var(--surface);
     padding: 0 9px;
     color: var(--text-2);
     font-size: 12px;

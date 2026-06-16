@@ -20,7 +20,8 @@
       "!dist",
       "!build",
       "!apps/web/src/server/db/database.types.ts",
-      "!apps/web/supabase/.temp"
+      "!apps/web/supabase/.temp",
+      "!docs/references/light-redesign-handoff"
     ]
   },
   "formatter": {

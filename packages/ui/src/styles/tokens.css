@@ -10,9 +10,11 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
+  --color-surface-inset: var(--surface-inset);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
   --color-text-4: var(--text-4);
+  --color-accent-softer: var(--accent-softer);
   --color-border-soft: var(--border-soft);
   --color-border-strong: var(--border-strong);
   --color-accent-text: var(--accent-text);
@@ -59,43 +61,60 @@
 }
 
 :root {
-  color-scheme: dark;
+  /*
+   * LIGHT theme (Notion-inspired). v1 shipped dark-first; this is the redesign.
+   * Authored in OKLCH so a future dark theme can be reintroduced by overriding
+   * a single `.dark`/`[data-theme]` scope — the `@custom-variant dark` seam in
+   * each app's globals.css is left in place for that. No dark toggle ships now.
+   */
+  color-scheme: light;
   --accent-h: 282;
   --density: 1;
-  --canvas: oklch(0.171 0.011 274);
-  --surface: oklch(0.205 0.012 274);
-  --surface-2: oklch(0.235 0.013 274);
-  --surface-3: oklch(0.275 0.013 274);
-  --border: oklch(0.32 0.012 274);
-  --border-soft: oklch(0.27 0.011 274);
-  --border-strong: oklch(0.42 0.013 274);
-  --text: oklch(0.955 0.004 274);
-  --text-2: oklch(0.74 0.009 274);
-  --text-3: oklch(0.585 0.011 274);
-  --text-4: oklch(0.475 0.011 274);
-  --accent: oklch(0.74 0.148 var(--accent-h));
-  --accent-bright: oklch(0.81 0.135 var(--accent-h));
-  --accent-deep: oklch(0.55 0.155 var(--accent-h));
-  --accent-text: oklch(0.8 0.115 var(--accent-h));
-  --accent-soft: oklch(0.74 0.148 var(--accent-h) / 14%);
-  --accent-line: oklch(0.74 0.148 var(--accent-h) / 40%);
-  --accent-glow: oklch(0.74 0.148 var(--accent-h) / 28%);
-  --on-accent: oklch(0.18 0.02 274);
-  --ok: oklch(0.76 0.14 158);
-  --ok-soft: oklch(0.76 0.14 158 / 15%);
-  --busy: oklch(0.74 0.13 244);
-  --busy-soft: oklch(0.74 0.13 244 / 15%);
-  --warn: oklch(0.8 0.13 78);
-  --warn-soft: oklch(0.8 0.13 78 / 15%);
-  --danger: oklch(0.7 0.16 18);
-  --danger-soft: oklch(0.7 0.16 18 / 15%);
+
+  /* neutrals (near-neutral cool gray on a true-white canvas) */
+  --canvas: oklch(1 0 0);
+  --surface: oklch(0.985 0.0015 274);
+  --surface-2: oklch(0.971 0.002 274);
+  --surface-3: oklch(0.948 0.003 274);
+  --surface-inset: oklch(0.992 0.001 274);
+  --border: oklch(0.916 0.003 274);
+  --border-soft: oklch(0.94 0.0025 274);
+  --border-strong: oklch(0.86 0.004 274);
+  --text: oklch(0.285 0.008 274);
+  --text-2: oklch(0.46 0.009 274);
+  --text-3: oklch(0.6 0.009 274);
+  --text-4: oklch(0.72 0.008 274);
+
+  /* accent (iris) — re-weighted darker so it carries contrast on white */
+  --accent: oklch(0.56 0.19 var(--accent-h));
+  --accent-bright: oklch(0.5 0.2 var(--accent-h));
+  --accent-deep: oklch(0.44 0.19 var(--accent-h));
+  --accent-text: oklch(0.52 0.2 var(--accent-h));
+  --accent-soft: oklch(0.56 0.19 var(--accent-h) / 9%);
+  --accent-softer: oklch(0.56 0.19 var(--accent-h) / 5%);
+  --accent-line: oklch(0.56 0.19 var(--accent-h) / 32%);
+  --accent-glow: oklch(0.56 0.19 var(--accent-h) / 22%);
+  --on-accent: oklch(0.99 0 0);
+
+  /* status — deepened so they hold on white */
+  --ok: oklch(0.56 0.13 158);
+  --ok-soft: oklch(0.56 0.13 158 / 12%);
+  --busy: oklch(0.54 0.15 244);
+  --busy-soft: oklch(0.54 0.15 244 / 12%);
+  --warn: oklch(0.64 0.13 70);
+  --warn-soft: oklch(0.64 0.13 70 / 14%);
+  --danger: oklch(0.55 0.19 18);
+  --danger-soft: oklch(0.55 0.19 18 / 11%);
+
   --font-ui: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-read: var(--font-newsreader), Georgia, serif;
-  --radius: 6px;
-  --r: 6px;
+
+  /* radius (skinnier than dark v1) */
+  --radius: 5px;
+  --r: 5px;
   --r-sm: 3px;
-  --r-lg: 10px;
-  --r-xl: 16px;
+  --r-lg: 8px;
+  --r-xl: 12px;
   --r-pill: 999px;
   --s1: calc(4px * var(--density));
   --s2: calc(8px * var(--density));
@@ -104,15 +123,35 @@
   --s5: calc(22px * var(--density));
   --s6: calc(30px * var(--density));
   --s7: calc(44px * var(--density));
-  --row-h: calc(32px * (0.55 + (0.45 * var(--density))));
+
+  /* chrome sizing (the "skinnier" redesign) */
+  --sidebar-w: 240px;
+  --sidebar-rail-w: 52px;
+  --topbar-h: 44px;
+  --control-h: 32px;
+  --control-h-sm: 27px;
+  --row-h: calc(29px * (0.62 + (0.38 * var(--density))));
+
+  /* motion */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.12s;
+  --dur: 0.16s;
+
+  /* elevation — soft low shadow + hairline ring, never heavy drops */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 274 / 6%);
+  --shadow-card:
+    0 1px 2px oklch(0.2 0.02 274 / 5%), 0 0 0 1px var(--border-soft);
   --shadow-pop:
-    0 18px 46px -14px oklch(0 0 0 / 70%), 0 0 0 1px var(--border-soft);
+    0 14px 40px -12px oklch(0.2 0.02 274 / 18%), 0 2px 8px -2px
+    oklch(0.2 0.02 274 / 8%), 0 0 0 1px var(--border);
+  --shadow-accent: 0 8px 22px -12px var(--accent-glow);
+
   --background: var(--canvas);
   --foreground: var(--text);
-  --card: var(--surface-2);
+  --card: var(--canvas);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--canvas);
   --popover-foreground: var(--text);
   --primary: var(--accent);
   --primary-foreground: var(--on-accent);

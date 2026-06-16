@@ -41,7 +41,7 @@
     color: var(--text);
   }
   * {
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--border-strong) transparent;
     scrollbar-width: thin;
   }
   ::-webkit-scrollbar {
@@ -52,13 +52,13 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: var(--border-strong);
     border: 3px solid transparent;
     border-radius: var(--r-pill);
     background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
+    background: var(--text-4);
     background-clip: padding-box;
   }
 }
@@ -66,12 +66,12 @@
 @layer components {
   .l-chip {
     display: inline-flex;
-    height: 24px;
+    height: 22px;
     align-items: center;
     gap: 6px;
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--border);
     border-radius: var(--r-pill);
-    background: color-mix(in oklch, var(--surface-2), transparent 18%);
+    background: var(--surface);
     padding: 0 9px;
     color: var(--text-2);
     font-size: 12px;
@@ -80,8 +80,9 @@
 
   .l-badge {
     display: inline-flex;
-    height: 23px;
+    height: 21px;
     align-items: center;
+    gap: 5px;
     border-radius: var(--r-pill);
     padding: 0 8px;
     font-family: var(--font-geist-mono);
@@ -89,6 +90,22 @@
     font-weight: 500;
     line-height: 1;
     text-transform: capitalize;
+  }
+  .l-badge--ok {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .l-badge--busy {
+    background: var(--busy-soft);
+    color: var(--busy);
+  }
+  .l-badge--warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .l-badge--danger {
+    background: var(--danger-soft);
+    color: var(--danger);
   }
 
   .l-mark {
@@ -110,28 +127,28 @@
   .lumen-editor {
     color: var(--text);
     font-family: var(--font-read);
-    font-size: 17px;
+    font-size: 16.5px;
     line-height: 1.7;
   }
 
   .lumen-editor :where(h1) {
-    margin: 0 0 18px;
+    margin: 0 0 16px;
     font-family: var(--font-read);
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 600;
     line-height: 1.2;
   }
 
   .lumen-editor :where(h2) {
-    margin: 24px 0 10px;
+    margin: 22px 0 8px;
     font-family: var(--font-ui);
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 600;
     line-height: 1.35;
   }
 
   .lumen-editor :where(p) {
-    margin: 0 0 16px;
+    margin: 0 0 14px;
   }
 
   .lumen-editor :where(.l-citation-block-active) {
@@ -144,7 +161,7 @@
   }
 
   .lumen-editor :where(ul, ol) {
-    margin: 0 0 16px;
+    margin: 0 0 14px;
     padding-left: 1.4rem;
   }
 
@@ -165,11 +182,11 @@
   }
 
   .lumen-editor :where(blockquote) {
-    margin: 18px 0;
+    margin: 16px 0;
     border-left: 2px solid var(--accent-line);
     border-radius: var(--r);
     background: var(--accent-soft);
-    padding: 12px 14px;
+    padding: 10px 14px;
   }
 
   .lumen-editor :where(table) {
