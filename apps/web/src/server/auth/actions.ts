@@ -26,12 +26,15 @@ const signupSchema = loginSchema
 
 const verifySignupOtpSchema = z.object({
   email: z.string().email(),
-  token: z.string().regex(/^\d{6}$/, "Enter the 6-digit code."),
+  // Supabase's "Email OTP Length" is dashboard-configurable (6–10) and can
+  // differ between local config.toml and hosted prod — accept the full range so
+  // a length change can't silently truncate the token and fail verification.
+  token: z.string().regex(/^\d{6,10}$/, "Enter the code from your email."),
 });
 
 export type AuthState =
   | { error: string; email?: string }
-  | { status: "otp-sent"; email: string; error?: string }
+  | { status: "otp-sent"; email: string; error?: string; resent?: boolean }
   | { status: "check-email" }
   | undefined;
 
@@ -106,6 +109,31 @@ export async function verifySignUpOtp(
   }
 
   redirect("/library");
+}
+
+export async function resendSignUpOtp(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = emailSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid email." };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data.email,
+  });
+  if (error) {
+    return {
+      status: "otp-sent",
+      email: parsed.data.email,
+      error: error.message,
+    };
+  }
+
+  return { status: "otp-sent", email: parsed.data.email, resent: true };
 }
 
 export async function requestPasswordReset(

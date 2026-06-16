@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   type AuthState,
+  resendSignUpOtp,
   signInWithGoogle,
   verifySignUpOtp,
 } from "@/server/auth/actions";
@@ -46,9 +47,12 @@ const COPY = {
   },
 } as const;
 
-function isOtpSentState(
-  state: AuthState,
-): state is { status: "otp-sent"; email: string; error?: string } {
+function isOtpSentState(state: AuthState): state is {
+  status: "otp-sent";
+  email: string;
+  error?: string;
+  resent?: boolean;
+} {
   return Boolean(state && "status" in state && state.status === "otp-sent");
 }
 
@@ -65,12 +69,26 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
     AuthState,
     FormData
   >(verifySignUpOtp, undefined);
+  const [resendState, resendFormAction, resendPending] = useActionState<
+    AuthState,
+    FormData
+  >(resendSignUpOtp, undefined);
   const copy = COPY[mode];
-  const pendingOtpState = isOtpSentState(otpState)
+  const otpBase = isOtpSentState(otpState)
     ? otpState
-    : isOtpSentState(state)
-      ? { ...state, error: errorOf(otpState) ?? state.error }
-      : undefined;
+    : isOtpSentState(resendState)
+      ? resendState
+      : isOtpSentState(state)
+        ? state
+        : undefined;
+  const resent = isOtpSentState(resendState) && resendState.resent === true;
+  const pendingOtpState = otpBase
+    ? {
+        ...otpBase,
+        error: errorOf(otpState) ?? errorOf(resendState) ?? errorOf(state),
+        resent,
+      }
+    : undefined;
 
   if (pendingOtpState) {
     return (
@@ -83,7 +101,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
             Check your email
           </CardTitle>
           <CardDescription className="text-[var(--text-2)]">
-            Enter the six-digit confirmation code from your inbox.
+            Enter the confirmation code from your inbox.
           </CardDescription>
         </CardHeader>
         <form action={otpFormAction}>
@@ -114,8 +132,8 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
                 id="token"
                 name="token"
                 inputMode="numeric"
-                maxLength={6}
-                pattern="[0-9]{6}"
+                maxLength={10}
+                pattern="[0-9]{6,10}"
                 required
               />
             </div>
@@ -123,6 +141,10 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
               <p className="text-sm text-destructive" role="alert">
                 {pendingOtpState.error}
               </p>
+            ) : pendingOtpState.resent ? (
+              <output className="text-sm text-[var(--text-3)]">
+                New code sent to your email.
+              </output>
             ) : null}
           </CardContent>
           <CardFooter className="mt-4 flex flex-col gap-3 border-0 bg-transparent pt-0">
@@ -130,6 +152,23 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
               {otpPending ? "…" : "Verify email"}
             </Button>
           </CardFooter>
+        </form>
+        <form
+          action={resendFormAction}
+          className="flex flex-col gap-2 px-6 pb-6 text-center"
+        >
+          <input type="hidden" name="email" value={pendingOtpState.email} />
+          <p className="text-sm text-[var(--text-3)]">
+            Didn’t get a code?{" "}
+            <Button
+              type="submit"
+              variant="link"
+              className="h-auto p-0 font-medium text-[var(--accent-text)]"
+              disabled={resendPending}
+            >
+              {resendPending ? "Sending…" : "Resend code"}
+            </Button>
+          </p>
         </form>
       </Card>
     );
