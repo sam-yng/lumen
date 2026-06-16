@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { LumenMark } from "@/components/lumen-mark";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -97,6 +98,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
         className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
       >
         <CardHeader className="gap-2">
+          <LumenMark className="mb-1 size-10 min-[860px]:hidden" />
           <CardTitle className="text-[22px] font-semibold leading-tight">
             Check your email
           </CardTitle>
@@ -180,6 +182,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
       className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
     >
       <CardHeader className="gap-2">
+        <LumenMark className="mb-1 size-10 min-[860px]:hidden" />
         <CardTitle className="text-[22px] font-semibold leading-tight">
           {copy.title}
         </CardTitle>

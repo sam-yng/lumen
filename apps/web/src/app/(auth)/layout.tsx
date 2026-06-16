@@ -1,5 +1,6 @@
 import { BookOpenText, LockKeyhole, Mic, Sparkles } from "lucide-react";
 import { LegalFooter } from "@/components/legal-footer";
+import { LumenMark } from "@/components/lumen-mark";
 
 const FEATURES = [
   { label: "Nested study folders", icon: BookOpenText },
@@ -21,9 +22,9 @@ export default function AuthLayout({
           style={{ background: "var(--accent-glow)" }}
         />
         <div className="relative">
-          <div className="mb-16 inline-flex items-center gap-2">
-            <span className="size-[11px] rounded-full bg-primary shadow-[0_0_24px_var(--accent-glow)]" />
-            <span className="font-semibold">Lumen</span>
+          <div className="mb-16 inline-flex items-center gap-2.5">
+            <LumenMark className="size-8 shadow-[0_0_24px_var(--accent-glow)]" />
+            <span className="text-[17px] font-semibold">Lumen</span>
           </div>
           <h1 className="max-w-xl font-serif text-[38px] leading-[1.15] text-foreground">
             A quiet vault for notes, recordings, and the thoughts between them.
