@@ -32,7 +32,21 @@ describe("AuthForm", () => {
 
     expect(screen.getByText("Check your email")).toBeVisible();
     expect(screen.getByLabelText("Confirmation code")).toBeVisible();
-    expect(screen.getByDisplayValue("new@lumen.test")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveValue("new@lumen.test");
+  });
+
+  it("offers to resend the OTP", () => {
+    render(
+      <AuthForm
+        mode="signup"
+        action={noopAction}
+        initialState={{ status: "otp-sent", email: "new@lumen.test" }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Resend code" }),
+    ).toBeInTheDocument();
   });
 
   it("shows validation errors in the OTP state", () => {
