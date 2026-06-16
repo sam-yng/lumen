@@ -1,11 +1,10 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Lumen brand mark. The source art (public/lumen-mark.svg) is a square with the
- * circular logo inset on a near-white field, so we render it as a circular
- * background and slightly oversize it to bleed the art to the edge — this hides
- * the white corners against any surface tint. Decorative by default; pass
- * `label` when the mark stands alone without an adjacent "Lumen" wordmark.
+ * Lumen brand mark. The source art (public/lumen-mark.svg) is already a
+ * transparent-cornered circle, so it just fills the box; `rounded-full` keeps
+ * the box-shadow circular. Decorative by default; pass `label` when the mark
+ * stands alone without an adjacent "Lumen" wordmark.
  */
 export function LumenMark({
   className,
@@ -25,7 +24,7 @@ export function LumenMark({
       )}
       style={{
         backgroundImage: "url(/lumen-mark.svg)",
-        backgroundSize: "104%",
+        backgroundSize: "contain",
       }}
     />
   );
