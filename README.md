@@ -1,76 +1,110 @@
-# Lumen
+# ✦ Lumen
 
-A multi-tenant **study workspace**: keep a nested library of folders, write
-rich-text notes, upload lectures/seminars, transcribe them locally on CPU, and
-search across everything. Built all-TypeScript on Next.js + Supabase in a Bun
-workspace.
+### Turn lectures into a searchable study system.
 
-> v1 builds the product foundation and the automated harness. The AI/MCP layer
-> (assistant, semantic search) comes in v2+ behind clean seams — see
-> [ARCHITECTURE.md](ARCHITECTURE.md).
+*Capture everything. Transcribe locally. Find anything. Reason over all of it.*
 
-## Prerequisites
+`Next.js 16` · `React 19` · `TypeScript (strict)` · `Supabase + RLS` · `Bun + Turborepo` · `Whisper` · `MCP`
 
-- **Bun** ≥ 1.3 — package manager and script runner. https://bun.sh
-- **Docker** — runs the local Supabase stack (Postgres + Auth + Storage).
-- **FFmpeg** — host dependency for transcription (`nodejs-whisper`). Needed from
-  milestone M4 onward; not required to run the app before then.
-  - macOS: `brew install ffmpeg` · Debian/Ubuntu: `apt install ffmpeg`
+---
 
-## Setup
+## What is this?
 
-```bash
-bun install
+Lumen is a private study workspace for people who collect more lecture
+material than they can actually find again. One nested library holds your
+folders, rich-text notes, uploaded files, audio, and transcripts — and a
+single search box that reaches across all of it, by **meaning**, not just by
+keyword.
 
-# Boot the local Supabase stack (Docker), then copy its keys into .env.local
-cd apps/web
-bunx supabase start
-bunx supabase status            # shows the URL + publishable/secret keys
-cp .env.example .env.local      # then paste the values from `status`
+You record a seminar. Lumen transcribes it **on your own machine** — no audio
+ever leaves for a third-party API. The transcript drops into the same library
+as your notes, gets chunked and indexed, and becomes searchable next to
+everything else. Later you half-remember "that thing about diffusion the prof
+mentioned" — hybrid retrieval surfaces the exact segment, deep-links you to the
+moment in the audio, and (with your own Claude key) an assistant can reason
+over the whole workspace and **cite the sources it used**.
 
-bun run db:types                # generate typed DB client
-bun run dev                     # http://localhost:3000
+It's the study app I wished existed, built properly instead of quickly.
+
+---
+
+## The good stuff
+
+**One library for the whole course** — Nested folders, rich-text notes,
+files, recordings, transcripts, and tags living together, instead of scattered
+across five apps that don't talk to each other.
+
+**Transcription that stays yours** — Batch-transcribe uploaded audio or
+capture a live session straight in the browser. CPU Whisper runs **locally** by
+design; your recordings don't get shipped to anyone's cloud.
+
+**It knows who's talking** — Optional local speaker diarization labels
+segments by speaker, for both uploaded recordings and finalized live sessions —
+ONNX models, on-device, degrade-never-fail.
+
+**Search by the idea, not the wording** — Full-text **and** semantic vector
+retrieval, fused. Remember the concept, find the sentence. Click a result and
+land on the exact transcript segment with the audio cued to the millisecond.
+
+**An assistant that shows its work** — Bring your own Claude key and ask
+questions across your notes and transcripts. Every answer carries grounded
+`[S#]` citations you can click straight through to the source. No vibes, no
+hand-waving.
+
+**Same tools, inside and out** — The assistant talks to your workspace
+through an **MCP** server — the exact same tool contract is exposed to external
+hosts. Your study workspace is an agent-ready surface.
+
+---
+
+## How it works
+
+```
+   capture  ──▶  transcribe  ──▶  index  ──▶  retrieve & reason
+  notes,          local CPU       chunks +     hybrid search +
+  files,          Whisper /       pgvector     cited Claude-key
+  recordings      live browser    embeddings   assistant (MCP)
 ```
 
-Sign up at `/signup`, and you land in the protected workspace shell.
+1. **Capture.** Drop in readings, recordings, files, and notes — organized in
+  nested folders from minute one.
+2. **Transcribe.** Run batch transcription on your machine, or capture live
+  text in the browser; both finalize into one transcript path.
+3. **Retrieve & reason.** Search lexically and semantically, then let the
+  assistant work through your own MCP-backed study tools — with citations.
 
-## Scripts
+---
 
-| Command | Purpose |
-| --- | --- |
-| `bun run check` | root gate: Biome + Turbo typecheck/test |
-| `bun run lint` / `bun run format` | root Biome lint / autofix |
-| `bun run typecheck` / `bun run test` | Turbo package tasks |
-| `bun run test:e2e` | app Playwright smoke tests via workspace filter |
-| `cd apps/web && bun run dev` | app Next dev server (port 3000) |
-| `cd apps/marketing && bun run dev` | marketing site Next dev server (port 3001) |
-| `cd apps/web && bun run build` / `bun run start` | app production build / serve |
-| `cd apps/web && bun run test:e2e` | app Playwright |
-| `cd apps/web && bun run db:types` | regenerate `apps/web/src/server/db/database.types.ts` |
-| `cd apps/web && bun run docs:db-schema` | regenerate `docs/generated/db-schema.md` |
-| `cd apps/web && bun run worker:transcribe` | run the transcription worker |
+## Under the hood
 
-Run `bun run check` after every change — a pre-commit hook (lefthook) and CI
-both enforce it. Pull request CI also runs the Supabase-backed Playwright smoke
-suite with `bun run test:e2e`. See [BACKPRESSURE.md](BACKPRESSURE.md).
+- **All-TypeScript monorepo** — Bun workspaces + Turborepo. An authenticated
+app (`apps/web`), a static marketing site (`apps/marketing`), and shared
+design tokens (`packages/ui`). One `bun run check` gate rules them all:
+Biome + typecheck + tests, enforced by a pre-commit hook **and** CI.
+- **Next.js 16, App Router** — Server Components and thin server actions over a
+**framework-agnostic service layer**. The same services back the UI today and
+the MCP server for agents — clean seams, not stubs. (Yes, `middleware` is
+`proxy` now. Welcome to Next 16.)
+- **Security is the data model** — Supabase Postgres with **Row-Level Security
+as the isolation boundary**, so multi-tenancy is enforced in the database, not
+hopefully-in-the-app. The transcription worker runs with the service role and
+bypasses RLS — so it scopes **every** query by `user_id`, on purpose, in
+writing.
+- **Background work** — pg-boss jobs for transcription, diarization, live-session
+speaker labeling, and a cron sweep that finalizes abandoned live recordings.
+- **Local-first AI** — `nodejs-whisper` for transcription, sherpa-onnx for
+diarization, pgvector + local embeddings for hybrid retrieval. Cloud inference
+is opt-in and runs on **your** Claude key, stored server-side, encrypted at
+rest, never shown again.
+- **Built behind a harness** — TDD where it counts, Playwright smoke tests on
+every PR, design + product + reliability docs kept in the same change as the
+code they describe. If it isn't in the repo, it doesn't exist.
 
-## Architecture
+Want the real map? Start at [AGENTS.md](AGENTS.md), then
+[ARCHITECTURE.md](ARCHITECTURE.md) and [docs/SECURITY.md](docs/SECURITY.md).
 
-Thin App Router routes/actions over a framework-agnostic service layer (from
-M2), backed by Supabase with **Row-Level Security as the isolation boundary**.
-Full overview and the v2+ seams: [ARCHITECTURE.md](ARCHITECTURE.md). Security
-model (auth, RLS, the service-role worker caveat): [docs/SECURITY.md](docs/SECURITY.md).
+---
 
-The agent-facing map of the whole repo is [AGENTS.md](AGENTS.md).
+**Lumen** — built all-TypeScript on Next.js 16 + Supabase, in a Bun workspace.
 
-## Workspace Layout
-
-- `apps/web` — the authenticated study workspace app (port 3000).
-- `apps/marketing` — the public marketing site (port 3001).
-- `packages/ui` — shared CSS design tokens, exported as `@lumen/ui/tokens.css`.
-
-## Roadmap
-
-M0 harness → M1 schema+RLS → M2 library → M3 editor → M4 transcription →
-M5 viewer+search → M6 harden+document. Plans live in
-[docs/PLANS.md](docs/PLANS.md).
+*Build a study workspace that keeps context close*: folders, rich notes, uploaded files, transcripts, tags, and fast full-text recall*.*
