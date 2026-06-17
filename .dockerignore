@@ -1,0 +1,32 @@
+# Docker build context = repo ROOT for both images:
+#   docker build -f apps/web/Dockerfile        -t lumen-web    .
+#   docker build -f apps/web/worker/Dockerfile -t lumen-worker .
+# Docker reads .dockerignore from the context root, so this one file trims the
+# context for both Railway builds. Keep it small, and never ship local deps or
+# secrets into the image (both Dockerfiles reinstall via `bun install`).
+
+# Dependencies — reinstalled with `bun install --frozen-lockfile`
+**/node_modules
+
+# Build outputs + caches
+**/.next
+**/.turbo
+**/dist
+.git
+.github
+
+# Local env + secrets — never bake into an image
+**/.env
+**/.env.*
+!**/.env.example
+
+# Tests + reports — not needed at runtime
+**/*.test.ts
+**/__tests__
+**/playwright-report
+**/test-results
+
+# Agent + editor + OS cruft
+.claude
+.agents
+**/.DS_Store
