@@ -6,7 +6,10 @@ import {
   ServiceError,
 } from "@/server/services/errors";
 import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
-import type { EnqueueTranscriptionPayload } from "@/server/services/uploads";
+import {
+  type EnqueueTranscriptionPayload,
+  enqueueFailureMessage,
+} from "@/server/services/uploads";
 
 type FileRow = Tables<"files">;
 type RecordingRow = Tables<"recordings">;
@@ -62,12 +65,26 @@ export async function retryRecordingTranscription(
   assertNoDatabaseError(updateError, "Could not update recording");
   assertFound(updated, "Recording not found.");
 
-  await input.enqueueTranscription({
-    userId: ctx.userId,
-    recordingId: updated.id,
-    fileId: file.id,
-    storageKey: file.storage_key,
-  });
+  try {
+    await input.enqueueTranscription({
+      userId: ctx.userId,
+      recordingId: updated.id,
+      fileId: file.id,
+      storageKey: file.storage_key,
+    });
+  } catch (enqueueError) {
+    // We just flipped the recording back to "pending"; if the enqueue fails it
+    // has no job behind it and would be stranded. Revert it to "failed" so it
+    // stays retryable, then surface the error to the caller.
+    const message = enqueueFailureMessage(enqueueError);
+    const { error: revertError } = await ctx.supabase
+      .from<RecordingRow>("recordings")
+      .update({ status: "failed", error: message })
+      .eq("id", updated.id)
+      .eq("user_id", ctx.userId);
+    assertNoDatabaseError(revertError, "Could not revert recording");
+    throw new ServiceError("database", message);
+  }
 
   return updated;
 }

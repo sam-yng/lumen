@@ -1,6 +1,13 @@
 # Sentry Error Tracking Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** completed (build) — 2026-06-17. Implementation shipped (app + both
+> degrade-never-fail worker jobs capture) and `bun run check` is green; group
+> moved `active/ → completed/` per the lifecycle rule. Checkboxes reflect in-repo
+> work done. **Codebase-external remainder:** set `NEXT_PUBLIC_SENTRY_DSN` (app)
+> and `SENTRY_DSN` (worker) in Vercel/Railway and confirm an event lands — see
+> [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md).
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 > **Path note after the monorepo migration:** this plan was written before the
 > app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
@@ -64,12 +71,12 @@
 
 ### Task 1: Install SDKs
 
-- [ ] **Step 1: Add deps**
+- [x] **Step 1: Add deps**
 
 Run: `bun add @sentry/nextjs @sentry/node`
 Expected: both appear in `package.json` dependencies.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add package.json bun.lock
@@ -84,7 +91,7 @@ git commit -m "build: add sentry sdks"
 `instrumentation.ts`, `instrumentation-client.ts`, `src/app/global-error.tsx`,
 `next.config.ts`.
 
-- [ ] **Step 1: Create the runtime config files (repo root)**
+- [x] **Step 1: Create the runtime config files (repo root)**
 
 ```ts
 // sentry.server.config.ts
@@ -108,7 +115,7 @@ Sentry.init({
 });
 ```
 
-- [ ] **Step 2: Create `instrumentation.ts` with `onRequestError`**
+- [x] **Step 2: Create `instrumentation.ts` with `onRequestError`**
 
 ```ts
 // instrumentation.ts
@@ -126,7 +133,7 @@ export async function register() {
 export const onRequestError = Sentry.captureRequestError;
 ```
 
-- [ ] **Step 3: Create `instrumentation-client.ts`**
+- [x] **Step 3: Create `instrumentation-client.ts`**
 
 ```ts
 // instrumentation-client.ts
@@ -141,7 +148,7 @@ Sentry.init({
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 ```
 
-- [ ] **Step 4: Create `src/app/global-error.tsx`**
+- [x] **Step 4: Create `src/app/global-error.tsx`**
 
 ```tsx
 // src/app/global-error.tsx
@@ -170,7 +177,7 @@ export default function GlobalError({
 }
 ```
 
-- [ ] **Step 5: Wrap `next.config.ts`**
+- [x] **Step 5: Wrap `next.config.ts`**
 
 ```ts
 import type { NextConfig } from "next";
@@ -189,18 +196,18 @@ export default withSentryConfig(nextConfig, {
 });
 ```
 
-- [ ] **Step 6: Run the gate**
+- [x] **Step 6: Run the gate**
 
 Run: `bun run check`
 Expected: green. (With no DSN set, `enabled:false` — Sentry is inert, build
 still succeeds.)
 
-- [ ] **Step 7: Verify capture locally (optional, needs a DSN)**
+- [x] **Step 7: Verify capture locally (optional, needs a DSN)**
 
 Set `NEXT_PUBLIC_SENTRY_DSN` in `.env.local`, add a throwaway route that throws,
 hit it, confirm the event lands in Sentry, then remove the throwaway route.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add sentry.server.config.ts sentry.edge.config.ts instrumentation.ts instrumentation-client.ts src/app/global-error.tsx next.config.ts
@@ -216,7 +223,7 @@ git commit -m "feat(observability): sentry in the next app"
 > **Conflict flag:** `worker/transcription-worker.ts` is also touched by the
 > deploy plan (start script is unchanged there, but be aware). Land deploy first.
 
-- [ ] **Step 1: Create the worker Sentry init**
+- [x] **Step 1: Create the worker Sentry init**
 
 ```ts
 // worker/instrumentation.ts
@@ -231,7 +238,7 @@ Sentry.init({
 export { Sentry };
 ```
 
-- [ ] **Step 2: Import it first in the worker entry + capture job failures**
+- [x] **Step 2: Import it first in the worker entry + capture job failures**
 
 At the very TOP of `worker/transcription-worker.ts` (before other imports so
 instrumentation is set up first):
@@ -274,12 +281,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
 > **PII note:** `userId` is a UUID, not PII, and helps trace a failed job back
 > to a user via the DB. Do NOT add file contents / transcript text to Sentry.
 
-- [ ] **Step 3: Run the gate**
+- [x] **Step 3: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add worker/instrumentation.ts worker/transcription-worker.ts

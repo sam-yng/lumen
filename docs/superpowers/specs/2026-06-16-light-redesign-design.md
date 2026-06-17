@@ -1,7 +1,7 @@
 # Lumen light-theme redesign — design spec
 
 > **Status:** design input for
-> [`exec-plans/active/production/light-redesign.md`](../../exec-plans/active/production/light-redesign.md).
+> [`exec-plans/completed/production/light-redesign.md`](../../exec-plans/completed/production/light-redesign.md).
 > Date: 2026-06-16.
 
 ## Source

@@ -44,16 +44,9 @@ same rule when it gains content.
 
 ## Active
 
-- **production** — Production readiness
-  - [index.md](exec-plans/active/production/prod-readiness/index.md)
-  - [EXTERNAL-SETUP.md](exec-plans/active/production/prod-readiness/EXTERNAL-SETUP.md)
-    — dashboard/DNS/accounts runbook for the Mon 2026-06-15 launch target
-  - [DEPLOY.md](exec-plans/active/production/prod-readiness/DEPLOY.md)
-    — deploy runbook + prod env matrix (created by prod-env-and-deploy Task 2)
-  - [prod-env-and-deploy.md](exec-plans/active/production/prod-readiness/prod-env-and-deploy.md)
-  - [prod-auth.md](exec-plans/active/production/prod-readiness/prod-auth.md)
-  - [prod-sentry.md](exec-plans/active/production/prod-readiness/prod-sentry.md)
-  - [prod-legal-pages.md](exec-plans/active/production/prod-readiness/prod-legal-pages.md)
+_(none — the production-readiness group shipped 2026-06-17 and moved to
+[completed](#production-shipped). The next work is queued under
+[post-prod](exec-plans/queued/post-prod/assistant-launch.md).)_
 
 ## Completed
 
@@ -143,6 +136,19 @@ same rule when it gains content.
   decisions: light-only with the dark seam retained (no toggle) + no
   "Notify me" capture anywhere
   (design: [superpowers/specs](superpowers/specs/2026-06-16-light-redesign-design.md))
+- **prod-readiness** — Production-readiness group (build complete 2026-06-17;
+  moved `active/production/ → completed/production/`). All four child plans
+  implemented and `bun run check` green; remaining work is codebase-external
+  launch verification (Resend SMTP, Google OAuth client, Sentry DSNs,
+  Vercel/Railway env, lawyer review, `{{…}}` placeholders) tracked in
+  [EXTERNAL-SETUP.md](exec-plans/completed/production/prod-readiness/EXTERNAL-SETUP.md).
+  - [index.md](exec-plans/completed/production/prod-readiness/index.md)
+  - [DEPLOY.md](exec-plans/completed/production/prod-readiness/DEPLOY.md)
+    — deploy runbook + prod env matrix
+  - [prod-env-and-deploy.md](exec-plans/completed/production/prod-readiness/prod-env-and-deploy.md)
+  - [prod-auth.md](exec-plans/completed/production/prod-readiness/prod-auth.md)
+  - [prod-sentry.md](exec-plans/completed/production/prod-readiness/prod-sentry.md)
+  - [prod-legal-pages.md](exec-plans/completed/production/prod-readiness/prod-legal-pages.md)
 
 ### Cross-cutting shipped
 

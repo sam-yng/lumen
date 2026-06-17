@@ -88,7 +88,7 @@ turbo.json               workspace task pipeline
   both. See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/SECURITY.md](docs/SECURITY.md).
 - Shipped in v2 (2026-06-08): the in-app AI assistant (browser verification
   still gated on a real Claude key — see
-  `docs/exec-plans/active/production/prod-readiness/prod-assistant-verification.md`).
+  `docs/exec-plans/queued/post-prod/assistant-launch.md`).
 - Shipped in v3 m2: live/streaming transcription — browser-side Whisper
   (`src/lib/transcription/`, `StreamingTranscriptionProvider` seam) +
   live-session service (`server/services/live-sessions.ts`, recordings status

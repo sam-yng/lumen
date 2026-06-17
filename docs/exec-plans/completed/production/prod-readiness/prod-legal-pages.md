@@ -1,6 +1,14 @@
 # Legal Pages Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** completed (build) — 2026-06-17. Implementation shipped (/privacy +
+> /terms with full first-draft copy incl. the Anthropic sub-processor
+> disclosure, footer links in both shells + the marketing site) and
+> `bun run check` is green; group moved `active/ → completed/` per the lifecycle
+> rule. Checkboxes reflect in-repo work done. **Codebase-external remainder:** a
+> lawyer must review the copy and the `{{…}}` placeholders must be filled before
+> opening to public users.
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 > **Path note after the monorepo migration:** this plan was written before the
 > app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
@@ -70,7 +78,7 @@
 **Files:** `src/app/(legal)/layout.tsx`, `src/components/legal-footer.tsx`,
 `src/proxy.ts`.
 
-- [ ] **Step 1: Create the legal layout**
+- [x] **Step 1: Create the legal layout**
 
 ```tsx
 // src/app/(legal)/layout.tsx
@@ -100,7 +108,7 @@ export default function LegalLayout({
 > `prose*` classes and the page still renders with default styling. Verify
 > against the repo's Tailwind config; do not add the plugin just for this.
 
-- [ ] **Step 2: Create the footer**
+- [x] **Step 2: Create the footer**
 
 ```tsx
 // src/components/legal-footer.tsx
@@ -121,7 +129,7 @@ export function LegalFooter() {
 }
 ```
 
-- [ ] **Step 3: Make the routes public in `src/proxy.ts`**
+- [x] **Step 3: Make the routes public in `src/proxy.ts`**
 
 ```ts
 const PUBLIC_PREFIXES = [
@@ -137,7 +145,7 @@ const PUBLIC_PREFIXES = [
 > **Conflict flag:** `src/proxy.ts` is also edited by the auth plan
 > (`/forgot-password`). Land both together or merge the array carefully.
 
-- [ ] **Step 4: Render the footer in both shells**
+- [x] **Step 4: Render the footer in both shells**
 
 In `src/app/(app)/layout.tsx`, add `import { LegalFooter } from "@/components/legal-footer";`
 and render `<LegalFooter />` after the `<main>`:
@@ -168,12 +176,12 @@ export default function AuthLayout({
 }
 ```
 
-- [ ] **Step 5: Run the gate**
+- [x] **Step 5: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "src/app/(legal)/layout.tsx" src/components/legal-footer.tsx src/proxy.ts "src/app/(app)/layout.tsx" "src/app/(auth)/layout.tsx"
@@ -186,7 +194,7 @@ git commit -m "feat(legal): legal layout, footer links, public routes"
 
 **Files:** `src/app/(legal)/privacy/page.tsx`.
 
-- [ ] **Step 1: Create the page with the drafted copy**
+- [x] **Step 1: Create the page with the drafted copy**
 
 ```tsx
 // src/app/(legal)/privacy/page.tsx
@@ -315,16 +323,16 @@ export default function PrivacyPage() {
 }
 ```
 
-- [ ] **Step 2: Run the gate**
+- [x] **Step 2: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 3: Verify it renders**
+- [x] **Step 3: Verify it renders**
 
 `bun run dev`, visit `/privacy` while logged out → page loads (proxy allows it).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "src/app/(legal)/privacy/page.tsx"
@@ -337,7 +345,7 @@ git commit -m "feat(legal): privacy policy draft"
 
 **Files:** `src/app/(legal)/terms/page.tsx`.
 
-- [ ] **Step 1: Create the page with the drafted copy**
+- [x] **Step 1: Create the page with the drafted copy**
 
 ```tsx
 // src/app/(legal)/terms/page.tsx
@@ -440,16 +448,16 @@ export default function TermsPage() {
 }
 ```
 
-- [ ] **Step 2: Run the gate**
+- [x] **Step 2: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 3: Verify it renders**
+- [x] **Step 3: Verify it renders**
 
 Visit `/terms` logged out → loads.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "src/app/(legal)/terms/page.tsx"

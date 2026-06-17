@@ -1,6 +1,15 @@
 # Production-readiness plans — index
 
-> **Status:** active. Written 2026-06-04, parallel to other in-flight work.
+> **Status:** completed (build) — 2026-06-17. All four child plans are
+> implemented in-repo and `bun run check` is green, so the group moved
+> `active/production/ → completed/production/` per the lifecycle rule below
+> (don't hold build-complete milestones open in `active/`). The remaining work
+> is **codebase-external** launch verification — Resend SMTP, the Google OAuth
+> client, Sentry DSNs, Vercel/Railway env values, lawyer review of the legal
+> copy, and filling the `{{…}}` placeholders — tracked in
+> [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md), not in code.
+>
+> Originally written 2026-06-04, parallel to other in-flight work.
 > These plans are **additive** and live in their own folder so they don't
 > collide with whatever else is editing `docs/`. (The original "PLANS.md not
 > updated" note is resolved — these plans are indexed in
