@@ -7,6 +7,8 @@ import {
 } from "@/server/services/errors";
 
 type Folder = Tables<"folders">;
+type Document = Tables<"documents">;
+type FileRow = Tables<"files">;
 
 async function listFolders(ctx: ServiceContext) {
   const { data, error } = await ctx.supabase
@@ -132,15 +134,47 @@ export async function moveFolder(
 }
 
 export async function deleteFolder(ctx: ServiceContext, input: { id: string }) {
-  const { data, error } = await ctx.supabase
+  const folders = await listFolders(ctx);
+  const target = folders.find((folder) => folder.id === input.id) ?? null;
+  assertFound(target, "Folder not found.");
+
+  const idsToDelete = new Set([input.id]);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const folder of folders) {
+      if (
+        folder.parent_id !== null &&
+        idsToDelete.has(folder.parent_id) &&
+        !idsToDelete.has(folder.id)
+      ) {
+        idsToDelete.add(folder.id);
+        added = true;
+      }
+    }
+  }
+
+  const folderIds = [...idsToDelete];
+  const { error: documentsError } = await ctx.supabase
+    .from<Document>("documents")
+    .delete()
+    .eq("user_id", ctx.userId)
+    .in("folder_id", folderIds);
+  assertNoDatabaseError(documentsError, "Could not delete folder documents");
+
+  const { error: filesError } = await ctx.supabase
+    .from<FileRow>("files")
+    .delete()
+    .eq("user_id", ctx.userId)
+    .in("folder_id", folderIds);
+  assertNoDatabaseError(filesError, "Could not delete folder files");
+
+  const { error } = await ctx.supabase
     .from<Folder>("folders")
     .delete()
-    .eq("id", input.id)
     .eq("user_id", ctx.userId)
-    .select("*")
-    .single();
+    .in("id", folderIds);
 
   assertNoDatabaseError(error, "Could not delete folder");
-  assertFound(data, "Folder not found.");
-  return data;
+  return target;
 }

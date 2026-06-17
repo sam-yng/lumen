@@ -52,6 +52,14 @@ same rule when it gains content.
   - [tag-color-picker-custom.md](exec-plans/active/cross-cutting/tag-color-picker-custom.md)
     — replace the native tag color select with a custom color-block picker and
     align the tag create controls on desktop.
+  - [document-editor-fixed-shell.md](exec-plans/active/cross-cutting/document-editor-fixed-shell.md)
+    — keep the note header and editor toolbar visible while document content
+    scrolls inside the editor shell.
+  - [library-topbar-recorder.md](exec-plans/active/cross-cutting/library-topbar-recorder.md)
+    — move the recorder control into the library top bar action slot.
+  - [recents-and-delete-safety.md](exec-plans/active/cross-cutting/recents-and-delete-safety.md)
+    — add a document-only recents view and make folder deletion remove the
+    full folder subtree.
 
 ## Completed
 

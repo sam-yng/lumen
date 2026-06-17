@@ -63,9 +63,6 @@ export function SearchPanel({
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
-      <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-        Postgres full-text · notes + transcripts · scoped to you
-      </p>
 
       {debouncedQuery.length > 0 && (
         <div className="overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">

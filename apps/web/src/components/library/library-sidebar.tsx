@@ -11,7 +11,6 @@ import {
   Search,
   Settings,
   Sparkles,
-  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -106,7 +105,7 @@ export function LibrarySidebar({
   onCreateFolder,
   onFocusSearch,
 }: {
-  view: "library" | "tags";
+  view: "library" | "tags" | "recents";
   folders: FolderRow[];
   selectedFolderId: string | null;
   tags: TagRow[];
@@ -119,6 +118,7 @@ export function LibrarySidebar({
   onCreateFolder: () => void;
   onFocusSearch: () => void;
 }) {
+  const showFolderTree = view !== "recents";
   const navItem =
     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px]";
   const navActive =
@@ -163,22 +163,23 @@ export function LibrarySidebar({
             <LibraryIcon className="size-4" />
             Library
           </Link>
-          <span
-            aria-disabled="true"
-            title="Recents ship in a later release"
-            className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-50`}
+          <Link
+            href="/library/recents"
+            aria-current={view === "recents" ? "page" : undefined}
+            className={`${navItem} ${view === "recents" ? navActive : navIdle}`}
           >
             <Clock className="size-4" />
             Recents
-          </span>
-          <Link
+          </Link>
+          {/* Does nothing - not a valid route for any future features */}
+          {/* <Link
             href="/library/tags"
             aria-current={view === "tags" ? "page" : undefined}
             className={`${navItem} ${view === "tags" ? navActive : navIdle}`}
           >
             <Tag className="size-4" />
             Tags
-          </Link>
+          </Link> */}
           {ASSISTANT_ENABLED ? (
             <Link href="/assistant" className={`${navItem} ${navIdle}`}>
               <Sparkles className="size-4 text-[var(--accent-text)]" />
@@ -199,26 +200,30 @@ export function LibrarySidebar({
             </span>
           )}
         </nav>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
-            Library
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            title="New folder"
-            onClick={onCreateFolder}
-          >
-            <span className="sr-only">New folder</span>
-            <FolderPlus className="size-3.5" />
-          </Button>
-        </div>
-        <FolderTree
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          onSelect={onSelectFolder}
-        />
+        {showFolderTree ? (
+          <>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+                Library
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                title="New folder"
+                onClick={onCreateFolder}
+              >
+                <span className="sr-only">New folder</span>
+                <FolderPlus className="size-3.5" />
+              </Button>
+            </div>
+            <FolderTree
+              folders={folders}
+              selectedFolderId={selectedFolderId}
+              onSelect={onSelectFolder}
+            />
+          </>
+        ) : null}
         <TagPanel
           tags={tags}
           selectedTagId={selectedTagId}
