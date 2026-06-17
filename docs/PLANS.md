@@ -44,9 +44,10 @@ same rule when it gains content.
 
 ## Active
 
-_(none — the production-readiness group shipped 2026-06-17 and moved to
-[completed](#production-shipped). The next work is queued under
-[post-prod](exec-plans/queued/post-prod/assistant-launch.md).)_
+- **production** — targeted production deployment fixes
+  - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
+    — make the Railway worker image prebuild and verify `whisper-cli` so the
+    service can return to an empty custom start command.
 
 ## Completed
 

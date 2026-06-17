@@ -18,7 +18,7 @@ All read the same Supabase prod project.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Supabase API (publishable/anon) |
 | `NEXT_PUBLIC_APP_URL` | ✅ | Your app domain, e.g. https://lumen.app |
 | `SUPABASE_SECRET_KEY` | ✅ | Supabase API (secret/service role) — server-only |
-| `PG_BOSS_DATABASE_URL` | ✅ | Supabase → Database → Connection string (DIRECT, not pooler) |
+| `PG_BOSS_DATABASE_URL` | ✅ | Supabase → Database → Connection string (session-mode pooler, port `5432`) |
 
 The app needs `SUPABASE_SECRET_KEY` + `PG_BOSS_DATABASE_URL` because the upload
 Route Handlers enqueue pg-boss jobs from the request path.
@@ -36,8 +36,10 @@ No Supabase vars, no service layer, no user data — keep it dependency-light.
 
 | Var | Required | Value source |
 | --- | :---: | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Supabase API (publishable/anon) |
 | `SUPABASE_SECRET_KEY` | ✅ | Supabase API (secret/service role) |
-| `PG_BOSS_DATABASE_URL` | ✅ | Supabase DB connection (DIRECT, not pooler) |
+| `PG_BOSS_DATABASE_URL` | ✅ | Supabase DB connection (session-mode pooler, port `5432`) |
 | `TRANSCRIPTION_STORAGE_BUCKET` | ✅ | `library-files` |
 | `WHISPER_MODEL` | ✅ | `base.en` (or larger if you size up the box) |
 | `TRANSCRIPTION_TMP_DIR` | ✅ | `/tmp/lumen-transcription` |
@@ -53,8 +55,10 @@ batch transcription, `label-speakers` (live-session speaker labels), and the
 cron-scheduled `sweep-stale-live-sessions`. One Railway service suffices — no
 extra service, no external cron.
 
-> `PG_BOSS_DATABASE_URL` must be the **DIRECT** Postgres connection, not the
-> transaction pooler — pg-boss holds long-lived connections and uses `LISTEN`.
+> `PG_BOSS_DATABASE_URL` should use the Supabase **session-mode pooler** host
+> (`...pooler.supabase.com:5432`). Do not use the transaction pooler on `:6543`;
+> pg-boss holds long-lived connections. Avoid the direct `db.<ref>.supabase.co`
+> host on Railway/Vercel unless the Supabase IPv4 add-on is enabled.
 
 > **No server-side Claude key.** The in-app assistant is BYO-key per-user via
 > Supabase Vault (`user_ai_credentials`, `supabase_vault` extension). There is
@@ -70,16 +74,19 @@ extra service, no external cron.
    policies.
 4. Set **Auth → URL Configuration** Site URL + redirect allowlist to
    `NEXT_PUBLIC_APP_URL` (see the auth plan).
-5. Copy the publishable + secret keys and the DIRECT Postgres connection string.
+5. Copy the publishable + secret keys and the session-mode pooler Postgres
+   connection string.
 
 ## Railway worker service
 
 - Build from `apps/web/worker/Dockerfile` with **repo root** as build context.
 - Start command is the Dockerfile `CMD` (`bun run worker:transcribe` from
-  `apps/web`).
+  `apps/web`). Leave Railway's custom start command empty; do not carry over
+  bootstrap commands from manual incident recovery.
 - The image **bakes the whisper model and the diarization ONNX models** at
-  build, so there's zero runtime download and no volume is required. `/tmp`
-  audio is ephemeral by design.
+  build, and verifies `whisper-cli` exists before the image can publish, so
+  there's zero runtime download and no volume is required. `/tmp` audio is
+  ephemeral by design.
 - Sizing: start at 2 vCPU / 2 GB. `batchSize: 1` ⇒ one transcription at a time
   per instance; scale by adding instances (pg-boss distributes via Postgres).
 
