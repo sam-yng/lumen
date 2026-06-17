@@ -48,6 +48,10 @@ same rule when it gains content.
   - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
     — make the Railway worker image prebuild and verify `whisper-cli` so the
     service can return to an empty custom start command.
+- **cross-cutting** — focused UI polish
+  - [tag-color-picker-custom.md](exec-plans/active/cross-cutting/tag-color-picker-custom.md)
+    — replace the native tag color select with a custom color-block picker and
+    align the tag create controls on desktop.
 
 ## Completed
 
