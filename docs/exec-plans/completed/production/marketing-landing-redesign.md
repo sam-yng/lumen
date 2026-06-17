@@ -4,7 +4,7 @@
 > 2026-06-10: react-doctor 100/100, build + browser checks green; shimmer-tilt
 > polish landed 2026-06-12). Moved `active/production/ → completed/production/`
 > 2026-06-12. Deployment of `apps/marketing` is tracked by
-> [`prod-readiness/prod-env-and-deploy.md`](../../active/production/prod-readiness/prod-env-and-deploy.md).
+> [`prod-readiness/prod-env-and-deploy.md`](prod-readiness/prod-env-and-deploy.md).
 > **Version:** production
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

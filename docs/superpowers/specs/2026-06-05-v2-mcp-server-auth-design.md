@@ -16,7 +16,7 @@ over the existing v1 service layer.
 
 ## Hosting context (locked)
 
-Per `docs/exec-plans/active/production/prod-readiness/index.md`: **app → Vercel,
+Per `docs/exec-plans/completed/production/prod-readiness/index.md`: **app → Vercel,
 worker → Railway.** The MCP server is part of the app, so it deploys to Vercel
 with the rest of `apps/web`. This rules out a persistent server process for v2;
 the transport runs in **stateless** mode to fit Vercel function execution.

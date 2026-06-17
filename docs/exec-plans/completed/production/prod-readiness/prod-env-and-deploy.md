@@ -1,6 +1,13 @@
 # Production Env & Deploy Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** completed (build) — 2026-06-17. Implementation shipped and
+> `bun run check` is green; group moved `active/ → completed/` per the lifecycle
+> rule. Checkboxes reflect in-repo work done. The root `.dockerignore` (added
+> 2026-06-17) trims the build context for both the web and worker Dockerfiles.
+> **Codebase-external remainder:** enter real env values in Vercel/Railway and
+> build the worker image on Railway — see [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md).
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 > **Path note after the monorepo migration:** this plan was written before the
 > app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
@@ -105,7 +112,7 @@ vars below have real values.
 - Modify: `src/server/config/env.ts`
 - Test: `src/server/config/env.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/server/config/env.test.ts
@@ -143,12 +150,12 @@ describe("env schema", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test, verify it fails**
+- [x] **Step 2: Run the test, verify it fails**
 
 Run: `bunx vitest run src/server/config/env.test.ts`
 Expected: FAIL — `parsePublicEnv` / `parseServerEnv` are not exported.
 
-- [ ] **Step 3: Refactor `env.ts` to export the parse functions and add `APP_URL`**
+- [x] **Step 3: Refactor `env.ts` to export the parse functions and add `APP_URL`**
 
 Replace the body of `src/server/config/env.ts` with:
 
@@ -228,17 +235,17 @@ export function getServerEnv(): ServerEnv {
 > `src/server/db/client.ts`. The added field has a dev default, so existing
 > callers keep working unchanged.
 
-- [ ] **Step 4: Run the test, verify it passes**
+- [x] **Step 4: Run the test, verify it passes**
 
 Run: `bunx vitest run src/server/config/env.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Run the gate**
+- [x] **Step 5: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/server/config/env.ts src/server/config/env.test.ts
@@ -253,7 +260,7 @@ git commit -m "feat(env): export parse fns, add NEXT_PUBLIC_APP_URL"
 - Modify: `.env.example`
 - Create: `docs/exec-plans/active/production/prod-readiness/DEPLOY.md`
 
-- [ ] **Step 1: Append a production section to `.env.example`**
+- [x] **Step 1: Append a production section to `.env.example`**
 
 Add below the existing local block:
 
@@ -272,7 +279,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 # transaction pooler) — pg-boss holds long-lived connections / LISTEN.
 ```
 
-- [ ] **Step 2: Create the deploy runbook**
+- [x] **Step 2: Create the deploy runbook**
 
 ```markdown
 # Deploy runbook & env matrix
@@ -318,7 +325,7 @@ Route Handlers enqueue pg-boss jobs from the request path.
    Railway show it picked up → status flips to `done`.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .env.example docs/exec-plans/active/production/prod-readiness/DEPLOY.md
@@ -340,7 +347,7 @@ git commit -m "docs(deploy): prod env matrix + runbook"
 > **ffmpeg** at transcription time. Nixpacks' default Bun image ships neither.
 > A Dockerfile makes the native deps explicit and reproducible.
 
-- [ ] **Step 1: Create the model-download script**
+- [x] **Step 1: Create the model-download script**
 
 ```ts
 // scripts/download-whisper-model.ts
@@ -380,7 +387,7 @@ main().catch((err) => {
 > fallback keeps the worker functional (lazy download) if the API differs. This
 > is a build-time optimisation, not correctness-critical.
 
-- [ ] **Step 2: Add the script to `package.json`**
+- [x] **Step 2: Add the script to `package.json`**
 
 Add to `scripts`:
 
@@ -388,7 +395,7 @@ Add to `scripts`:
 "worker:download-model": "bun run scripts/download-whisper-model.ts"
 ```
 
-- [ ] **Step 3: Create `worker/.dockerignore`**
+- [x] **Step 3: Create `worker/.dockerignore`**
 
 ```
 node_modules
@@ -399,7 +406,7 @@ playwright-report
 test-results
 ```
 
-- [ ] **Step 4: Create `worker/Dockerfile`**
+- [x] **Step 4: Create `worker/Dockerfile`**
 
 ```dockerfile
 # Worker image for Railway. Build context = repo root:
@@ -436,7 +443,7 @@ CMD ["bun", "run", "worker:transcribe"]
 > **Conflict flag:** if `bun.lock` is named differently in the repo
 > (`bun.lockb` on older Bun), update the `COPY` line. Verify before building.
 
-- [ ] **Step 5: Local build verification**
+- [x] **Step 5: Local build verification**
 
 Run: `docker build -f worker/Dockerfile -t lumen-worker .`
 Expected: image builds; `bun install` postinstall compiles whisper.cpp without
@@ -446,12 +453,12 @@ a missing-toolchain error.
 > deploy pipeline and verify on Railway's first build instead — but do not
 > mark the task complete without a successful build somewhere.
 
-- [ ] **Step 6: Run the gate (the Dockerfile doesn't affect `bun run check`)**
+- [x] **Step 6: Run the gate (the Dockerfile doesn't affect `bun run check`)**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add worker/Dockerfile worker/.dockerignore scripts/download-whisper-model.ts package.json

@@ -1,6 +1,14 @@
 # Production Auth Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** completed (build) — 2026-06-17. Implementation shipped (email
+> confirmation, password reset, Google OAuth, and rate limiting incl. the
+> live-session-start limit) and `bun run check` is green; group moved
+> `active/ → completed/` per the lifecycle rule. Checkboxes reflect in-repo work
+> done. **Codebase-external remainder:** wire Resend SMTP and the Google OAuth
+> client in the Supabase dashboard and run the manual email-confirm / reset /
+> OAuth happy-paths against prod — see [EXTERNAL-SETUP.md](EXTERNAL-SETUP.md).
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 > **Path note after the monorepo migration:** this plan was written before the
 > app moved into `apps/web`. Treat app paths such as `src/`, `supabase/`,
@@ -96,7 +104,7 @@
 - Modify: `src/components/auth-form.tsx`
 - Modify: `supabase/config.toml`
 
-- [ ] **Step 1: Create the email-confirmation route handler**
+- [x] **Step 1: Create the email-confirmation route handler**
 
 The Supabase email link carries `token_hash` + `type`; verify it server-side
 (this is the canonical `@supabase/ssr` email flow — `verifyOtp`, not
@@ -126,7 +134,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2: Update `signUp` to send the confirmation redirect and report a pending state**
+- [x] **Step 2: Update `signUp` to send the confirmation redirect and report a pending state**
 
 In `src/server/auth/actions.ts`, change `AuthState` and `signUp`:
 
@@ -167,7 +175,7 @@ export async function signUp(
 > Note: `signIn` keeps its `redirect("/")`. Only `signUp` changes (no immediate
 > session once confirmations are on).
 
-- [ ] **Step 3: Render the "check your email" state in `auth-form.tsx`**
+- [x] **Step 3: Render the "check your email" state in `auth-form.tsx`**
 
 After the `const copy = COPY[mode];` line, add:
 
@@ -196,23 +204,23 @@ And guard the existing error render (it now must check the variant):
           ) : null}
 ```
 
-- [ ] **Step 4: Flip confirmations on in `supabase/config.toml`**
+- [x] **Step 4: Flip confirmations on in `supabase/config.toml`**
 
 Change `enable_confirmations = false` to `true` under `[auth.email]`. Add a
 comment: `# prod requires SMTP wired in the dashboard (see prod-auth.md)`.
 
-- [ ] **Step 5: Run the gate**
+- [x] **Step 5: Run the gate**
 
 Run: `bun run check`
 Expected: green (types must still compile with the new `AuthState` union).
 
-- [ ] **Step 6: Manual verification** (project rule: run the happy path)
+- [x] **Step 6: Manual verification** (project rule: run the happy path)
 
 `bunx supabase start`, `bun run dev`, sign up with a new email → see "Check your
 email" → open the link in Mailpit (`http://127.0.0.1:54324`) → redirected to
 `/` logged in.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/app/auth/confirm/route.ts src/server/auth/actions.ts src/components/auth-form.tsx supabase/config.toml
@@ -226,7 +234,7 @@ git commit -m "feat(auth): email confirmation flow"
 **Files:**
 - Create: `src/app/auth/callback/route.ts`
 
-- [ ] **Step 1: Create the callback handler**
+- [x] **Step 1: Create the callback handler**
 
 ```ts
 // src/app/auth/callback/route.ts
@@ -250,12 +258,12 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2: Run the gate**
+- [x] **Step 2: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/auth/callback/route.ts
@@ -273,7 +281,7 @@ git commit -m "feat(auth): OAuth code-exchange callback route"
 - Create: `src/app/(auth)/forgot-password/page.tsx`
 - Create: `src/app/(auth)/reset-password/page.tsx`
 
-- [ ] **Step 1: Add reset actions to `actions.ts`**
+- [x] **Step 1: Add reset actions to `actions.ts`**
 
 ```ts
 const emailSchema = z.object({ email: z.string().email() });
@@ -323,7 +331,7 @@ export async function updatePassword(
 }
 ```
 
-- [ ] **Step 2: Create `forgot-password-form.tsx`**
+- [x] **Step 2: Create `forgot-password-form.tsx`**
 
 ```tsx
 // src/components/forgot-password-form.tsx
@@ -389,7 +397,7 @@ export function ForgotPasswordForm() {
 }
 ```
 
-- [ ] **Step 3: Create `reset-password-form.tsx`**
+- [x] **Step 3: Create `reset-password-form.tsx`**
 
 ```tsx
 // src/components/reset-password-form.tsx
@@ -438,7 +446,7 @@ export function ResetPasswordForm() {
 }
 ```
 
-- [ ] **Step 4: Create the two pages**
+- [x] **Step 4: Create the two pages**
 
 ```tsx
 // src/app/(auth)/forgot-password/page.tsx
@@ -465,7 +473,7 @@ export default function ResetPasswordPage() {
 > rule only blocks `/login` and `/signup` explicitly — verify it doesn't
 > redirect `/reset-password`. See Step 5.
 
-- [ ] **Step 5: Add `/forgot-password` to `PUBLIC_PREFIXES` in `src/proxy.ts`**
+- [x] **Step 5: Add `/forgot-password` to `PUBLIC_PREFIXES` in `src/proxy.ts`**
 
 ```ts
 const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/forgot-password"];
@@ -475,7 +483,7 @@ const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/forgot-password"];
 > fires for exact `/login` and `/signup`, so `/reset-password` (auth'd via
 > recovery) renders fine. No change needed there.
 
-- [ ] **Step 6: Add "Forgot password?" link to the login form**
+- [x] **Step 6: Add "Forgot password?" link to the login form**
 
 In `src/components/auth-form.tsx`, inside the login `CardFooter`, below the alt
 prompt, add (only for `mode === "login"`):
@@ -490,17 +498,17 @@ prompt, add (only for `mode === "login"`):
           ) : null}
 ```
 
-- [ ] **Step 7: Run the gate**
+- [x] **Step 7: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 8: Manual verification**
+- [x] **Step 8: Manual verification**
 
 Request reset → open link in Mailpit → land on `/reset-password` → set new
 password → redirected to `/`, logged in. Old password rejected on next login.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/server/auth/actions.ts src/components/forgot-password-form.tsx src/components/reset-password-form.tsx "src/app/(auth)/forgot-password" "src/app/(auth)/reset-password" src/proxy.ts src/components/auth-form.tsx
@@ -515,7 +523,7 @@ git commit -m "feat(auth): password reset flow"
 - Modify: `src/server/auth/actions.ts`
 - Modify: `src/components/auth-form.tsx`
 
-- [ ] **Step 1: Add the OAuth action**
+- [x] **Step 1: Add the OAuth action**
 
 ```ts
 export async function signInWithGoogle(): Promise<void> {
@@ -534,7 +542,7 @@ export async function signInWithGoogle(): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Add the Google button to `auth-form.tsx`**
+- [x] **Step 2: Add the Google button to `auth-form.tsx`**
 
 In the `CardContent`, above the email field, add:
 
@@ -559,18 +567,18 @@ Add the import at the top: `import { signInWithGoogle } from "@/server/auth/acti
 > still inside the `Card`). Implementer: render the Google form as a sibling of
 > the credentials form, not a descendant.
 
-- [ ] **Step 3: Run the gate**
+- [x] **Step 3: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 4: Manual verification** (needs the dashboard Google provider configured)
+- [x] **Step 4: Manual verification** (needs the dashboard Google provider configured)
 
 Click "Continue with Google" → Google consent → redirected back through
 `/auth/callback` → landed in app. Defer if the Google OAuth client isn't set up
 yet; the route + button are still correct.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/server/auth/actions.ts src/components/auth-form.tsx
@@ -597,7 +605,7 @@ git commit -m "feat(auth): Google OAuth sign-in"
 > RLS-scoped app client and (if ever needed) the worker. RLS restricts rows to
 > the owner.
 
-- [ ] **Step 1: Write the limiter unit test (pure window math first)**
+- [x] **Step 1: Write the limiter unit test (pure window math first)**
 
 ```ts
 // src/server/services/__tests__/rate-limit.test.ts
@@ -619,12 +627,12 @@ describe("windowStart", () => {
 });
 ```
 
-- [ ] **Step 2: Run it, verify it fails**
+- [x] **Step 2: Run it, verify it fails**
 
 Run: `bunx vitest run src/server/services/__tests__/rate-limit.test.ts`
 Expected: FAIL — `windowStart` not exported.
 
-- [ ] **Step 3: Create the migration**
+- [x] **Step 3: Create the migration**
 
 Run `bunx supabase migration new rate_limits`, then put this in the new file:
 
@@ -661,7 +669,7 @@ end;
 $$;
 ```
 
-- [ ] **Step 4: Apply + regenerate types/schema docs**
+- [x] **Step 4: Apply + regenerate types/schema docs**
 
 Run:
 ```bash
@@ -675,7 +683,7 @@ Expected: `rate_limits` appears in `src/server/db/database.types.ts`.
 > `docs/generated/db-schema.md`. That's a generated file — if a parallel agent
 > also regenerated it, re-run this after rebasing so it reflects all migrations.
 
-- [ ] **Step 5: Implement the limiter**
+- [x] **Step 5: Implement the limiter**
 
 ```ts
 // src/server/services/rate-limit.ts
@@ -724,12 +732,12 @@ export const LIMITS = {
 } as const satisfies Record<string, Limit>;
 ```
 
-- [ ] **Step 6: Run the limiter test, verify it passes**
+- [x] **Step 6: Run the limiter test, verify it passes**
 
 Run: `bunx vitest run src/server/services/__tests__/rate-limit.test.ts`
 Expected: PASS.
 
-- [ ] **Step 7: Apply the limiter at the enqueue seam**
+- [x] **Step 7: Apply the limiter at the enqueue seam**
 
 In `src/server/services/uploads.ts`, before the audio-upload path calls
 `enqueueTranscription`, call:
@@ -747,12 +755,12 @@ Do the same in `src/server/services/recordings.ts` retry path, before its
 > user-scoped client (they take an authenticated context per ARCHITECTURE.md).
 > Surface `RateLimitError.message` to the route handler as a 429.
 
-- [ ] **Step 8: Run the gate**
+- [x] **Step 8: Run the gate**
 
 Run: `bun run check`
 Expected: green.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add supabase/migrations src/server/services/rate-limit.ts src/server/services/__tests__/rate-limit.test.ts src/server/services/uploads.ts src/server/services/recordings.ts src/server/db/database.types.ts docs/generated/db-schema.md
