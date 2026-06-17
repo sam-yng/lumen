@@ -145,16 +145,56 @@ export async function createUploadedFile(
       fileId: file.id,
     });
 
-    await input.enqueueTranscription({
-      userId: ctx.userId,
-      recordingId: recording.id,
-      fileId: file.id,
-      storageKey: file.storage_key,
-    });
+    try {
+      await input.enqueueTranscription({
+        userId: ctx.userId,
+        recordingId: recording.id,
+        fileId: file.id,
+        storageKey: file.storage_key,
+      });
+    } catch (enqueueError) {
+      // The file + recording rows are already committed. Nothing advances a
+      // recording that has no job behind it, so leaving it "pending" would
+      // strand it forever. Surface it as "failed" (which the UI shows and the
+      // user can retry) and keep the stored audio so the retry can re-enqueue
+      // without re-uploading the bytes.
+      const failed = await markRecordingEnqueueFailed(
+        ctx,
+        recording.id,
+        enqueueError,
+      );
+      return { file, recording: failed };
+    }
 
     return { file, recording };
   } catch (error) {
+    // Failure before the recording row is committed (storage/file/recording
+    // insert): no rows to keep, so remove the orphaned object and rethrow.
     await input.storage.remove({ bucket: input.bucket, key: storageKey });
     throw error;
   }
+}
+
+export function enqueueFailureMessage(cause: unknown): string {
+  return cause instanceof Error
+    ? `Could not queue transcription: ${cause.message}`
+    : "Could not queue transcription.";
+}
+
+async function markRecordingEnqueueFailed(
+  ctx: ServiceContext,
+  recordingId: string,
+  cause: unknown,
+): Promise<RecordingRow> {
+  const { data, error } = await ctx.supabase
+    .from<RecordingRow>("recordings")
+    .update({ status: "failed", error: enqueueFailureMessage(cause) })
+    .eq("id", recordingId)
+    .eq("user_id", ctx.userId)
+    .select("*")
+    .single();
+
+  assertNoDatabaseError(error, "Could not mark recording failed");
+  assertFound(data, "Recording not found.");
+  return data;
 }

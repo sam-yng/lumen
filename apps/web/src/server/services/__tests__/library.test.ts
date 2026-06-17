@@ -468,33 +468,34 @@ describe("library services", () => {
     ]);
   });
 
-  it("removes the uploaded object when transcription enqueue fails", async () => {
+  it("marks the recording failed (not stranded pending) when enqueue fails", async () => {
     const ctx = createContext({
       files: [],
       recordings: [],
     });
     const storage = new FakeStorage();
 
-    await expect(
-      createUploadedFile(ctx, {
-        bucket: "library-files",
-        name: "lecture.mp3",
-        mimeType: "audio/mpeg",
-        bytes: new Uint8Array([8, 9]),
-        folderId: null,
-        storage,
-        enqueueTranscription: async () => {
-          throw new Error("queue unavailable");
-        },
-      }),
-    ).rejects.toThrow("queue unavailable");
-
-    expect(storage.removed).toEqual([
-      {
-        bucket: "library-files",
-        key: storage.uploaded[0]?.key,
+    const result = await createUploadedFile(ctx, {
+      bucket: "library-files",
+      name: "lecture.mp3",
+      mimeType: "audio/mpeg",
+      bytes: new Uint8Array([8, 9]),
+      folderId: null,
+      storage,
+      enqueueTranscription: async () => {
+        throw new Error("queue unavailable");
       },
-    ]);
+    });
+
+    // A recording with no job behind it must never sit at "pending": surface it
+    // as a retryable failure instead.
+    expect(result.recording).toMatchObject({
+      status: "failed",
+      error: "Could not queue transcription: queue unavailable",
+    });
+    // The stored audio is kept so a retry can re-enqueue without re-uploading.
+    expect(storage.removed).toEqual([]);
+    expect(storage.uploaded).toHaveLength(1);
   });
 
   it("retries failed recordings by resetting status and enqueueing transcription", async () => {
@@ -536,6 +537,49 @@ describe("library services", () => {
         storageKey: "user-1/file-a-lecture-mp3",
       },
     ]);
+  });
+
+  it("reverts a retried recording to failed when re-enqueue fails", async () => {
+    const ctx = createContext({
+      files: [
+        {
+          id: "file-a",
+          user_id: userId,
+          storage_key: "user-1/file-a-lecture-mp3",
+        },
+      ],
+      recordings: [
+        {
+          id: "recording-a",
+          user_id: userId,
+          file_id: "file-a",
+          status: "failed",
+          error: "Whisper failed",
+        },
+      ],
+    });
+
+    await expect(
+      retryRecordingTranscription(ctx, {
+        id: "recording-a",
+        enqueueTranscription: async () => {
+          throw new Error("queue unavailable");
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: "database",
+      message: "Could not queue transcription: queue unavailable",
+    });
+
+    // The recording must not be stranded at "pending" — it stays retryable.
+    const recordings = tablesFor(ctx).recordings as Array<{
+      status: string;
+      error: string;
+    }>;
+    expect(recordings[0]).toMatchObject({
+      status: "failed",
+      error: "Could not queue transcription: queue unavailable",
+    });
   });
 
   it.each(["pending", "processing", "done"] as const)(
