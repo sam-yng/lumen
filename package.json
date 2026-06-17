@@ -9,8 +9,9 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "check": "biome check . && bun run check:plans && turbo run typecheck test",
+    "check": "biome check . && bun run check:plans && bun run check:worker-dockerfile && turbo run typecheck test",
     "check:plans": "bun run scripts/check-plan-lifecycle.ts",
+    "check:worker-dockerfile": "bun run scripts/check-worker-dockerfile.ts",
     "lint": "biome lint .",
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck",

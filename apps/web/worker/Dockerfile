@@ -14,9 +14,10 @@ FROM oven/bun:1-debian
 # - sherpa-onnx-node (diarization) pulls a prebuilt native binary at install;
 #   bzip2 extracts the segmentation model's .tar.bz2 archive at build;
 #   wget is required by whisper.cpp's download-ggml-model.sh
+# - git is required by whisper.cpp's CMake configure step
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-       ffmpeg make cmake g++ python3 ca-certificates bzip2 wget \
+       ffmpeg make cmake g++ python3 ca-certificates bzip2 wget git \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -43,7 +44,14 @@ WORKDIR /app/apps/web
 
 # Bake the whisper model so the first job has zero download latency.
 ENV WHISPER_MODEL=base.en
-RUN bun run worker:download-model || true
+RUN bun run worker:download-model
+
+# nodejs-whisper skips its build path when the model already exists, so verify
+# the native executable independently. Railway should fail the image build here
+# instead of publishing a worker that can only fail after it picks up a job.
+RUN cmake -S node_modules/nodejs-whisper/cpp/whisper.cpp -B node_modules/nodejs-whisper/cpp/whisper.cpp/build \
+  && cmake --build node_modules/nodejs-whisper/cpp/whisper.cpp/build --config Release \
+  && test -x node_modules/nodejs-whisper/cpp/whisper.cpp/build/bin/whisper-cli
 
 # Bake the diarization ONNX models so live-session speaker labeling works
 # offline. Point the worker at these paths via DIARIZATION_*_MODEL_PATH:
