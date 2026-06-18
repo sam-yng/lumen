@@ -7,13 +7,16 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Email").fill("demo@lumen.test");
   await page.getByLabel("Password").fill("demo12345");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/library$/);
+  // The node-tree app roots at "/"; wait for the authenticated mobile shell
+  // rather than a specific URL.
+  await expect(
+    page.getByRole("button", { name: "Open navigation" }),
+  ).toBeVisible();
 }
 
-test("mobile drawer + row actions happy path", async ({ page }) => {
+test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   // Unique per run so leftovers from interrupted runs can't collide.
-  const noteName = `Mobile note ${Date.now()}`;
-  const renamedName = `${noteName} renamed`;
+  const pageName = `Mobile page ${Date.now()}`;
 
   await login(page);
 
@@ -33,34 +36,28 @@ test("mobile drawer + row actions happy path", async ({ page }) => {
     .evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
   expect(searchFontSize).toBeGreaterThanOrEqual(16);
 
-  // Drawer: open, create a note from the sidebar action, drawer closes.
+  const nodes = page.getByRole("list", { name: "Library nodes" });
+
+  // Open the seeded "Course notes" workspace (double-tap opens a node).
+  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
+  await expect(page).toHaveURL(/\/course-notes/);
+
+  // Drawer: create a page from the sidebar action.
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "New note" })
+    .getByRole("button", { name: "New page" })
     .click();
-  await page.getByLabel("Note title").fill(noteName);
-  await page.getByRole("button", { name: "Create note" }).click();
-  await expect(
-    page.getByRole("button", { name: noteName }).first(),
-  ).toBeVisible();
+  await page.getByLabel("Page title").fill(pageName);
+  await page.getByRole("button", { name: "Create page" }).click();
+  await expect(nodes.getByRole("button", { name: pageName })).toBeVisible();
 
-  // Row ⋯ menu: rename through the bottom-sheet dialog.
-  await page.getByRole("button", { name: `Actions for ${noteName}` }).click();
-  await page.getByRole("menuitem", { name: "Rename…" }).click();
-  await page.getByLabel("Name", { exact: true }).fill(renamedName);
-  await page.getByRole("button", { name: "Rename" }).click();
-  await expect(
-    page.getByRole("button", { name: renamedName }).first(),
-  ).toBeVisible();
-
-  // Cleanup: delete it.
-  await page
-    .getByRole("button", { name: `Actions for ${renamedName}` })
-    .click();
-  await page.getByRole("menuitem", { name: "Delete…" }).click();
-  await page.getByRole("button", { name: "Delete note" }).click();
-  await expect(page.getByRole("button", { name: renamedName })).toHaveCount(0);
+  // The node tree has no per-row menu: select the row, then delete through the
+  // bulk action bar + confirmation dialog.
+  await nodes.getByRole("button", { name: pageName }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete selected" }).click();
+  await expect(nodes.getByRole("button", { name: pageName })).toHaveCount(0);
 });
 
 test("tag rename from the drawer survives the drawer close-on-click handler", async ({
@@ -77,23 +74,27 @@ test("tag rename from the drawer survives the drawer close-on-click handler", as
   const drawer = page.getByRole("dialog");
   await drawer.getByLabel("Tag name").fill(tagName);
   await drawer.getByRole("button", { name: "Create tag" }).click();
-  await expect(
-    drawer.getByRole("button", { name: tagName, exact: true }),
-  ).toBeVisible();
+  // Compact tag rows render the tag as a "Filter by <name>" toggle button.
+  const tagButton = drawer.getByRole("button", {
+    name: `Filter by ${tagName}`,
+  });
+  await expect(tagButton).toBeVisible();
 
   // Rename through the tag controls; the dialog is owned by drawer content,
   // so this regresses if the drawer closes (and unmounts it) on that click.
+  // The Rename/Delete controls only reveal on hover/focus of the row.
+  await tagButton.hover();
   await drawer.getByRole("button", { name: `Rename ${tagName}` }).click();
   await page.getByLabel("Tag name").last().fill(renamedTag);
   await page.getByRole("button", { name: "Rename", exact: true }).click();
-  await expect(
-    drawer.getByRole("button", { name: renamedTag, exact: true }),
-  ).toBeVisible();
+  const renamedButton = drawer.getByRole("button", {
+    name: `Filter by ${renamedTag}`,
+  });
+  await expect(renamedButton).toBeVisible();
 
   // Cleanup.
+  await renamedButton.hover();
   await drawer.getByRole("button", { name: `Delete ${renamedTag}` }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await expect(
-    drawer.getByRole("button", { name: renamedTag, exact: true }),
-  ).toHaveCount(0);
+  await expect(renamedButton).toHaveCount(0);
 });

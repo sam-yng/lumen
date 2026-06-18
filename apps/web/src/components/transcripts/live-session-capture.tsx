@@ -293,11 +293,11 @@ function useLiveSessionCaptureController(
       await cancelLiveSession(recordingId).catch(() => {});
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     }
-    router.push("/library");
+    router.push("/");
   }
 
   return {
-    cancel: () => router.push("/library"),
+    cancel: () => router.push("/"),
     discard,
     setName: (name: string) => dispatch({ name, type: "name" }),
     start,

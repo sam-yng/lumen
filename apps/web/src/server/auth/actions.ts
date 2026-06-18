@@ -58,7 +58,7 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
 
-  redirect("/library");
+  redirect("/");
 }
 
 export async function signUp(
@@ -108,7 +108,7 @@ export async function verifySignUpOtp(
     };
   }
 
-  redirect("/library");
+  redirect("/");
 }
 
 export async function resendSignUpOtp(
@@ -174,7 +174,7 @@ export async function updatePassword(
   });
   if (error) return { error: error.message };
 
-  redirect("/library");
+  redirect("/");
 }
 
 export async function signInWithGoogle(): Promise<void> {
@@ -183,7 +183,7 @@ export async function signInWithGoogle(): Promise<void> {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${NEXT_PUBLIC_APP_URL}/auth/callback?next=/library`,
+      redirectTo: `${NEXT_PUBLIC_APP_URL}/auth/callback?next=/`,
     },
   });
   if (error) {
