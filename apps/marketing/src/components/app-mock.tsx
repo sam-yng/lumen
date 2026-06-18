@@ -102,7 +102,7 @@ function CapabilityMap() {
   return (
     <div
       aria-hidden="true"
-      className="border-border-soft bg-surface relative overflow-hidden rounded-xl border p-4 shadow-[var(--shadow-pop)] sm:p-5"
+      className="border-border-soft bg-surface relative overflow-hidden rounded-xl border p-4 shadow-(--shadow-pop) sm:p-5"
     >
       <div className="l-system-grid" />
       <div className="relative grid gap-4 lg:grid-cols-[1fr_0.92fr]">
@@ -162,7 +162,7 @@ function CapabilityMap() {
                   <span
                     // biome-ignore lint/suspicious/noArrayIndexKey: static decorative grid
                     key={i}
-                    className="l-vector-cell bg-[var(--accent-soft)] h-4 rounded"
+                    className="l-vector-cell bg-(--accent-soft) h-4 rounded"
                     style={{ "--i": i } as CSSProperties}
                   />
                 ))}
@@ -176,7 +176,7 @@ function CapabilityMap() {
             <span className="l-chip">Assistant</span>
             <span className="text-warn font-mono text-[10px]">Claude key</span>
           </div>
-          <div className="mt-4 rounded-lg border border-[var(--accent-line)] bg-[var(--accent-soft)] p-3">
+          <div className="mt-4 rounded-lg border border-(--accent-line) bg-(--accent-soft) p-3">
             <p className="text-sm font-medium text-foreground">
               "Summarize the respiration lecture and make exam prompts."
             </p>
@@ -207,7 +207,7 @@ function ProductFrame({ compact = false }: { compact?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className={`l-product-frame border-border-soft bg-surface overflow-hidden rounded-xl border shadow-[var(--shadow-pop)] ${
+      className={`l-product-frame border-border-soft bg-surface overflow-hidden rounded-xl border shadow-(--shadow-pop) ${
         compact ? "l-product-frame--compact" : ""
       }`}
     >
@@ -227,9 +227,7 @@ function ProductFrame({ compact = false }: { compact?: boolean }) {
             <div
               key={folder}
               className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs ${
-                i === 0
-                  ? "bg-[var(--accent-soft)] text-accent-text"
-                  : "text-text-3"
+                i === 0 ? "bg-(--accent-soft) text-accent-text" : "text-text-3"
               }`}
             >
               <span className="h-3 w-3 rounded-sm bg-current/60 opacity-70" />

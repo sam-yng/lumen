@@ -49,7 +49,7 @@ export function HowItWorks() {
               style={{ "--i": i } as CSSProperties}
             >
               <div className="flex items-center justify-between gap-4">
-                <div className="bg-[var(--accent-soft)] text-accent-text flex h-12 w-12 items-center justify-center rounded-full border border-[var(--accent-line)] font-serif text-base font-semibold">
+                <div className="bg-(--accent-soft) text-accent-text flex h-12 w-12 items-center justify-center rounded-full border border-(--accent-line) font-serif text-base font-semibold">
                   {step.n}
                 </div>
                 <DemoArtifact index={i} />
@@ -90,7 +90,7 @@ function DemoArtifact({ index }: { index: number }) {
 
   if (index === 1) {
     return (
-      <div className="l-mini-demo bg-surface-2 flex flex-col justify-center rounded-lg border border-[var(--accent-line)] px-2">
+      <div className="l-mini-demo bg-surface-2 flex flex-col justify-center rounded-lg border border-(--accent-line) px-2">
         <span className="text-busy font-mono text-[10px]">42%</span>
         <span className="bg-surface-3 mt-1 h-1.5 overflow-hidden rounded-full">
           <span className="l-progress block h-full rounded-full bg-busy" />
@@ -100,12 +100,12 @@ function DemoArtifact({ index }: { index: number }) {
   }
 
   return (
-    <div className="l-mini-demo bg-surface-2 rounded-lg border border-[var(--accent-line)] p-2">
+    <div className="l-mini-demo bg-surface-2 rounded-lg border border-(--accent-line) p-2">
       <div className="flex items-center gap-1.5">
         <span className="bg-ok h-1.5 w-1.5 rounded-full" />
         <span className="bg-surface-3 h-1.5 w-10 rounded-full" />
       </div>
-      <div className="bg-[var(--ok-soft)] mt-2 h-2 w-14 rounded-full" />
+      <div className="bg-(--ok-soft) mt-2 h-2 w-14 rounded-full" />
     </div>
   );
 }

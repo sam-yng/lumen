@@ -12,7 +12,7 @@ export function TrustStrip() {
             className="reveal text-text-3 flex items-center gap-2 text-sm font-medium"
             style={{ "--i": i } as CSSProperties}
           >
-            <span className="bg-[var(--accent-line)] h-1.5 w-1.5 rounded-full" />
+            <span className="bg-(--accent-line) h-1.5 w-1.5 rounded-full" />
             {badge}
           </span>
         ))}
