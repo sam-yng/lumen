@@ -41,6 +41,13 @@ same rule when it gains content.
     flows) is deferred past launch. Absorbs the former
     `prod-assistant-verification` gate so the launch path carries no Claude-key
     dependency.
+- **cross-cutting** — product navigation and library model changes
+  - [navigation-node-tree.md](exec-plans/queued/cross-cutting/navigation-node-tree.md)
+    — replace `/library` with root Library at `/`, migrate to a single
+    `library_nodes` tree for workspaces/pages/files/audio, add pinned
+    container pages, desktop row multi-select, bulk actions, delete loading,
+    and compact multi-tag filtering. Design:
+    [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md).
 
 ## Active
 
