@@ -4,11 +4,12 @@ import {
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import { bulkDeleteLibraryNodes } from "@/server/services/library-nodes";
 
 const bulkDeleteSchema = z.object({
-  ids: z.array(z.string().uuid()).min(1),
+  ids: z.array(uuidSchema).min(1),
 });
 
 export async function POST(request: Request) {

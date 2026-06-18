@@ -1,7 +1,15 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { NoteRoute } from "@/components/library/note-route";
 
-export default function LegacyNotePage(_props: {
+export default async function NotePage({
+  params,
+}: {
   params: Promise<{ id: string }>;
 }) {
-  redirect("/");
+  const { id } = await params;
+  return (
+    <Suspense>
+      <NoteRoute nodeId={id} />
+    </Suspense>
+  );
 }

@@ -77,4 +77,10 @@ export async function parseJsonBody<Schema extends z.ZodType>(
   return { ok: true, data: parsed.data };
 }
 
-export const nullableUuidSchema = z.string().uuid().nullable();
+export const uuidSchema = z
+  .string()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    "Invalid UUID",
+  );
+export const nullableUuidSchema = uuidSchema.nullable();

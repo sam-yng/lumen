@@ -42,10 +42,15 @@ test("live session records, streams a transcript, and finalizes", async ({
   await page.getByLabel("Email").fill("demo@lumen.test");
   await page.getByLabel("Password").fill("demo12345");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/library$/);
+  await expect(page.getByLabel("Search notes and transcripts")).toBeVisible();
 
+  const nodes = page.getByRole("list", { name: "Library nodes" });
+  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
+  await expect(page).toHaveURL(/\/course-notes/);
   await page.getByRole("button", { name: "Live session" }).click();
-  await expect(page).toHaveURL(/\/library\/live$/);
+  await expect(page).toHaveURL(
+    /\/library\/live\?workspaceId=[0-9a-f-]+&parentId=[0-9a-f-]+$/i,
+  );
 
   // Unique per run so leftovers from earlier runs can't match the search.
   const sessionName = `Biology live capture ${Date.now()}`;

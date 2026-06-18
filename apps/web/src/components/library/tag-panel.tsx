@@ -25,7 +25,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         variant="ghost"
         size="icon-xs"
         title={`Rename ${tag.name}`}
-        className="absolute right-7 hidden group-hover:inline-flex group-focus-within:inline-flex"
+        className="absolute right-8 hidden group-hover:inline-flex group-focus-within:inline-flex"
         data-drawer-stay
         onClick={() => setRenameOpen(true)}
       >
@@ -121,7 +121,7 @@ export function TagPanel({
               aria-label={`Filter by ${tag.name}`}
               aria-pressed={selectedTagIds.has(tag.id)}
               onClick={() => onToggleTag(tag.id)}
-              className={`flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 pr-16 text-left text-[13px] transition hover:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-soft)] ${
+              className={`grid h-8 w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_2rem] items-center gap-2 rounded-md px-2 pr-16 text-left text-[13px] transition hover:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-soft)] ${
                 selectedTagIds.has(tag.id)
                   ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
                   : "text-[var(--text-2)]"
@@ -134,7 +134,7 @@ export function TagPanel({
                 #
               </span>
               <span className="truncate">{tag.name}</span>
-              <span className="ml-auto text-xs tabular-nums text-[var(--text-4)] group-hover:hidden group-focus-within:hidden">
+              <span className="justify-self-end text-xs tabular-nums text-[var(--text-4)] group-hover:hidden group-focus-within:hidden">
                 {tagLinks.filter((link) => link.tag_id === tag.id).length}
               </span>
             </button>

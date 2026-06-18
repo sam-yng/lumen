@@ -98,7 +98,18 @@ describe("LibraryContent desktop selection", () => {
     expect(onOpen).toHaveBeenCalledWith("gamma");
 
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
-    expect(screen.queryByText(/selected$/)).toBeNull();
+    expect(screen.getByText("0 selected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Move" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+  });
+
+  it("keeps the selection action bar mounted before anything is selected", () => {
+    renderContent();
+
+    expect(screen.getByText("0 selected")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Move" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Clear" })).toBeDisabled();
   });
 
   it("shows a blocking busy overlay while bulk delete is pending", async () => {

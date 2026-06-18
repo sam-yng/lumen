@@ -1,7 +1,15 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { TranscriptRoute } from "@/components/library/transcript-route";
 
-export default function LegacyTranscriptPage(_props: {
+export default async function TranscriptPage({
+  params,
+}: {
   params: Promise<{ recordingId: string }>;
 }) {
-  redirect("/");
+  const { recordingId } = await params;
+  return (
+    <Suspense>
+      <TranscriptRoute recordingId={recordingId} />
+    </Suspense>
+  );
 }

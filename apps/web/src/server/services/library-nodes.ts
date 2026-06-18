@@ -18,6 +18,11 @@ export type LibraryNodeSnapshot = {
 };
 
 const CONTAINER_KINDS: LibraryNodeKind[] = ["workspace", "page"];
+const FOLDER_NODE_TYPE = "lumen-folder";
+const EMPTY_NOTE_CONTENT = {
+  type: "doc",
+  content: [{ type: "paragraph", content: [] }],
+};
 
 function slugFor(title: string, id: string) {
   const base = title
@@ -227,11 +232,17 @@ export async function createWorkspaceNode(
 
 export async function createPageNode(
   ctx: ServiceContext,
-  input: { title: string; parentId: string },
+  input: { title: string; parentId: string; role?: "note" | "folder" },
 ) {
   const parent = await loadOwnedParent(ctx, input.parentId);
   const id = crypto.randomUUID();
   const title = cleanTitle(input.title);
+  const contentJson =
+    input.role === "folder"
+      ? { type: FOLDER_NODE_TYPE }
+      : input.role === "note"
+        ? EMPTY_NOTE_CONTENT
+        : undefined;
   return insertNode(ctx, {
     id,
     user_id: ctx.userId,
@@ -240,6 +251,7 @@ export async function createPageNode(
     kind: "page",
     title,
     slug: slugFor(title, id),
+    ...(contentJson === undefined ? {} : { content_json: contentJson }),
   });
 }
 

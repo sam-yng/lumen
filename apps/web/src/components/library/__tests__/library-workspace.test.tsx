@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LibraryWorkspace } from "@/components/library/library-workspace";
 import type { LibraryNode } from "@/server/services/library-nodes";
@@ -10,6 +16,7 @@ const apiMocks = vi.hoisted(() => ({
   createWorkspace: vi.fn(),
   deleteTag: vi.fn(),
   fetchLibrarySnapshot: vi.fn(),
+  uploadFile: vi.fn(),
   updateTag: vi.fn(),
 }));
 const routerMocks = vi.hoisted(() => ({ push: vi.fn() }));
@@ -22,6 +29,7 @@ vi.mock("@/components/library/library-api", () => ({
   createWorkspace: apiMocks.createWorkspace,
   deleteTag: apiMocks.deleteTag,
   fetchLibrarySnapshot: apiMocks.fetchLibrarySnapshot,
+  uploadFile: apiMocks.uploadFile,
   updateTag: apiMocks.updateTag,
 }));
 vi.mock("@/components/library/library-shell", () => ({
@@ -57,6 +65,18 @@ vi.mock("@/components/library/transcript-route", () => ({
 vi.mock("@/components/search/search-panel", () => ({
   SearchPanel: () => <div data-testid="search-panel" />,
 }));
+vi.mock("@/components/transcripts/record-audio-form", () => ({
+  RecordAudioForm: ({ onSave }: { onSave: (file: File) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onSave(new File(["audio"], "recording.webm", { type: "audio/webm" }))
+      }
+    >
+      Record audio
+    </button>
+  ),
+}));
 
 function node(
   id: string,
@@ -85,7 +105,9 @@ function node(
 }
 
 function renderWorkspace(
-  props: Partial<React.ComponentProps<typeof LibraryWorkspace>> = {},
+  props: Partial<React.ComponentProps<typeof LibraryWorkspace>> & {
+    view?: "library" | "recents";
+  } = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -182,6 +204,20 @@ describe("LibraryWorkspace node routes", () => {
           slug: "lecture-audio-11111111",
         }),
       ],
+      recordings: [
+        {
+          id: "recording-1",
+          user_id: "user-1",
+          node_id: "audio-1",
+          status: "done",
+          duration_sec: 60,
+          error: null,
+          created_at: "2026-06-18T00:00:00.000Z",
+        },
+      ],
+      tags: [],
+      tagLinks: [],
+      transcripts: [],
     });
 
     renderWorkspace({
@@ -192,7 +228,11 @@ describe("LibraryWorkspace node routes", () => {
     expect(
       await screen.findByRole("heading", { name: "Lecture audio" }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("transcript-route")).toHaveTextContent("audio-1");
+    await waitFor(() =>
+      expect(routerMocks.push).toHaveBeenCalledWith(
+        "/library/transcripts/recording-1",
+      ),
+    );
     expect(screen.queryByRole("button", { name: "New workspace" })).toBeNull();
   });
 
@@ -215,6 +255,126 @@ describe("LibraryWorkspace node routes", () => {
       nodeSlug: "cell-biology-11111111",
     });
 
-    expect(await screen.findByTestId("note-route")).toHaveTextContent("page-1");
+    await waitFor(() =>
+      expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/page-1"),
+    );
+    expect(screen.queryByTestId("note-route")).toBeNull();
+  });
+
+  it("restores workspace actions and uploads instant recordings into the selected workspace", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    expect(
+      (await screen.findAllByRole("button", { name: "New note" })).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "New folder" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Upload" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Live session" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Record audio" }));
+    await waitFor(() =>
+      expect(apiMocks.uploadFile.mock.calls[0]?.[0]).toMatchObject({
+        parentId: "workspace-1",
+      }),
+    );
+  });
+
+  it("routes newly created notes to the standalone note editor", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+    apiMocks.createPage.mockResolvedValue(
+      node("note-1", "page", {
+        title: "New note",
+        slug: "new-note-11111111",
+      }),
+    );
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    const actionButtons = await screen.findAllByRole("button", {
+      name: "New note",
+    });
+    fireEvent.click(actionButtons.at(-1) as HTMLElement);
+    fireEvent.change(screen.getByLabelText("Note title"), {
+      target: { value: "New note" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create note" }));
+
+    await waitFor(() =>
+      expect(apiMocks.createPage.mock.calls[0]?.[0]).toMatchObject({
+        title: "New note",
+        parentId: "workspace-1",
+        role: "note",
+      }),
+    );
+    await waitFor(() =>
+      expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/note-1"),
+    );
+  });
+
+  it("renders a recents view for recently updated notes", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("old-note", "page", {
+          title: "Old note",
+          updated_at: "2026-06-17T00:00:00.000Z",
+        }),
+        node("new-note", "page", {
+          title: "New note",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        }),
+        node("file-1", "file", { title: "Syllabus.pdf" }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace({ view: "recents" });
+
+    expect(
+      await screen.findByRole("heading", { name: "Recents" }),
+    ).toBeVisible();
+    const recentsList = screen.getByRole("list", {
+      name: "Recently updated notes",
+    });
+    const newNote = within(recentsList).getByRole("button", {
+      name: /New note/,
+    });
+    const oldNote = within(recentsList).getByRole("button", {
+      name: /Old note/,
+    });
+    expect(newNote.compareDocumentPosition(oldNote)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.queryByText("Syllabus.pdf")).toBeNull();
   });
 });
