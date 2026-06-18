@@ -37,22 +37,42 @@ values (
 )
 on conflict do nothing;
 
--- Sample library for the demo user.
-insert into public.folders (id, user_id, name, parent_id) values
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000d1', 'Course notes', null),
-  ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-0000000000d1', 'Lectures', null)
+-- Sample library for the demo user (library_nodes tree).
+-- Workspace node owns the tree (workspace_id = id, parent_id = null).
+insert into public.library_nodes (id, user_id, workspace_id, parent_id, kind, title, slug) values
+  (
+    '00000000-0000-0000-0000-0000000000f1',
+    '00000000-0000-0000-0000-0000000000d1',
+    '00000000-0000-0000-0000-0000000000f1',
+    null,
+    'workspace',
+    'Course notes',
+    'course-notes-000000f1'
+  )
 on conflict do nothing;
 
-insert into public.documents (id, user_id, folder_id, title, content_text) values
+-- A page node nested under the workspace.
+insert into public.library_nodes (id, user_id, workspace_id, parent_id, kind, title, slug, content_text) values
   (
     '00000000-0000-0000-0000-0000000000a1',
     '00000000-0000-0000-0000-0000000000d1',
     '00000000-0000-0000-0000-0000000000f1',
+    '00000000-0000-0000-0000-0000000000f1',
+    'page',
     'Welcome to Lumen',
+    'welcome-to-lumen-000000a1',
     'A seeded note about photosynthesis, mitochondria, and cellular respiration.'
   )
 on conflict do nothing;
 
 insert into public.tags (id, user_id, name, color) values
   ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000d1', 'biology', '#22c55e')
+on conflict do nothing;
+
+insert into public.tag_links (id, tag_id, node_id) values
+  (
+    '00000000-0000-0000-0000-0000000000b1',
+    '00000000-0000-0000-0000-0000000000c1',
+    '00000000-0000-0000-0000-0000000000a1'
+  )
 on conflict do nothing;

@@ -41,21 +41,19 @@ same rule when it gains content.
     flows) is deferred past launch. Absorbs the former
     `prod-assistant-verification` gate so the launch path carries no Claude-key
     dependency.
-- **cross-cutting** — product navigation and library model changes
-  - [navigation-node-tree.md](exec-plans/queued/cross-cutting/navigation-node-tree.md)
-    — replace `/library` with root Library at `/`, migrate to a single
-    `library_nodes` tree for workspaces/pages/files/audio, add pinned
-    container pages, desktop row multi-select, bulk actions, delete loading,
-    and compact multi-tag filtering. Design:
-    [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md).
-
 ## Active
 
 - **production** — targeted production deployment fixes
   - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
     — make the Railway worker image prebuild and verify `whisper-cli` so the
     service can return to an empty custom start command.
-- **cross-cutting** — focused UI polish
+- **cross-cutting** — product navigation and focused UI polish
+  - [navigation-node-tree.md](exec-plans/active/cross-cutting/navigation-node-tree.md)
+    — replace `/library` with root Library at `/`, migrate to a single
+    `library_nodes` tree for workspaces/pages/files/audio, add pinned
+    container pages, desktop row multi-select, bulk actions, delete loading,
+    and compact multi-tag filtering. Design:
+    [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md).
   - [tag-color-picker-custom.md](exec-plans/active/cross-cutting/tag-color-picker-custom.md)
     — replace the native tag color select with a custom color-block picker and
     align the tag create controls on desktop.

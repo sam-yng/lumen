@@ -2,6 +2,40 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## ⚠️ Implementation status / handoff (2026-06-18)
+
+**Branch:** `navigation-node-tree` (committed + pushed; NOT merged).
+
+**Done — Milestone 1 only (Tasks 1–3):**
+- Migration `apps/web/supabase/migrations/20260618120000_library_nodes.sql` written + applied (`db reset`). `seed.sql` rewritten onto nodes.
+- `database.types.ts` + `docs/generated/db-schema.md` regenerated.
+- `src/server/services/library-nodes.ts` implemented; `__tests__/library-nodes.test.ts` 7/7; full service suite 176/176. `fake-supabase.ts` now returns inserted rows from `insert().select()`.
+
+**🔴 `bun run check` is RED on this commit — intentionally.** The destructive
+migration drops the `folders`/`documents`/`files` tables+types, so ~60 files
+that still import `Tables<"folders"|"documents"|"files">` (services, the
+`app/api/library/**` routes, App Router pages, library UI, tags, uploads,
+workers, search, assistant, MCP) no longer typecheck. There is **no green
+checkpoint until M2–M5 land**; the whole change goes green again only once every
+consumer is retargeted to `library_nodes`. Do not "fix" the migration to make
+check pass — finish the migration.
+
+**Resume at Milestone 2, Task 4.** Recommended order to claw typecheck back to
+green: M2 (API + routes) → M4 Task 9 (uploads/workers/recordings/transcripts) →
+M5 (search/assistant/MCP) → M3 (library UI) → M4 Task 8 (tags) → M4 Task 10
+(editor/transcript) → M6 (docs + browser happy-path). Run
+`bun run typecheck` to enumerate the remaining broken files as a live worklist.
+
+**Gotchas already handled (do not redo):**
+- The plan's two `drop constraint if exists` names for the per-source unique
+  constraints were wrong; corrected to the Postgres-truncated 63-char names
+  (`..._document_id_chun_key`, `..._transcript_id_ch_key`), verified against the
+  live DB. If you add a fresh migration, re-introspect names with
+  `select conname from pg_constraint where conrelid = 'public.<table>'::regclass;`.
+- `crypto.randomUUID()` is used for node IDs in the service (matches `folders.ts`).
+
+---
+
 **Goal:** Replace Lumen's `/library` folder/document/file navigation model with a root Library at `/`, workspace/page/file/audio `library_nodes`, Notion-style nesting, pinned container pages, desktop row selection, bulk actions, and compact multi-tag filtering.
 
 **Architecture:** Add `library_nodes` as the single navigation/content tree, destructively reset existing library content per product-owner approval, and retarget routes, services, uploads, live sessions, search, assistant retrieval, MCP, workers, and UI components to node IDs. Recording/transcript rows remain domain tables attached to audio nodes.
@@ -35,7 +69,7 @@
 - Regenerate: `apps/web/src/server/db/database.types.ts`
 - Regenerate: `docs/generated/db-schema.md`
 
-- [ ] **Step 1: Write migration**
+- [x] **Step 1: Write migration**
 
 Create a migration that:
 
@@ -288,7 +322,7 @@ different generated name, inspect it with `select conname from pg_constraint whe
 conrelid = 'public.tag_links'::regclass;` and update this migration before
 running `db reset`.
 
-- [ ] **Step 2: Apply migration locally**
+- [x] **Step 2: Apply migration locally**
 
 Run:
 
@@ -298,7 +332,12 @@ cd apps/web && bunx supabase db reset
 
 Expected: migrations apply cleanly and create `library_nodes`.
 
-- [ ] **Step 3: Regenerate database types and schema docs**
+- [x] **Step 3: Regenerate database types and schema docs**
+
+> Note: the migration's two `drop constraint if exists` names for the original
+> per-source unique constraints were corrected to the Postgres-truncated (63-char)
+> identifiers (`..._document_id_chun_key`, `..._transcript_id_ch_key`) verified
+> against the local DB. `seed.sql` was rewritten onto `library_nodes` + `tag_links.node_id`.
 
 Run:
 
@@ -315,7 +354,7 @@ Expected: `database.types.ts` includes `library_nodes`, `library_node_kind`, upd
 - Test: `apps/web/src/server/services/__tests__/library-nodes.test.ts`
 - Modify: `apps/web/src/server/services/__tests__/fake-supabase.ts` if the fake needs extra query behavior.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Cover:
 
@@ -328,7 +367,7 @@ it("allows pinning workspaces and container pages only", async () => {});
 it("returns a snapshot scoped to the current user", async () => {});
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run:
 
@@ -343,7 +382,7 @@ Expected: FAIL because `library-nodes.ts` is not implemented.
 **Files:**
 - Modify: `apps/web/src/server/services/library-nodes.ts`
 
-- [ ] **Step 1: Implement service module**
+- [x] **Step 1: Implement service module**
 
 Export:
 
@@ -370,7 +409,10 @@ Required helpers:
 - `nodeHasChildren(nodes, id)` for pin eligibility.
 - `extractTipTapText` for page content updates.
 
-- [ ] **Step 2: Verify GREEN**
+- [x] **Step 2: Verify GREEN**
+
+> Done: 7/7 `library-nodes.test.ts` pass; full service suite 176/176 green
+> (fake-supabase gained inserted-row return semantics for `insert().select()`).
 
 Run:
 
