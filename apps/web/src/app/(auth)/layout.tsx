@@ -1,5 +1,4 @@
 import { BookOpenText, LockKeyhole, Mic, Sparkles } from "lucide-react";
-import { LegalFooter } from "@/components/legal-footer";
 import { LumenMark } from "@/components/lumen-mark";
 
 const FEATURES = [
@@ -52,7 +51,6 @@ export default function AuthLayout({
         <div className="flex flex-1 items-center justify-center">
           {children}
         </div>
-        <LegalFooter />
       </section>
     </main>
   );

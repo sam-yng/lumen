@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { LegalFooter } from "@/components/legal-footer";
 import { createServerSupabase } from "@/server/db/client";
 
 export default async function AppLayout({
@@ -20,7 +19,6 @@ export default async function AppLayout({
       <main className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1">{children}</div>
       </main>
-      {/* <LegalFooter /> */}
     </div>
   );
 }
