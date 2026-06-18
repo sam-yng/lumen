@@ -21,7 +21,7 @@ export function LibraryRecentsContent({
   snapshot: LibrarySnapshot;
   onOpenDocument: (documentId: string) => void;
 }) {
-  const documents = [...snapshot.documents].sort(byMostRecentlyUpdated);
+  const documents = snapshot.documents.toSorted(byMostRecentlyUpdated);
 
   if (documents.length === 0) {
     return (
