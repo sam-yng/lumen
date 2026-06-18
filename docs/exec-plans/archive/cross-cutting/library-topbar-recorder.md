@@ -1,5 +1,12 @@
 # Library Top Bar Recorder Implementation Plan
 
+> **Status: ARCHIVED (superseded 2026-06-18).** Implemented on the
+> folder/document workspace, then superseded by the navigation-node-tree
+> migration, which reworked `LibraryWorkspace` and left `RecordAudioForm`
+> unused (the top-bar recorder is no longer mounted). Kept as a historical
+> record; do not implement from it. (See the follow-up to remove the now-dead
+> `RecordAudioForm` or re-wire capture into the node UI.)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Move the existing `RecordAudioForm` control into the library top bar action slot while keeping Search available at the right edge of the top bar.

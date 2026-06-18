@@ -7,8 +7,10 @@ export default async function WorkspacePage({
 }: {
   params: Promise<{ workspaceSlug: string }>;
 }) {
-  const { workspaceSlug } = await params;
-  const supabase = await createServerSupabase();
+  const [{ workspaceSlug }, supabase] = await Promise.all([
+    params,
+    createServerSupabase(),
+  ]);
   const {
     data: { user },
   } = await supabase.auth.getUser();

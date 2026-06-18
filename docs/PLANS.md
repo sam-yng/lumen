@@ -47,18 +47,6 @@ same rule when it gains content.
   - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
     — make the Railway worker image prebuild and verify `whisper-cli` so the
     service can return to an empty custom start command.
-- **cross-cutting** — product navigation and focused UI polish
-  - [tag-color-picker-custom.md](exec-plans/active/cross-cutting/tag-color-picker-custom.md)
-    — replace the native tag color select with a custom color-block picker and
-    align the tag create controls on desktop.
-  - [document-editor-fixed-shell.md](exec-plans/active/cross-cutting/document-editor-fixed-shell.md)
-    — keep the note header and editor toolbar visible while document content
-    scrolls inside the editor shell.
-  - [library-topbar-recorder.md](exec-plans/active/cross-cutting/library-topbar-recorder.md)
-    — move the recorder control into the library top bar action slot.
-  - [recents-and-delete-safety.md](exec-plans/active/cross-cutting/recents-and-delete-safety.md)
-    — add a document-only recents view and make folder deletion remove the
-    full folder subtree.
 
 ## Completed
 
@@ -179,8 +167,23 @@ same rule when it gains content.
   workspace` per profile. `bun run check` green (334 tests) + browser happy path
   verified (design:
   [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md))
+- [tag-color-picker-custom.md](exec-plans/completed/cross-cutting/tag-color-picker-custom.md)
+  (`cf001ce`) — custom color-block tag picker replacing the native select;
+  still valid under the node-tree tag UI
+- [document-editor-fixed-shell.md](exec-plans/completed/cross-cutting/document-editor-fixed-shell.md)
+  (`f5abb55`) — viewport-bounded editor shell keeping header/toolbar fixed while
+  the note body scrolls; still valid under the node-tree page editor
 
 ## Archive
 
 - **v2** — [index.md](exec-plans/archive/v2/index.md) — original queued v2 group
   snapshot, superseded by [completed/v2/index.md](exec-plans/completed/v2/index.md).
+- **cross-cutting** — shipped on the old folder/document model, then superseded
+  by [navigation-node-tree.md](exec-plans/completed/cross-cutting/navigation-node-tree.md);
+  kept as historical records, do not implement from them.
+  - [recents-and-delete-safety.md](exec-plans/archive/cross-cutting/recents-and-delete-safety.md)
+    — `/library/recents` view + `folders.ts` cascade (shipped `665b432`); recents
+    now redirects to `/` and delete-safety is `library_nodes` cascade + bulk-delete
+    confirm.
+  - [library-topbar-recorder.md](exec-plans/archive/cross-cutting/library-topbar-recorder.md)
+    — top-bar recorder; the node-tree rework left `RecordAudioForm` unmounted.

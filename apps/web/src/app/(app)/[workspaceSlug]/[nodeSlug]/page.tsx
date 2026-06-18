@@ -7,8 +7,10 @@ export default async function NodePage({
 }: {
   params: Promise<{ workspaceSlug: string; nodeSlug: string }>;
 }) {
-  const { workspaceSlug, nodeSlug } = await params;
-  const supabase = await createServerSupabase();
+  const [{ workspaceSlug, nodeSlug }, supabase] = await Promise.all([
+    params,
+    createServerSupabase(),
+  ]);
   const {
     data: { user },
   } = await supabase.auth.getUser();
