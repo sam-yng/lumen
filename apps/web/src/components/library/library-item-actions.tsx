@@ -20,7 +20,7 @@ export function LibraryItemActions({
   const disabled = isBusy || !hasSelection;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] p-2 shadow-[var(--shadow-pop)]">
+    <div className={`flex flex-wrap items-center gap-2 rounded-md border bg-[var(--surface)] p-2`}>
       <span className="mr-auto px-1 text-sm font-medium">
         {selectedCount} selected
       </span>

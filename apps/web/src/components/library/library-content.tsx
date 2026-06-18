@@ -96,10 +96,24 @@ export function LibraryContent({
 
   return (
     <div className="relative space-y-4" aria-busy={isDeleting}>
+      <LibraryItemActions
+        selectedCount={selectedIds.size}
+        isBusy={isDeleting || moveMutation.isPending}
+        onMove={() => {
+          if (selectedIds.size > 0) setMoveOpen(true);
+        }}
+        onDelete={() => {
+          if (selectedIds.size > 0) setDeleteOpen(true);
+        }}
+        onClear={() => {
+          anchorIndex.current = null;
+          setSelectedIds(new Set());
+        }}
+      />
       {visibleNodes.length > 0 ? (
         <ul
           aria-label="Library nodes"
-          className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)] px-3"
+          className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)]"
         >
           {visibleNodes.map((node, index) => (
             <ItemRow
@@ -129,21 +143,6 @@ export function LibraryContent({
           </div>
         </div>
       )}
-
-      <LibraryItemActions
-        selectedCount={selectedIds.size}
-        isBusy={isDeleting || moveMutation.isPending}
-        onMove={() => {
-          if (selectedIds.size > 0) setMoveOpen(true);
-        }}
-        onDelete={() => {
-          if (selectedIds.size > 0) setDeleteOpen(true);
-        }}
-        onClear={() => {
-          anchorIndex.current = null;
-          setSelectedIds(new Set());
-        }}
-      />
 
       {error ? (
         <p role="alert" className="text-sm text-destructive">
