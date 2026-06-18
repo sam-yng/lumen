@@ -1,20 +1,17 @@
 "use client";
 
 import { FolderPlus, Plus, Radio, Upload } from "lucide-react";
-import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
 import { Button } from "@/components/ui/button";
 
 export function LibraryActions({
   onCreateNote,
   onCreateFolder,
   onUpload,
-  onRecordSave,
   onStartLiveSession,
 }: {
   onCreateNote: () => void;
   onCreateFolder: () => void;
   onUpload: () => void;
-  onRecordSave: (file: File) => void;
   onStartLiveSession: () => void;
 }) {
   return (
@@ -45,7 +42,6 @@ export function LibraryActions({
         <Radio className="size-4" />
         Live session
       </Button>
-      <RecordAudioForm onSave={onRecordSave} />
     </div>
   );
 }

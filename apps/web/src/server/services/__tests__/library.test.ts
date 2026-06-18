@@ -183,6 +183,124 @@ describe("library services", () => {
     });
   });
 
+  it("deletes a folder subtree with its documents and files", async () => {
+    const ctx = createContext({
+      folders: [
+        {
+          id: "root",
+          user_id: userId,
+          parent_id: null,
+          name: "Root",
+        },
+        {
+          id: "child",
+          user_id: userId,
+          parent_id: "root",
+          name: "Child",
+        },
+        {
+          id: "grandchild",
+          user_id: userId,
+          parent_id: "child",
+          name: "Grandchild",
+        },
+        {
+          id: "outside",
+          user_id: userId,
+          parent_id: null,
+          name: "Outside",
+        },
+        {
+          id: "foreign-child",
+          user_id: otherUserId,
+          parent_id: "root",
+          name: "Foreign child",
+        },
+      ],
+      documents: [
+        {
+          id: "doc-root",
+          user_id: userId,
+          folder_id: "root",
+          title: "Root doc",
+        },
+        {
+          id: "doc-child",
+          user_id: userId,
+          folder_id: "child",
+          title: "Child doc",
+        },
+        {
+          id: "doc-grandchild",
+          user_id: userId,
+          folder_id: "grandchild",
+          title: "Grandchild doc",
+        },
+        {
+          id: "doc-outside",
+          user_id: userId,
+          folder_id: "outside",
+          title: "Outside doc",
+        },
+        {
+          id: "doc-foreign",
+          user_id: otherUserId,
+          folder_id: "child",
+          title: "Foreign doc",
+        },
+      ],
+      files: [
+        {
+          id: "file-root",
+          user_id: userId,
+          folder_id: "root",
+          name: "root.pdf",
+        },
+        {
+          id: "file-child",
+          user_id: userId,
+          folder_id: "child",
+          name: "child.pdf",
+        },
+        {
+          id: "file-grandchild",
+          user_id: userId,
+          folder_id: "grandchild",
+          name: "grandchild.pdf",
+        },
+        {
+          id: "file-outside",
+          user_id: userId,
+          folder_id: "outside",
+          name: "outside.pdf",
+        },
+        {
+          id: "file-foreign",
+          user_id: otherUserId,
+          folder_id: "child",
+          name: "foreign.pdf",
+        },
+      ],
+    });
+
+    const deleted = await deleteFolder(ctx, { id: "root" });
+    const tables = tablesFor(ctx);
+
+    expect(deleted.id).toBe("root");
+    expect(tables.folders.map((folder) => folder.id).sort()).toEqual([
+      "foreign-child",
+      "outside",
+    ]);
+    expect(tables.documents.map((document) => document.id).sort()).toEqual([
+      "doc-foreign",
+      "doc-outside",
+    ]);
+    expect(tables.files.map((file) => file.id).sort()).toEqual([
+      "file-foreign",
+      "file-outside",
+    ]);
+  });
+
   it("creates documents under the current user and validates folder ownership", async () => {
     const ctx = createContext({
       folders: [

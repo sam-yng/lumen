@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Loader2, Plus, Search, Upload } from "lucide-react";
+import { ChevronRight, Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
+import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +28,7 @@ import { TextInputDialog } from "./library-dialogs";
 import { LibraryFilterChips } from "./library-filter-chips";
 import { useLibraryMutation } from "./library-hooks";
 import { folderName, folderPath } from "./library-paths";
+import { LibraryRecentsContent } from "./library-recents-content";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 
@@ -39,7 +41,7 @@ export function LibraryWorkspace({
 }: {
   signOutAction: SignOutAction;
   userEmail: string;
-  view?: "library" | "tags";
+  view?: "library" | "tags" | "recents";
 }) {
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +65,11 @@ export function LibraryWorkspace({
   const openRecording = (recordingId: string) =>
     router.push(`/library/transcripts/${recordingId}`);
   const focusSearch = () => searchInputRef.current?.focus();
+  const selectFolder = (folderId: string | null) => {
+    setSelectedFolderId(folderId);
+    setSelectedTagId(null);
+    if (view === "recents") router.push("/library");
+  };
 
   if (isLoading) {
     return (
@@ -84,53 +91,65 @@ export function LibraryWorkspace({
   const selectedTagName = selectedTagId
     ? snapshot.tags.find((tag) => tag.id === selectedTagId)?.name
     : null;
+  const isRecentsView = view === "recents";
 
   const crumbs = folderPath(snapshot, selectedFolderId);
 
   const topBar = (
     <div className="flex min-h-[var(--topbar-h)] w-full min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
-        <button
-          type="button"
-          className="relative shrink-0 truncate hover:text-foreground pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-['']"
-          onClick={() => setSelectedFolderId(null)}
-        >
-          Library
-        </button>
-        {crumbs.length > 2 ? (
-          <span
-            className="flex shrink-0 items-center gap-2 sm:hidden"
-            aria-hidden="true"
-          >
-            <ChevronRight className="size-4 shrink-0" />…
-          </span>
-        ) : null}
-        {crumbs.map((crumb, index) => {
-          const isLast = index === crumbs.length - 1;
-          const isParent = index === crumbs.length - 2;
-          return (
-            <span
-              key={crumb.id}
-              className={`${
-                isLast || isParent ? "flex" : "hidden sm:flex"
-              } min-w-0 items-center gap-2`}
+        {isRecentsView ? (
+          <span className="truncate text-foreground">Recents</span>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="relative shrink-0 truncate hover:text-foreground pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-['']"
+              onClick={() => selectFolder(null)}
             >
-              <ChevronRight className="size-4 shrink-0" />
-              <button
-                type="button"
-                onClick={() => setSelectedFolderId(crumb.id)}
-                className={`relative truncate pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-[''] ${
-                  isLast ? "text-foreground" : "hover:text-foreground"
-                }`}
-                aria-current={isLast ? "page" : undefined}
+              Library
+            </button>
+            {crumbs.length > 2 ? (
+              <span
+                className="flex shrink-0 items-center gap-2 sm:hidden"
+                aria-hidden="true"
               >
-                {crumb.name}
-              </button>
-            </span>
-          );
-        })}
+                <ChevronRight className="size-4 shrink-0" />…
+              </span>
+            ) : null}
+            {crumbs.map((crumb, index) => {
+              const isLast = index === crumbs.length - 1;
+              const isParent = index === crumbs.length - 2;
+              return (
+                <span
+                  key={crumb.id}
+                  className={`${
+                    isLast || isParent ? "flex" : "hidden sm:flex"
+                  } min-w-0 items-center gap-2`}
+                >
+                  <ChevronRight className="size-4 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => selectFolder(crumb.id)}
+                    className={`relative truncate pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-[''] ${
+                      isLast ? "text-foreground" : "hover:text-foreground"
+                    }`}
+                    aria-current={isLast ? "page" : undefined}
+                  >
+                    {crumb.name}
+                  </button>
+                </span>
+              );
+            })}
+          </>
+        )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
+        <RecordAudioForm
+          onSave={(file) =>
+            uploadMutation.mutate({ file, folderId: selectedFolderId })
+          }
+        />
         <Button
           type="button"
           variant="ghost"
@@ -141,22 +160,18 @@ export function LibraryWorkspace({
           <span className="sr-only">Search</span>
           <Search className="size-4" />
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setUploadOpen(true)}
-        >
-          <Upload className="size-4" />
-          <span className="hidden sm:inline">Upload</span>
-        </Button>
-        <Button type="button" size="sm" onClick={() => setNewNoteOpen(true)}>
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">New note</span>
-        </Button>
       </div>
     </div>
   );
+
+  const pageTitle = isRecentsView
+    ? "Recents"
+    : folderName(snapshot, selectedFolderId);
+  const pageMeta = isRecentsView
+    ? `${snapshot.documents.length} notes`
+    : selectedTagName
+      ? `Filtered by ${selectedTagName}`
+      : `${snapshot.folders.length + snapshot.documents.length + snapshot.files.length} items`;
 
   return (
     <LibraryShell
@@ -169,7 +184,7 @@ export function LibraryWorkspace({
           selectedTagId={selectedTagId}
           userEmail={userEmail}
           signOutAction={signOutAction}
-          onSelectFolder={setSelectedFolderId}
+          onSelectFolder={selectFolder}
           onSelectTag={setSelectedTagId}
           onCreateNote={() => setNewNoteOpen(true)}
           onCreateFolder={() => setNewFolderOpen(true)}
@@ -179,56 +194,57 @@ export function LibraryWorkspace({
       topBar={topBar}
     >
       <div className="mb-5">
-        <h2 className="text-2xl font-semibold">
-          {folderName(snapshot, selectedFolderId)}
-        </h2>
+        <h2 className="text-2xl font-semibold">{pageTitle}</h2>
         <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-          {selectedTagName
-            ? `Filtered by ${selectedTagName}`
-            : `${snapshot.folders.length + snapshot.documents.length + snapshot.files.length} items`}
+          {pageMeta}
         </p>
-        <div className="mt-3">
-          <LibraryFilterChips
-            tags={snapshot.tags}
-            selectedTagId={selectedTagId}
-            onSelectTag={setSelectedTagId}
-          />
-        </div>
+        {!isRecentsView ? (
+          <div className="mt-3">
+            <LibraryFilterChips
+              tags={snapshot.tags}
+              selectedTagId={selectedTagId}
+              onSelectTag={setSelectedTagId}
+            />
+          </div>
+        ) : null}
       </div>
       <SearchPanel
         inputRef={searchInputRef}
         onOpenDocument={openDocument}
         onOpenTranscript={openRecording}
         onSelectFile={(_fileId, folderId) => {
-          setSelectedFolderId(folderId);
-          setSelectedTagId(null);
+          selectFolder(folderId);
         }}
       />
-      <div className="space-y-5">
-        <LibraryActions
-          onCreateNote={() => setNewNoteOpen(true)}
-          onCreateFolder={() => setNewFolderOpen(true)}
-          onUpload={() => setUploadOpen(true)}
-          onRecordSave={(file) =>
-            uploadMutation.mutate({ file, folderId: selectedFolderId })
-          }
-          onStartLiveSession={() =>
-            router.push(
-              selectedFolderId
-                ? `/library/live?folderId=${selectedFolderId}`
-                : "/library/live",
-            )
-          }
-        />
-        <LibraryContent
+      {isRecentsView ? (
+        <LibraryRecentsContent
           snapshot={snapshot}
-          selectedFolderId={selectedFolderId}
-          selectedTagId={selectedTagId}
-          onSelectFolder={setSelectedFolderId}
           onOpenDocument={openDocument}
-          onOpenRecording={openRecording}
         />
-      </div>
+      ) : (
+        <div className="space-y-5">
+          <LibraryActions
+            onCreateNote={() => setNewNoteOpen(true)}
+            onCreateFolder={() => setNewFolderOpen(true)}
+            onUpload={() => setUploadOpen(true)}
+            onStartLiveSession={() =>
+              router.push(
+                selectedFolderId
+                  ? `/library/live?folderId=${selectedFolderId}`
+                  : "/library/live",
+              )
+            }
+          />
+          <LibraryContent
+            snapshot={snapshot}
+            selectedFolderId={selectedFolderId}
+            selectedTagId={selectedTagId}
+            onSelectFolder={selectFolder}
+            onOpenDocument={openDocument}
+            onOpenRecording={openRecording}
+          />
+        </div>
+      )}
 
       <TextInputDialog
         open={newNoteOpen}

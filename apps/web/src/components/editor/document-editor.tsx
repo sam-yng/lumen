@@ -220,7 +220,7 @@ function DocumentHeader({
   const statusTone = saveStatusTone(saveState);
 
   return (
-    <div className="flex min-h-[var(--topbar-h)] flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4">
+    <div className="flex min-h-[var(--topbar-h)] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4 py-3">
       <div className="min-w-0">
         <p className="font-mono text-[11.5px] text-[var(--text-3)]">
           Library / note
@@ -244,7 +244,7 @@ function EditorToolbar({
   onOpenLinkDialog: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex min-h-[40px] items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
+    <div className="z-10 flex min-h-[40px] shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
       <ToolbarButton
         label="Bold"
         active={editor.isActive("bold")}
@@ -527,23 +527,31 @@ export function DocumentEditor({
   }
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
+    <section
+      data-testid="document-editor-shell"
+      className="flex h-[calc(100dvh-var(--topbar-h)-2rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)] lg:h-[calc(100dvh-var(--topbar-h)-3rem)]"
+    >
       <DocumentHeader saveState={saveState} title={document.title} />
       <EditorToolbar editor={editor} onOpenLinkDialog={linkDialog.openDialog} />
 
       <div
-        id={anchorScopeId}
-        ref={editorShellRef}
-        data-citation-block-target={citationBlockIndex ?? undefined}
-        className="mx-auto max-w-[700px] px-4 py-6 sm:px-5 sm:py-8"
+        data-testid="document-editor-scroll"
+        className="min-h-0 flex-1 overflow-y-auto"
       >
-        <CitationBlockStyle
-          anchorScopeId={anchorScopeId}
-          citationBlockIndex={citationBlockIndex}
-        />
-        <EditorMeta updated={updated} wordCount={wordCount} />
-        <EditorContent editor={editor} />
-        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+        <div
+          id={anchorScopeId}
+          ref={editorShellRef}
+          data-citation-block-target={citationBlockIndex ?? undefined}
+          className="mx-auto max-w-[700px] px-4 py-6 sm:px-5 sm:py-8"
+        >
+          <CitationBlockStyle
+            anchorScopeId={anchorScopeId}
+            citationBlockIndex={citationBlockIndex}
+          />
+          <EditorMeta updated={updated} wordCount={wordCount} />
+          <EditorContent editor={editor} />
+          {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+        </div>
       </div>
 
       <LinkDialog

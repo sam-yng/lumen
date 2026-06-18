@@ -52,7 +52,7 @@ export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] p-1">
+    <div className="flex items-center gap-2 rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)]">
       <span
         className={`grid size-8 place-items-center rounded-md ${
           recording

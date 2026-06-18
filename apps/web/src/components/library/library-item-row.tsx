@@ -195,6 +195,22 @@ export function ItemRow({
       : type === "folder"
         ? "Folder"
         : "Rich-text note";
+  const deleteDialog =
+    type === "folder"
+      ? {
+          description:
+            "This folder and everything inside it will be permanently deleted.",
+          confirmLabel: "Delete folder and contents",
+        }
+      : type === "document"
+        ? {
+            description: "This note will be permanently deleted.",
+            confirmLabel: "Delete note",
+          }
+        : {
+            description: "This file will be permanently deleted.",
+            confirmLabel: "Delete file",
+          };
 
   return (
     <li className="group flex items-start gap-2 border-b border-[var(--border-soft)] py-2.5 last:border-b-0">
@@ -304,8 +320,8 @@ export function ItemRow({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title={`Delete ${name}?`}
-        description="This action cannot be undone."
-        confirmLabel="Delete"
+        description={deleteDialog.description}
+        confirmLabel={deleteDialog.confirmLabel}
         onConfirm={applyDelete}
       />
       <SelectDialog

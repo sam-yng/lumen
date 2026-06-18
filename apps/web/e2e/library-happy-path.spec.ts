@@ -72,7 +72,8 @@ test("tags are created with a preset color", async ({ page }) => {
   await login(page);
 
   await page.getByLabel("Tag name").fill("Exam");
-  await page.getByLabel("Tag color").selectOption({ label: "Blue" });
+  await page.getByLabel("Tag color").click();
+  await page.getByRole("button", { name: "Use Blue tag color" }).click();
   await page.getByRole("button", { name: "Create tag" }).click();
 
   // The new tag shows in the sidebar tag panel; exact match avoids the

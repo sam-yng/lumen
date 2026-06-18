@@ -59,7 +59,7 @@ test("mobile drawer + row actions happy path", async ({ page }) => {
     .getByRole("button", { name: `Actions for ${renamedName}` })
     .click();
   await page.getByRole("menuitem", { name: "Delete…" }).click();
-  await page.getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("button", { name: "Delete note" }).click();
   await expect(page.getByRole("button", { name: renamedName })).toHaveCount(0);
 });
 

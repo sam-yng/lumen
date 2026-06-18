@@ -78,7 +78,7 @@ export function TagPanel({
   return (
     <section className="space-y-3 border-t border-[var(--border-soft)] pt-4">
       <form
-        className="space-y-2"
+        className="flex flex-col gap-2 sm:flex-row sm:items-center"
         data-drawer-stay
         onSubmit={(event) => {
           event.preventDefault();
@@ -92,14 +92,19 @@ export function TagPanel({
           setColor(TAG_COLOR_PRESETS[0].value);
         }}
       >
-        <div className="flex gap-2">
-          <Input name="name" placeholder="Tag name" aria-label="Tag name" />
+        <TagColorPicker name="color" value={color} onChange={setColor} />
+        <div className="flex min-w-0 flex-1 gap-2">
+          <Input
+            name="name"
+            placeholder="Tag name"
+            aria-label="Tag name"
+            className="min-w-0 flex-1"
+          />
           <Button type="submit" variant="outline" title="Create tag">
             <span className="sr-only">Create tag</span>
             <Tag className="size-4" />
           </Button>
         </div>
-        <TagColorPicker name="color" value={color} onChange={setColor} />
       </form>
       <div className="flex flex-wrap gap-2">
         <Button

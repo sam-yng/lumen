@@ -75,4 +75,19 @@ describe("DocumentEditor citation block links", () => {
     );
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
+
+  it("keeps header and toolbar fixed while the document body scrolls", async () => {
+    renderEditor(null);
+
+    const shell = await screen.findByTestId("document-editor-shell");
+    const scroller = screen.getByTestId("document-editor-scroll");
+
+    expect(shell).toHaveClass("h-[calc(100dvh-var(--topbar-h)-2rem)]");
+    expect(shell).toHaveClass("lg:h-[calc(100dvh-var(--topbar-h)-3rem)]");
+    expect(shell).toHaveClass("flex");
+    expect(shell).toHaveClass("flex-col");
+    expect(scroller).toHaveClass("min-h-0");
+    expect(scroller).toHaveClass("flex-1");
+    expect(scroller).toHaveClass("overflow-y-auto");
+  });
 });
