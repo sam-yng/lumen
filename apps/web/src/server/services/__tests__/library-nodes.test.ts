@@ -73,6 +73,29 @@ describe("library-nodes service", () => {
     expect(child.workspace_id).toBe(workspace.id);
   });
 
+  it("rejects creating a page under another user's parent", async () => {
+    const ctx = createContext({
+      library_nodes: [
+        nodeRow({
+          id: "foreign-workspace",
+          user_id: otherUserId,
+          kind: "workspace",
+          workspace_id: "foreign-workspace",
+        }),
+      ],
+    });
+
+    await expect(
+      createPageNode(ctx, {
+        title: "Private child",
+        parentId: "foreign-workspace",
+      }),
+    ).rejects.toMatchObject({
+      code: "not_found",
+      message: "Parent node not found.",
+    });
+  });
+
   it("rejects creating a page under a file/audio leaf", async () => {
     const ctx = createContext({
       library_nodes: [

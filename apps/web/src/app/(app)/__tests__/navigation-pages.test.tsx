@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { redirect } = vi.hoisted(() => ({ redirect: vi.fn() }));
+const { getLibraryNodeSnapshot, redirect } = vi.hoisted(() => ({
+  getLibraryNodeSnapshot: vi.fn(),
+  redirect: vi.fn(),
+}));
 const nodeId = "11111111-1111-4111-8111-111111111111";
 
 vi.mock("next/navigation", () => ({ redirect }));
@@ -11,10 +14,13 @@ vi.mock("@/server/db/client", () => ({
   createServerSupabase: async () => ({
     auth: {
       getUser: async () => ({
-        data: { user: { email: "reader@example.com" } },
+        data: { user: { id: "user-1", email: "reader@example.com" } },
       }),
     },
   }),
+}));
+vi.mock("@/server/services/library-nodes", () => ({
+  getLibraryNodeSnapshot,
 }));
 vi.mock("@/components/library/library-workspace", () => ({
   LibraryWorkspace: ({
@@ -74,6 +80,32 @@ async function renderPage(page: Promise<ReactNode> | ReactNode) {
 describe("node navigation pages", () => {
   beforeEach(() => {
     redirect.mockClear();
+    getLibraryNodeSnapshot.mockResolvedValue({
+      nodes: [
+        {
+          id: "workspace-1",
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: null,
+          kind: "workspace",
+          title: "Research",
+          slug: "research-abcd1234",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+      ],
+      recordings: [],
+      transcripts: [],
+      tags: [],
+      tagLinks: [],
+    });
   });
 
   it("renders the root library shell without route slugs", async () => {
@@ -107,6 +139,64 @@ describe("node navigation pages", () => {
       "research-abcd1234",
     );
     expect(screen.getByTestId("node-slug")).toHaveTextContent("notes-efab5678");
+  });
+
+  it("redirects a leaf note before rendering the workspace shell", async () => {
+    getLibraryNodeSnapshot.mockResolvedValue({
+      nodes: [
+        {
+          id: "workspace-1",
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: null,
+          kind: "workspace",
+          title: "Research",
+          slug: "research-abcd1234",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+        {
+          id: nodeId,
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: "workspace-1",
+          kind: "page",
+          title: "Notes",
+          slug: "notes-efab5678",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+      ],
+      recordings: [],
+      transcripts: [],
+      tags: [],
+      tagLinks: [],
+    });
+
+    await renderPage(
+      NodePage({
+        params: Promise.resolve({
+          workspaceSlug: "research-abcd1234",
+          nodeSlug: "notes-efab5678",
+        }),
+      }),
+    );
+
+    expect(redirect).toHaveBeenCalledWith(`/library/notes/${nodeId}`);
   });
 
   it("keeps the legacy library route redirected to the root", async () => {

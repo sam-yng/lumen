@@ -192,7 +192,7 @@ describe("LibraryWorkspace node routes", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not treat a selected leaf node as the Library root", async () => {
+  it("does not client-redirect a selected audio node during render", async () => {
     apiMocks.fetchLibrarySnapshot.mockResolvedValue({
       nodes: [
         node("workspace-1", "workspace", {
@@ -228,15 +228,11 @@ describe("LibraryWorkspace node routes", () => {
     expect(
       await screen.findByRole("heading", { name: "Lecture audio" }),
     ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(routerMocks.push).toHaveBeenCalledWith(
-        "/library/transcripts/recording-1",
-      ),
-    );
+    expect(routerMocks.push).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "New workspace" })).toBeNull();
   });
 
-  it("opens a selected page node in the editor route", async () => {
+  it("does not client-redirect a selected leaf note during render", async () => {
     apiMocks.fetchLibrarySnapshot.mockResolvedValue({
       nodes: [
         node("workspace-1", "workspace", {
@@ -255,9 +251,10 @@ describe("LibraryWorkspace node routes", () => {
       nodeSlug: "cell-biology-11111111",
     });
 
-    await waitFor(() =>
-      expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/page-1"),
-    );
+    expect(
+      await screen.findByRole("heading", { name: "Cell biology" }),
+    ).toBeVisible();
+    expect(routerMocks.push).not.toHaveBeenCalled();
     expect(screen.queryByTestId("note-route")).toBeNull();
   });
 

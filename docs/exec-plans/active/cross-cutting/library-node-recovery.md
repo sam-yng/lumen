@@ -138,17 +138,17 @@
 - Extracted presentation modules consume data/callback props only; query and
   mutation ownership stays in `LibraryWorkspace`.
 
-- [ ] Write route-resolution tests for note redirect, transcript redirect,
+- [x] Write route-resolution tests for note redirect, transcript redirect,
   container rendering, and audio-without-recording fallback; run the focused
   test and confirm RED because route resolution still happens in effects.
-- [ ] Implement server-side route resolution and remove both navigation effects;
+- [x] Implement server-side route resolution and remove both navigation effects;
   run the focused tests and confirm GREEN.
-- [ ] Write reducer tests for dialog exclusivity, tag toggle, and clear; run the
+- [x] Write reducer tests for dialog exclusivity, tag toggle, and clear; run the
   focused test and confirm RED because the reducer does not exist.
-- [ ] Implement the reducer-backed hook, extract focused presentation/dialog
+- [x] Implement the reducer-backed hook, extract focused presentation/dialog
   modules, and replace the upload `onSubmit` handler with a form action.
-- [ ] Run `bun run check` after each production patch and keep the gate green.
-- [ ] Run `bunx react-doctor@latest --verbose --diff`; confirm all seven reported
+- [x] Run `bun run check` after each production patch and keep the gate green.
+- [x] Run `bunx react-doctor@latest --verbose --diff`; confirm all seven reported
   warnings are gone and the score does not regress.
 
 ### Task 9: Stabilize Smoke Coverage And Audit The Test Suite
@@ -165,18 +165,18 @@
 - Every test retained must map to a current production module, security
   invariant, user journey, or distinct regression risk.
 
-- [ ] Add a configuration test or inspectable assertion for the CI expectation
+- [x] Add a configuration test or inspectable assertion for the CI expectation
   budget; confirm RED against the five-second default.
-- [ ] Add the minimal CI-aware expectation budget and rerun the targeted smoke.
-- [ ] Inventory all test files, production imports, overlapping assertions,
+- [x] Add the minimal CI-aware expectation budget and rerun the targeted smoke.
+- [x] Inventory all test files, production imports, overlapping assertions,
   skipped paths, obsolete terminology, and tests for modules without production
   consumers.
-- [ ] Delete or consolidate only cases with evidence of staleness/redundancy;
+- [x] Delete or consolidate only cases with evidence of staleness/redundancy;
   run `bun run check` after every patch.
-- [ ] Record a strict audit table in Verification Notes: removed, consolidated,
+- [x] Record a strict audit table in Verification Notes: removed, consolidated,
   retained, and gaps that require new coverage.
-- [ ] Run the full Playwright suite and the manual library happy path.
-- [ ] Run docs-sanity-check's six read-only checks and report all groups before
+- [x] Run the full Playwright suite and the manual library happy path.
+- [x] Run docs-sanity-check's six read-only checks and report all groups before
   applying any human-authored documentation fixes.
 
 ## Verification Notes
@@ -185,3 +185,37 @@
 - 2026-06-18: `bun run check` passed: Biome, plan lifecycle, worker Dockerfile check, Turbo typecheck, and 55 Vitest files / 348 tests.
 - 2026-06-18: `bun run --filter @lumen/web test:e2e` passed: 4 browser tests passed, live-session capture remained intentionally skipped unless `LIVE_SESSION_E2E=1`.
 - 2026-06-18: Manual browser smoke passed against local dev server: created workspace, folder, uploaded file, opened live-session route with `workspaceId`/`parentId`, created standalone note, verified recents active state, verified Library active state, verified disabled Ask Lumen, selected/cleared/deleted workspace, and cleaned up created data.
+- 2026-06-18: Task 8 focused coverage added four pure route-resolution cases,
+  three reducer cases, and a Server Component dispatch assertion. The client
+  navigation effects were removed; dialog and top-bar presentation were split
+  from query/mutation ownership. Local React Doctor v0.5.1 scanned 24 changed
+  files with zero issues. Its optional remote score API was unavailable, so no
+  numeric score is claimed.
+- 2026-06-18: Strict suite inventory covered 58 Vitest files, 3 Playwright spec
+  files, 8 shared test-support modules, and their local import graph. All shared
+  helpers have consumers. The only modules reached exclusively from tests are
+  legitimate Next route/proxy entry points, the Playwright config, the schema
+  generator, and the transcription worker—not dead production modules. No
+  `.only`, pending test marker, fixed sleep, or unexplained skip remains; the single
+  skipped browser case is the explicit `LIVE_SESSION_E2E=1` microphone path.
+
+| Test-audit disposition | Strict finding | Action |
+| --- | --- | --- |
+| Removed | Unified snapshot, descendant-move, subtree-delete, and tag-ownership cases in the umbrella library suite duplicated focused `library-nodes` or `tags-read` coverage. | Removed four duplicate cases. |
+| Consolidated | Workspace create/delete and page-create coverage repeated `library-nodes`; only cross-user parent rejection was distinct. | Removed two umbrella cases and retained one focused ownership test in `library-nodes.test.ts`. |
+| Corrected | Stale-live-sweeper fixtures still used the dropped `recordings.file_id` field; permissive fakes let the mismatch pass. | Migrated fixtures to `node_id` and typed the row factory against generated `Tables<"recordings">`. |
+| Retained | Retrieval, semantic indexing, worker, MCP, citation, component, and browser cases map to current production modules, security boundaries, degraded-operation behavior, or distinct user journeys. | Kept; large files are long because they cover separate source types and failure boundaries, not copy-pasted assertions. |
+| Gap | Live audio capture remains opt-in, and several thin API handlers (live sessions, uploads, tags/tag-links, recording retry, transcript detail, search, and auth callbacks) lack direct route-level tests. | Service coverage and browser smoke reduce risk, but auth/validation/error mapping at those handler seams still deserves focused future coverage. |
+| Gap | No coverage provider is installed. | This audit makes no line/branch coverage claim; conclusions come from import/consumer analysis, assertion overlap, schema terminology, skips, and executed journeys. |
+
+- 2026-06-18: After consolidation, `bun run check` passed with 58 Vitest files
+  and 353 tests. Full Playwright passed 4 tests with the one intentional live
+  audio skip. Manual browser verification created a temporary workspace and
+  note, confirmed stable zero-selection/filter chrome, disabled Ask Lumen,
+  workspace actions, instant-record controls, standalone note creation, and
+  server-side nested-note dispatch; the temporary data was deleted.
+- 2026-06-18: docs-sanity-check six-check report: BROKEN 0, DRIFT 0,
+  ORPHAN 0, STALE 0, STUB 7, HISTORICAL 68. All seven stub hits are literal
+  marker discussions inside completed plans, not live placeholders. Historical
+  paths remain unchanged because modernizing completed milestones would falsify
+  the record; this active plan records the triage instead.

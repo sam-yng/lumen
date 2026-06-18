@@ -259,7 +259,7 @@ describe("runAssistant", () => {
   });
 
   it("stops at the iteration cap", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({});
     const anthropic = fakeAnthropic([
       {
         stop_reason: "tool_use",
@@ -283,7 +283,7 @@ describe("runAssistant", () => {
   });
 
   it("records a failed tool call and lets the model recover", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({});
     const anthropic = fakeAnthropic([
       {
         stop_reason: "tool_use",

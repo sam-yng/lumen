@@ -1,23 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
-import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { LibraryNode } from "@/server/services/library-nodes";
-import { FileUploadPicker } from "./file-upload-picker";
 import { LibraryActions } from "./library-actions";
 import {
   createPage,
@@ -27,7 +15,6 @@ import {
   uploadFile,
 } from "./library-api";
 import { LibraryContent } from "./library-content";
-import { TextInputDialog } from "./library-dialogs";
 import { LibraryFilterChips } from "./library-filter-chips";
 import { isFolderNode, isNoteNode } from "./library-node-ui";
 import { canonicalNodePath, nodePath } from "./library-paths";
@@ -35,6 +22,12 @@ import { LibraryRecentsContent } from "./library-recents-content";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 import { filterNodesBySelectedTags } from "./library-tags";
+import { LibraryWorkspaceDialogs } from "./library-workspace-dialogs";
+import {
+  createLibraryWorkspaceState,
+  libraryWorkspaceReducer,
+} from "./library-workspace-state";
+import { LibraryWorkspaceTopBar } from "./library-workspace-top-bar";
 
 type SignOutAction = () => Promise<void>;
 
@@ -54,12 +47,10 @@ export function LibraryWorkspace({
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
-  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(
-    () => new Set(),
+  const [{ activeDialog, selectedTagIds }, dispatch] = useReducer(
+    libraryWorkspaceReducer,
+    undefined,
+    createLibraryWorkspaceState,
   );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
@@ -84,24 +75,6 @@ export function LibraryWorkspace({
     ? (nodes.find((node) => node.id === selectedNode.parent_id) ?? null)
     : null;
   const pageParent = selectedContainer ?? parentContainer ?? workspace;
-  const selectedRecording =
-    selectedNode?.kind === "audio"
-      ? (recordings.find(
-          (recording) => recording.node_id === selectedNode.id,
-        ) ?? null)
-      : null;
-
-  useEffect(() => {
-    if (!selectedNode) return;
-    if (isNoteNode(selectedNode, nodes)) {
-      router.push(`/library/notes/${selectedNode.id}`);
-      return;
-    }
-    if (selectedRecording) {
-      router.push(`/library/transcripts/${selectedRecording.id}`);
-    }
-  }, [nodes, router, selectedNode, selectedRecording]);
-
   const createWorkspaceMutation = useMutation({
     mutationFn: createWorkspace,
     onSuccess: async (node) => {
@@ -146,14 +119,7 @@ export function LibraryWorkspace({
     tagLinks,
     selectedTagIds,
   );
-  const toggleTag = (tagId: string) => {
-    setSelectedTagIds((current) => {
-      const next = new Set(current);
-      if (next.has(tagId)) next.delete(tagId);
-      else next.add(tagId);
-      return next;
-    });
-  };
+  const toggleTag = (tagId: string) => dispatch({ type: "toggleTag", tagId });
   const atRoot = workspaceSlug === undefined;
   const isRecentsView = view === "recents";
   const hasWorkspace = nodes.some((node) => node.kind === "workspace");
@@ -177,60 +143,6 @@ export function LibraryWorkspace({
     if (node) openNode(node);
   };
 
-  const topBar = (
-    <div className="flex min-h-[var(--topbar-h)] w-full min-w-0 items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
-        {isRecentsView ? (
-          <span className="truncate text-foreground">Recents</span>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="shrink-0 hover:text-foreground"
-              onClick={() => router.push("/")}
-            >
-              Library
-            </button>
-            {crumbs.map((crumb) => (
-              <span key={crumb.id} className="flex min-w-0 items-center gap-2">
-                <ChevronRight className="size-4 shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => openNode(crumb)}
-                  className="truncate hover:text-foreground"
-                  aria-current={
-                    crumb.id === selectedNode?.id ? "page" : undefined
-                  }
-                >
-                  {crumb.title}
-                </button>
-              </span>
-            ))}
-          </>
-        )}
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {pageParent ? (
-          <RecordAudioForm
-            onSave={(file) =>
-              uploadMutation.mutate({ file, parentId: pageParent.id })
-            }
-          />
-        ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          title="Search"
-          onClick={() => searchInputRef.current?.focus()}
-        >
-          <span className="sr-only">Search</span>
-          <Search className="size-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <LibraryShell
       sidebar={
@@ -244,13 +156,31 @@ export function LibraryWorkspace({
           userEmail={userEmail}
           signOutAction={signOutAction}
           onCreatePage={() =>
-            pageParent ? setNoteDialogOpen(true) : setWorkspaceDialogOpen(true)
+            dispatch({
+              type: "openDialog",
+              dialog: pageParent ? "note" : "workspace",
+            })
           }
           onFocusSearch={() => searchInputRef.current?.focus()}
           onToggleTag={toggleTag}
         />
       }
-      topBar={topBar}
+      topBar={
+        <LibraryWorkspaceTopBar
+          canRecord={pageParent !== null}
+          crumbs={crumbs}
+          isRecentsView={isRecentsView}
+          onFocusSearch={() => searchInputRef.current?.focus()}
+          onOpenLibrary={() => router.push("/")}
+          onOpenNode={openNode}
+          onRecord={(file) => {
+            if (pageParent) {
+              uploadMutation.mutate({ file, parentId: pageParent.id });
+            }
+          }}
+          selectedNodeId={selectedNode?.id ?? null}
+        />
+      }
     >
       <div className="mb-5">
         <h2 className="text-2xl font-semibold">
@@ -278,15 +208,23 @@ export function LibraryWorkspace({
             tags={tags}
             selectedTagIds={selectedTagIds}
             onToggleTag={toggleTag}
-            onClearTags={() => setSelectedTagIds(new Set())}
+            onClearTags={() => dispatch({ type: "clearTags" })}
           />
           {atRoot || selectedContainer ? (
             <LibraryActions
               atRoot={atRoot}
-              onCreateWorkspace={() => setWorkspaceDialogOpen(true)}
-              onCreateNote={() => setNoteDialogOpen(true)}
-              onCreateFolder={() => setFolderDialogOpen(true)}
-              onUpload={() => setUploadOpen(true)}
+              onCreateWorkspace={() =>
+                dispatch({ type: "openDialog", dialog: "workspace" })
+              }
+              onCreateNote={() =>
+                dispatch({ type: "openDialog", dialog: "note" })
+              }
+              onCreateFolder={() =>
+                dispatch({ type: "openDialog", dialog: "folder" })
+              }
+              onUpload={() =>
+                dispatch({ type: "openDialog", dialog: "upload" })
+              }
               onStartLiveSession={() => {
                 if (!pageParent) return;
                 router.push(
@@ -304,40 +242,11 @@ export function LibraryWorkspace({
         </div>
       )}
 
-      <TextInputDialog
-        open={workspaceDialogOpen}
-        onOpenChange={setWorkspaceDialogOpen}
-        title="Create a workspace"
-        label="Workspace name"
-        placeholder="Workspace name"
-        submitLabel="Create workspace"
-        onSubmit={(title) => createWorkspaceMutation.mutate({ title })}
-      />
-      <TextInputDialog
-        open={noteDialogOpen}
-        onOpenChange={setNoteDialogOpen}
-        title="New note"
-        label="Note title"
-        placeholder="Untitled note"
-        submitLabel="Create note"
-        onSubmit={(title) => {
-          if (pageParent) {
-            createPageMutation.mutate({
-              title,
-              parentId: pageParent.id,
-              role: "note",
-            });
-          }
-        }}
-      />
-      <TextInputDialog
-        open={folderDialogOpen}
-        onOpenChange={setFolderDialogOpen}
-        title="New folder"
-        label="Folder name"
-        placeholder="Folder name"
-        submitLabel="Create folder"
-        onSubmit={(title) => {
+      <LibraryWorkspaceDialogs
+        activeDialog={activeDialog}
+        createWorkspacePending={createWorkspaceMutation.isPending}
+        firstRun={firstRun}
+        onCreateFolder={(title) => {
           if (pageParent) {
             createPageMutation.mutate({
               title,
@@ -346,77 +255,25 @@ export function LibraryWorkspace({
             });
           }
         }}
+        onCreateNote={(title) => {
+          if (pageParent) {
+            createPageMutation.mutate({
+              title,
+              parentId: pageParent.id,
+              role: "note",
+            });
+          }
+        }}
+        onCreateWorkspace={(title) => createWorkspaceMutation.mutate({ title })}
+        onDialogOpenChange={(dialog, open) =>
+          dispatch({ type: "setDialogOpen", dialog, open })
+        }
+        onUpload={(file) => {
+          if (pageParent) {
+            uploadMutation.mutate({ file, parentId: pageParent.id });
+          }
+        }}
       />
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent aria-describedby={undefined}>
-          <DialogTitle className="text-sm font-semibold">
-            Upload a file
-          </DialogTitle>
-          <form
-            className="mt-3 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!pageParent) return;
-              const formData = new FormData(event.currentTarget);
-              const file = formData.get("file");
-              if (!(file instanceof File) || file.size === 0) return;
-              uploadMutation.mutate({ file, parentId: pageParent.id });
-              setUploadOpen(false);
-            }}
-          >
-            <FileUploadPicker name="file" />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" size="sm">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" size="sm">
-                Upload
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={firstRun}>
-        <DialogContent
-          aria-describedby={undefined}
-          onEscapeKeyDown={(event) => event.preventDefault()}
-          onPointerDownOutside={(event) => event.preventDefault()}
-        >
-          <DialogTitle className="text-sm font-semibold">
-            Create a workspace
-          </DialogTitle>
-          <form
-            className="mt-3 space-y-4"
-            action={(formData) => {
-              const title = String(formData.get("title") ?? "").trim();
-              if (title) createWorkspaceMutation.mutate({ title });
-            }}
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="first-workspace-name">Workspace name</Label>
-              <Input
-                id="first-workspace-name"
-                name="title"
-                placeholder="My workspace"
-                autoFocus
-                required
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={createWorkspaceMutation.isPending}
-              >
-                Create workspace
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </LibraryShell>
   );
 }
