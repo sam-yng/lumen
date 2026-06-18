@@ -48,7 +48,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         open={renameOpen}
         onOpenChange={setRenameOpen}
         title={`Rename ${tag.name}`}
-        label="Tag name"
+        placeholder="Tag name"
         defaultValue={tag.name}
         submitLabel="Rename"
         onSubmit={(name) => rename.mutate({ id: tag.id, name })}

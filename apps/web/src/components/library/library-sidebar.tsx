@@ -3,8 +3,6 @@
 import {
   ChevronRight,
   Clock,
-  FileText,
-  Folder,
   Library as LibraryIcon,
   LogOut,
   Plus,
@@ -18,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ASSISTANT_ENABLED } from "@/lib/assistant-flags";
 import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
+import { libraryNodeIcon } from "./library-node-ui";
 import { canonicalNodePath } from "./library-paths";
 import { TagPanel } from "./tag-panel";
 
@@ -58,11 +57,10 @@ function NodeTreeBranch({
             <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
           ) : null}
           <ChevronRight className="size-3.5 shrink-0 text-text-4" />
-          {node.kind === "workspace" ? (
-            <Folder className="size-4 shrink-0" />
-          ) : (
-            <FileText className="size-4 shrink-0" />
-          )}
+          {(() => {
+            const Icon = libraryNodeIcon(node, nodes);
+            return <Icon className="size-4 shrink-0" />;
+          })()}
           <span className="truncate">{node.title}</span>
         </Link>
         <NodeTreeBranch
@@ -214,20 +212,19 @@ export function LibrarySidebar({
               Pinned
             </p>
             <nav className="space-y-1" aria-label="Pinned">
-              {pinned.map((node) => (
-                <Link
-                  key={node.id}
-                  href={canonicalNodePath(nodes, node)}
-                  className={`${navItem} ${navIdle}`}
-                >
-                  {node.kind === "workspace" ? (
-                    <Folder className="size-4" />
-                  ) : (
-                    <FileText className="size-4" />
-                  )}
-                  <span className="truncate">{node.title}</span>
-                </Link>
-              ))}
+              {pinned.map((node) => {
+                const Icon = libraryNodeIcon(node, nodes);
+                return (
+                  <Link
+                    key={node.id}
+                    href={canonicalNodePath(nodes, node)}
+                    className={`${navItem} ${navIdle}`}
+                  >
+                    <Icon className="size-4" />
+                    <span className="truncate">{node.title}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </section>
         ) : null}

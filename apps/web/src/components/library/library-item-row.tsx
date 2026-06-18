@@ -1,23 +1,9 @@
 "use client";
 
-import { Check, File as FileIcon, Folder, Mic, Globe } from "lucide-react";
+import { Check } from "lucide-react";
 import type { MouseEvent } from "react";
 import type { LibraryNode } from "@/server/services/library-nodes";
-import { nodeMetaLabel } from "./library-node-ui";
-
-const iconByKind = {
-  workspace: Globe,
-  page: Folder,
-  file: FileIcon,
-  audio: Mic,
-} satisfies Record<LibraryNode["kind"], typeof Folder>;
-
-const metaByKind = {
-  workspace: "Workspace",
-  page: "Folder",
-  file: "File",
-  audio: "Audio",
-} satisfies Record<LibraryNode["kind"], string>;
+import { libraryNodeIcon, nodeMetaLabel } from "./library-node-ui";
 
 export function ItemRow({
   node,
@@ -36,10 +22,10 @@ export function ItemRow({
   onSelect: (event: MouseEvent, nodeId: string) => void;
   onOpen: (nodeId: string) => void;
 }) {
-  const Icon = iconByKind[node.kind];
+  const Icon = libraryNodeIcon(node, nodes);
   const meta =
     node.kind === "file" || node.kind === "audio"
-      ? `${node.mime_type ?? metaByKind[node.kind]} · ${node.size_bytes ?? 0} bytes`
+      ? `${node.mime_type ?? nodeMetaLabel(node, nodes)} · ${node.size_bytes ?? 0} bytes`
       : nodeMetaLabel(node, nodes);
 
   return (

@@ -1,4 +1,12 @@
 import type { Content } from "@tiptap/core";
+import {
+  File as FileIcon,
+  FileText,
+  Folder,
+  Globe,
+  type LucideIcon,
+  Mic,
+} from "lucide-react";
 import type { LibraryNode } from "@/server/services/library-nodes";
 
 export const FOLDER_NODE_TYPE = "lumen-folder";
@@ -35,10 +43,46 @@ export function isNoteNode(node: LibraryNode, nodes: LibraryNode[]) {
   return node.kind === "page" && !isFolderNode(node, nodes);
 }
 
+export type LibraryNodeDisplayKind =
+  | "workspace"
+  | "folder"
+  | "file"
+  | "importedFile"
+  | "audio";
+
+// The DB `kind` enum has four values; the UI presents five "types" by splitting
+// page nodes into folders (containers) and files (authored notes) and treating
+// uploaded `file` nodes as imported files.
+export function libraryNodeDisplayKind(
+  node: LibraryNode,
+  nodes: LibraryNode[],
+): LibraryNodeDisplayKind {
+  if (node.kind === "workspace") return "workspace";
+  if (node.kind === "audio") return "audio";
+  if (node.kind === "file") return "importedFile";
+  return isFolderNode(node, nodes) ? "folder" : "file";
+}
+
+const DISPLAY_KIND_LABELS: Record<LibraryNodeDisplayKind, string> = {
+  workspace: "Workspace",
+  folder: "Folder",
+  file: "File",
+  importedFile: "Imported File",
+  audio: "Audio",
+};
+
+const DISPLAY_KIND_ICONS: Record<LibraryNodeDisplayKind, LucideIcon> = {
+  workspace: Globe,
+  folder: Folder,
+  file: FileIcon,
+  importedFile: FileText,
+  audio: Mic,
+};
+
 export function nodeMetaLabel(node: LibraryNode, nodes: LibraryNode[]) {
-  if (node.kind === "workspace") return "Workspace";
-  if (node.kind === "page")
-    return isFolderNode(node, nodes) ? "Folder" : "Note";
-  if (node.kind === "audio") return "Audio";
-  return "File";
+  return DISPLAY_KIND_LABELS[libraryNodeDisplayKind(node, nodes)];
+}
+
+export function libraryNodeIcon(node: LibraryNode, nodes: LibraryNode[]) {
+  return DISPLAY_KIND_ICONS[libraryNodeDisplayKind(node, nodes)];
 }
