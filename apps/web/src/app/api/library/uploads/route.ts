@@ -11,16 +11,15 @@ import type { ServiceSupabaseClient } from "@/server/services/context";
 import { SupabaseStorageProvider } from "@/server/services/storage-provider";
 import { createUploadedFile } from "@/server/services/uploads";
 
-const folderIdSchema = z.string().uuid().nullable();
+const parentIdSchema = z.string().uuid();
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
 }
 
-function parseFolderId(formData: FormData) {
-  const raw = formString(formData, "folderId").trim();
-  return folderIdSchema.parse(raw === "" ? null : raw);
+function parseParentId(formData: FormData) {
+  return parentIdSchema.parse(formString(formData, "parentId").trim());
 }
 
 function parseFile(formData: FormData) {
@@ -52,13 +51,13 @@ export async function POST(request: Request) {
     return Response.json({ error: "Missing upload file." }, { status: 400 });
   }
 
-  let folderId: string | null;
+  let parentId: string;
   try {
-    folderId = parseFolderId(formData);
+    parentId = parseParentId(formData);
   } catch (error) {
     return Response.json(
       {
-        error: "Invalid folder id.",
+        error: "Invalid parent node id.",
         issues: error instanceof z.ZodError ? z.treeifyError(error) : undefined,
       },
       { status: 400 },
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
         name: formString(formData, "name").trim() || file.name,
         mimeType: file.type || "application/octet-stream",
         bytes: new Uint8Array(await file.arrayBuffer()),
-        folderId,
+        parentId,
         storage: new SupabaseStorageProvider(supabase.storage),
         enqueueTranscription: async (payload) => {
           await enqueueTranscriptionJob(await getTranscriptionBoss(), payload);

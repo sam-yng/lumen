@@ -15,19 +15,26 @@ import {
   serializeEmbedding,
 } from "@/server/services/semantic-index";
 
-function document(overrides: Partial<Tables<"documents">> = {}) {
+function page(overrides: Partial<Tables<"library_nodes">> = {}) {
   return {
-    id: "doc-1",
+    id: "page-1",
     user_id: userId,
-    folder_id: null,
+    workspace_id: "workspace-1",
+    parent_id: "workspace-1",
+    kind: "page" as const,
     title: "Biology notes",
+    slug: "biology-notes-page1",
     content_json: null,
     content_text: "mitochondria powers cells",
     content_tsv: null as unknown,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
-  } satisfies Tables<"documents">;
+  } satisfies Tables<"library_nodes">;
 }
 
 function transcript(overrides: Partial<Tables<"transcripts">> = {}) {
@@ -62,8 +69,8 @@ function chunkRow(overrides: Row = {}) {
   return {
     id: "chunk-1",
     user_id: userId,
-    source_type: "document",
-    document_id: "doc-1",
+    source_type: "page",
+    node_id: "page-1",
     transcript_id: null,
     recording_id: null,
     start_ms: null,
@@ -161,8 +168,8 @@ describe("FakeSupabase query logging", () => {
   });
 });
 
-describe("indexDocumentSearchChunks", () => {
-  it("rejects documents not owned by the context user before embedding or queries", async () => {
+describe("indexPageSearchChunks", () => {
+  it("rejects pages not owned by the context user before embedding or queries", async () => {
     const tables = {
       semantic_search_chunks: [chunkRow({ id: "owned-stale" })],
     };
@@ -172,10 +179,10 @@ describe("indexDocumentSearchChunks", () => {
     await expectInvalidInput(
       () =>
         indexDocumentSearchChunks(ctx, {
-          document: document({ user_id: otherUserId }),
+          page: page({ user_id: otherUserId }),
           provider,
         }),
-      "Document does not belong to the current user.",
+      "Page does not belong to the current user.",
     );
 
     expect(calls).toEqual([]);
@@ -185,17 +192,17 @@ describe("indexDocumentSearchChunks", () => {
     ]);
   });
 
-  it("deletes only owned chunks for the document source and inserts fresh chunks", async () => {
+  it("deletes only owned chunks for the page source and inserts fresh chunks", async () => {
     const tables = {
       semantic_search_chunks: [
         chunkRow({ id: "owned-stale" }),
         chunkRow({ id: "other-user-stale", user_id: otherUserId }),
-        chunkRow({ id: "other-doc", document_id: "doc-2" }),
+        chunkRow({ id: "other-page", node_id: "page-2" }),
         chunkRow({
           id: "transcript-same-id",
           source_type: "transcript",
-          document_id: null,
-          transcript_id: "doc-1",
+          node_id: null,
+          transcript_id: "page-1",
           recording_id: "recording-1",
         }),
       ],
@@ -204,7 +211,7 @@ describe("indexDocumentSearchChunks", () => {
     const { calls, provider } = embeddingProvider([vector(0.25)]);
 
     await indexDocumentSearchChunks(ctx, {
-      document: document({ content_text: "fresh biology content" }),
+      page: page({ content_text: "fresh biology content" }),
       provider,
     });
 
@@ -214,21 +221,21 @@ describe("indexDocumentSearchChunks", () => {
     );
     expectFilters(deleteEntry, {
       user_id: userId,
-      source_type: "document",
-      document_id: "doc-1",
+      source_type: "page",
+      node_id: "page-1",
     });
 
     const remainingIds = tables.semantic_search_chunks.map((row) => row.id);
     expect(remainingIds).not.toContain("owned-stale");
     expect(remainingIds).toContain("other-user-stale");
-    expect(remainingIds).toContain("other-doc");
+    expect(remainingIds).toContain("other-page");
     expect(remainingIds).toContain("transcript-same-id");
 
     expect(calls).toEqual([["fresh biology content"]]);
     expect(tables.semantic_search_chunks.at(-1)).toMatchObject({
       user_id: userId,
-      source_type: "document",
-      document_id: "doc-1",
+      source_type: "page",
+      node_id: "page-1",
       transcript_id: null,
       recording_id: null,
       start_ms: null,
@@ -241,7 +248,7 @@ describe("indexDocumentSearchChunks", () => {
     });
   });
 
-  it("indexes document chunks with anchors from TipTap top-level blocks", async () => {
+  it("indexes page chunks with anchors from TipTap top-level blocks", async () => {
     const tables: { semantic_search_chunks: Row[] } = {
       semantic_search_chunks: [],
     };
@@ -253,7 +260,7 @@ describe("indexDocumentSearchChunks", () => {
     ]);
 
     await indexDocumentSearchChunks(ctx, {
-      document: document({
+      page: page({
         content_json: {
           type: "doc",
           content: [
@@ -294,7 +301,7 @@ describe("indexDocumentSearchChunks", () => {
     });
   });
 
-  it("deletes owned stale document chunks and skips embedding and insert for blank text", async () => {
+  it("deletes owned stale page chunks and skips embedding and insert for blank text", async () => {
     const tables = {
       semantic_search_chunks: [
         chunkRow({ id: "owned-stale" }),
@@ -305,7 +312,7 @@ describe("indexDocumentSearchChunks", () => {
     const { calls, provider } = embeddingProvider([vector(1)]);
 
     await indexDocumentSearchChunks(ctx, {
-      document: document({ content_text: " \n\t " }),
+      page: page({ content_text: " \n\t " }),
       provider,
     });
 
@@ -326,7 +333,7 @@ describe("indexTranscriptSearchChunks", () => {
         chunkRow({
           id: "owned-stale",
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
         }),
@@ -358,7 +365,7 @@ describe("indexTranscriptSearchChunks", () => {
         chunkRow({
           id: "owned-stale",
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
         }),
@@ -390,7 +397,7 @@ describe("indexTranscriptSearchChunks", () => {
         chunkRow({
           id: "owned-stale",
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
           start_ms: 0,
@@ -400,21 +407,21 @@ describe("indexTranscriptSearchChunks", () => {
           id: "other-user-stale",
           user_id: otherUserId,
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
         }),
         chunkRow({
-          id: "document-same-id",
-          source_type: "document",
-          document_id: "transcript-1",
+          id: "page-same-id",
+          source_type: "page",
+          node_id: "transcript-1",
           transcript_id: null,
           recording_id: null,
         }),
         chunkRow({
           id: "other-transcript",
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-2",
           recording_id: "recording-2",
         }),
@@ -455,14 +462,14 @@ describe("indexTranscriptSearchChunks", () => {
     const remainingIds = tables.semantic_search_chunks.map((row) => row.id);
     expect(remainingIds).not.toContain("owned-stale");
     expect(remainingIds).toContain("other-user-stale");
-    expect(remainingIds).toContain("document-same-id");
+    expect(remainingIds).toContain("page-same-id");
     expect(remainingIds).toContain("other-transcript");
 
     expect(calls).toEqual([["cells use energy energy becomes motion"]]);
     expect(tables.semantic_search_chunks.at(-1)).toMatchObject({
       user_id: userId,
       source_type: "transcript",
-      document_id: null,
+      node_id: null,
       transcript_id: "transcript-1",
       recording_id: "recording-1",
       start_ms: 0,
@@ -481,7 +488,7 @@ describe("indexTranscriptSearchChunks", () => {
         chunkRow({
           id: "owned-stale",
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
           start_ms: 0,
@@ -491,7 +498,7 @@ describe("indexTranscriptSearchChunks", () => {
           id: "other-user-stale",
           user_id: otherUserId,
           source_type: "transcript",
-          document_id: null,
+          node_id: null,
           transcript_id: "transcript-1",
           recording_id: "recording-1",
         }),

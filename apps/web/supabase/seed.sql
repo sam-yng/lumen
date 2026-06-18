@@ -41,9 +41,9 @@ on conflict do nothing;
 -- Workspace node owns the tree (workspace_id = id, parent_id = null).
 insert into public.library_nodes (id, user_id, workspace_id, parent_id, kind, title, slug) values
   (
-    '00000000-0000-0000-0000-0000000000f1',
+    '00000000-0000-4000-8000-0000000000f1',
     '00000000-0000-0000-0000-0000000000d1',
-    '00000000-0000-0000-0000-0000000000f1',
+    '00000000-0000-4000-8000-0000000000f1',
     null,
     'workspace',
     'Course notes',
@@ -54,10 +54,10 @@ on conflict do nothing;
 -- A page node nested under the workspace.
 insert into public.library_nodes (id, user_id, workspace_id, parent_id, kind, title, slug, content_text) values
   (
-    '00000000-0000-0000-0000-0000000000a1',
+    '00000000-0000-4000-8000-0000000000a1',
     '00000000-0000-0000-0000-0000000000d1',
-    '00000000-0000-0000-0000-0000000000f1',
-    '00000000-0000-0000-0000-0000000000f1',
+    '00000000-0000-4000-8000-0000000000f1',
+    '00000000-0000-4000-8000-0000000000f1',
     'page',
     'Welcome to Lumen',
     'welcome-to-lumen-000000a1',
@@ -73,6 +73,6 @@ insert into public.tag_links (id, tag_id, node_id) values
   (
     '00000000-0000-0000-0000-0000000000b1',
     '00000000-0000-0000-0000-0000000000c1',
-    '00000000-0000-0000-0000-0000000000a1'
+    '00000000-0000-4000-8000-0000000000a1'
   )
 on conflict do nothing;

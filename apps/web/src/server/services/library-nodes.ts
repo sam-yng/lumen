@@ -9,6 +9,13 @@ import {
 
 export type LibraryNodeKind = Tables<"library_nodes">["kind"];
 export type LibraryNode = Tables<"library_nodes">;
+export type LibraryNodeSnapshot = {
+  nodes: LibraryNode[];
+  recordings: Tables<"recordings">[];
+  transcripts: Tables<"transcripts">[];
+  tags: Tables<"tags">[];
+  tagLinks: Tables<"tag_links">[];
+};
 
 const CONTAINER_KINDS: LibraryNodeKind[] = ["workspace", "page"];
 
@@ -39,6 +46,18 @@ async function listNodes(ctx: ServiceContext) {
 
 function findNode(nodes: LibraryNode[], id: string) {
   return nodes.find((node) => node.id === id) ?? null;
+}
+
+export function canonicalLibraryNodeRoute(
+  nodes: LibraryNode[],
+  node: LibraryNode,
+) {
+  if (node.kind === "workspace") return `/${node.slug}`;
+  const workspace = nodes.find(
+    (candidate) =>
+      candidate.id === node.workspace_id && candidate.kind === "workspace",
+  );
+  return workspace ? `/${workspace.slug}/${node.slug}` : "/";
 }
 
 function assertParentCanContainChildren(parent: LibraryNode) {
@@ -132,9 +151,61 @@ async function loadOwnedParent(ctx: ServiceContext, parentId: string) {
   return parent;
 }
 
-export async function getLibraryNodeSnapshot(ctx: ServiceContext) {
+export async function getLibraryNodeSnapshot(
+  ctx: ServiceContext,
+): Promise<LibraryNodeSnapshot> {
+  const [nodes, recordingsResult, transcriptsResult, tagsResult] =
+    await Promise.all([
+      listNodes(ctx),
+      ctx.supabase
+        .from<Tables<"recordings">>("recordings")
+        .select("*")
+        .eq("user_id", ctx.userId)
+        .order("created_at"),
+      ctx.supabase
+        .from<Tables<"transcripts">>("transcripts")
+        .select("*")
+        .eq("user_id", ctx.userId)
+        .order("created_at"),
+      ctx.supabase
+        .from<Tables<"tags">>("tags")
+        .select("*")
+        .eq("user_id", ctx.userId)
+        .order("name"),
+    ]);
+  assertNoDatabaseError(recordingsResult.error, "Could not load recordings");
+  assertNoDatabaseError(transcriptsResult.error, "Could not load transcripts");
+  assertNoDatabaseError(tagsResult.error, "Could not load tags");
+
+  const { data: tagLinks, error } = await ctx.supabase
+    .from<Tables<"tag_links">>("tag_links")
+    .select("*");
+  assertNoDatabaseError(error, "Could not load tag links");
+
+  const tagIds = new Set(tagsResult.data.map((tag) => tag.id));
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  return {
+    nodes,
+    recordings: recordingsResult.data,
+    transcripts: transcriptsResult.data,
+    tags: tagsResult.data,
+    tagLinks: tagLinks.filter(
+      (link) => tagIds.has(link.tag_id) && nodeIds.has(link.node_id),
+    ),
+  };
+}
+
+export async function getPageNodeDetail(
+  ctx: ServiceContext,
+  input: { id: string },
+) {
   const nodes = await listNodes(ctx);
-  return { nodes };
+  const node = findNode(nodes, input.id);
+  assertFound(node, "Page not found.");
+  if (node.kind !== "page") {
+    throw new ServiceError("not_found", "Page not found.");
+  }
+  return { node, route: canonicalLibraryNodeRoute(nodes, node) };
 }
 
 export async function createWorkspaceNode(
@@ -210,15 +281,31 @@ export async function createAudioNode(
     storageKey: string;
   },
 ) {
+  let workspaceId = input.workspaceId;
   if (input.parentId !== null) {
-    await loadOwnedParent(ctx, input.parentId);
+    const parent = await loadOwnedParent(ctx, input.parentId);
+    if (parent.workspace_id !== input.workspaceId) {
+      throw new ServiceError(
+        "invalid_input",
+        "Parent node does not belong to that workspace.",
+      );
+    }
+    workspaceId = parent.workspace_id;
+  } else {
+    const nodes = await listNodes(ctx);
+    const workspace = findNode(nodes, input.workspaceId);
+    assertFound(workspace, "Workspace not found.");
+    if (workspace.kind !== "workspace") {
+      throw new ServiceError("invalid_input", "Workspace node is required.");
+    }
+    workspaceId = workspace.id;
   }
   const id = crypto.randomUUID();
   const title = cleanTitle(input.title, "Untitled recording");
   return insertNode(ctx, {
     id,
     user_id: ctx.userId,
-    workspace_id: input.workspaceId,
+    workspace_id: workspaceId,
     parent_id: input.parentId,
     kind: "audio",
     title,

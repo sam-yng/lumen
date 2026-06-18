@@ -5,7 +5,7 @@ import type { EmbeddingProvider } from "@/server/services/embedding-provider";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
 import { indexTranscriptSearchChunks } from "@/server/services/semantic-index";
 
-type FileRow = Tables<"files">;
+type NodeRow = Tables<"library_nodes">;
 type RecordingRow = Tables<"recordings">;
 type TranscriptRow = Tables<"transcripts">;
 type SegmentRow = Tables<"transcript_segments">;
@@ -30,16 +30,16 @@ async function getOwnedRecording(ctx: ServiceContext, recordingId: string) {
   return data;
 }
 
-async function getOwnedFile(ctx: ServiceContext, fileId: string) {
+async function getOwnedAudioNode(ctx: ServiceContext, nodeId: string) {
   const { data, error } = await ctx.supabase
-    .from<FileRow>("files")
+    .from<NodeRow>("library_nodes")
     .select("*")
-    .eq("id", fileId)
+    .eq("id", nodeId)
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  assertNoDatabaseError(error, "Could not load file");
-  assertFound(data, "File not found.");
+  assertNoDatabaseError(error, "Could not load audio node");
+  assertFound(data, "Audio node not found.");
   return data;
 }
 
@@ -135,7 +135,7 @@ export async function getTranscriptDetail(
   input: { recordingId: string },
 ) {
   const recording = await getOwnedRecording(ctx, input.recordingId);
-  const file = await getOwnedFile(ctx, recording.file_id);
+  const node = await getOwnedAudioNode(ctx, recording.node_id);
 
   const { data: transcript, error: transcriptError } = await ctx.supabase
     .from<TranscriptRow>("transcripts")
@@ -147,7 +147,7 @@ export async function getTranscriptDetail(
   assertNoDatabaseError(transcriptError, "Could not load transcript");
 
   if (!transcript) {
-    return { recording, file, transcript: null, segments: [] as SegmentRow[] };
+    return { recording, node, transcript: null, segments: [] as SegmentRow[] };
   }
 
   const { data: segments, error: segmentsError } = await ctx.supabase
@@ -158,5 +158,5 @@ export async function getTranscriptDetail(
 
   assertNoDatabaseError(segmentsError, "Could not load transcript segments");
 
-  return { recording, file, transcript, segments };
+  return { recording, node, transcript, segments };
 }

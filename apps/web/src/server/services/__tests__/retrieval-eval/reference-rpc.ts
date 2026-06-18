@@ -16,8 +16,8 @@ import type { GroundedSemanticRow } from "@/server/services/grounded-retrieval";
 export type FixtureChunkRow = {
   id: string;
   userId: string;
-  sourceType: "document" | "transcript";
-  documentId: string | null;
+  sourceType: "page" | "transcript";
+  nodeId: string | null;
   transcriptId: string | null;
   recordingId: string | null;
   startMs: number | null;
@@ -68,9 +68,9 @@ function textRank(content: string, queryTokens: string[]): number {
 }
 
 function sourcePayload(chunk: FixtureChunkRow): Record<string, unknown> {
-  if (chunk.sourceType === "document") {
+  if (chunk.sourceType === "page") {
     return {
-      documentId: chunk.documentId,
+      nodeId: chunk.nodeId,
       ...(chunk.documentAnchor ? { anchor: chunk.documentAnchor } : {}),
     };
   }

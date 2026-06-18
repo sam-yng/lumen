@@ -34,11 +34,12 @@ async function fixture(input: {
   tempDirs.push(tempDir);
 
   const supabase = new TrackingSupabase({
-    files: [
+    library_nodes: [
       {
         id: FILE_ID,
         user_id: USER_ID,
-        name: input.fileName ?? "seminar.webm",
+        title: input.fileName ?? "seminar.webm",
+        kind: "audio",
         storage_key: STORAGE_KEY,
       },
     ],
@@ -46,7 +47,7 @@ async function fixture(input: {
       {
         id: RECORDING_ID,
         user_id: USER_ID,
-        file_id: FILE_ID,
+        node_id: FILE_ID,
         status: "done",
         error: null,
       },
@@ -127,7 +128,7 @@ async function fixture(input: {
       data: {
         userId: USER_ID,
         recordingId: RECORDING_ID,
-        fileId: FILE_ID,
+        nodeId: FILE_ID,
         storageKey: STORAGE_KEY,
         bucket: "library-files",
       },
@@ -159,10 +160,10 @@ describe("processSpeakerLabelJob", () => {
       supabase.tables.transcript_segments.map((row) => row.speaker),
     ).toEqual(["Speaker 1", "Speaker 2", null]);
 
-    // Every files/transcripts read is user_id-scoped (service-role caveat).
+    // Every node/transcript read is user_id-scoped (service-role caveat).
     const scopedReads = supabase.queries.filter(
       (query) =>
-        ["files", "transcripts"].includes(query.table) &&
+        ["library_nodes", "transcripts"].includes(query.table) &&
         query.inserted.length === 0,
     );
     expect(scopedReads.length).toBeGreaterThan(0);
@@ -258,7 +259,7 @@ describe("processSpeakerLabelJob", () => {
     expect(convertCalls).toHaveLength(0);
   });
 
-  it("refuses a job whose storage key does not match the file", async () => {
+  it("refuses a job whose storage key does not match the audio node", async () => {
     const { deps, jobInput } = await fixture({
       diarization: {
         async diarize() {
@@ -269,7 +270,7 @@ describe("processSpeakerLabelJob", () => {
     jobInput.data.storageKey = `${USER_ID}/some-other-key`;
 
     await expect(processSpeakerLabelJob(jobInput, deps)).rejects.toThrow(
-      "Job storage key does not match file.",
+      "Job storage key does not match audio node.",
     );
   });
 });

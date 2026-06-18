@@ -1,9 +1,11 @@
 # Architecture
 
-Lumen is a multi-tenant study workspace: nested folders, rich-text notes, file
-and audio uploads, local CPU transcription, transcript viewing, tagging, and
-full-text search. This document covers the high-level system and — importantly —
-the seams that let the v2+ AI/MCP layer drop in without a rewrite.
+Lumen is a multi-tenant study workspace: nested workspaces and pages, rich-text
+notes, file and audio uploads, local CPU transcription, transcript viewing,
+tagging, and full-text search. Navigation and content live in a single
+`library_nodes` tree (see Data model). This document covers the high-level
+system and — importantly — the seams that let the v2+ AI/MCP layer drop in
+without a rewrite.
 
 ## Stack
 
@@ -91,8 +93,21 @@ segment the speaker turn with the largest time overlap
 diarization error degrades to `speaker: null` and the job still completes.
 The live path never labels speakers.
 
-**Still not built** (clean boundaries, not placeholders): clickable citation
-deep links (v3 m4), realtime collaboration.
+**Shipped in the navigation node tree (cross-cutting):** the old
+folder/document/file navigation model was replaced by a single `library_nodes`
+tree — `workspace`, `page`, `file`, and `audio` kinds nested by `parent_id` and
+rooted on a `workspace_id`. The Library now roots at `/`, with workspace pages at
+`/{workspaceSlug}` and node pages at `/{workspaceSlug}/{nodeSlug}`; legacy
+`/library/**` URLs redirect to `/`. Workspaces and container pages can be
+pinned. Recording, transcript, semantic-chunk, and tag-link rows attach to a
+node via `node_id` (recordings/audio nodes one-to-one); page bodies live on the
+node itself (`content_json` + a generated `content_tsv`). The migration was a
+destructive current-dev reset (product-owner approved) that seeded one
+`Imported workspace` per existing profile. Services, upload/live-session routes,
+search, assistant retrieval, MCP, and both workers were retargeted to node IDs;
+external MCP tool names and citation payloads stayed stable.
+
+**Still not built** (clean boundaries, not placeholders): realtime collaboration.
 
 ## Security
 
@@ -102,4 +117,9 @@ See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Data model
 
-Generated from migrations: [docs/generated/db-schema.md](docs/generated/db-schema.md).
+The navigation/content tree is `library_nodes` (kinds `workspace`, `page`,
+`file`, `audio`); `recordings.node_id`, `semantic_search_chunks.node_id` (for
+`source_type = 'page'`), and `tag_links.node_id` reference it, while
+`recordings`/`transcripts`/`transcript_segments` remain domain tables attached to
+audio nodes. Generated from migrations:
+[docs/generated/db-schema.md](docs/generated/db-schema.md).

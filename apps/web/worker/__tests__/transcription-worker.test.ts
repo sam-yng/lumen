@@ -46,11 +46,12 @@ describe("processTranscriptionJob", () => {
     const tempDir = await mkdtemp(join(tmpdir(), "lumen-worker-"));
     tempDirs.push(tempDir);
     const supabase = new TrackingSupabase({
-      files: [
+      library_nodes: [
         {
           id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
           user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
-          name: "lecture.mp3",
+          title: "lecture.mp3",
+          kind: "audio",
           storage_key: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
         },
       ],
@@ -58,7 +59,7 @@ describe("processTranscriptionJob", () => {
         {
           id: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
           user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
-          file_id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+          node_id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
           status: "pending",
           error: null,
         },
@@ -90,7 +91,7 @@ describe("processTranscriptionJob", () => {
         data: {
           userId: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
           recordingId: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
-          fileId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+          nodeId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
           storageKey: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
           bucket: "library-files",
         },
@@ -123,7 +124,7 @@ describe("processTranscriptionJob", () => {
     expect(supabase.tables.transcript_segments).toHaveLength(1);
     const userScopedQueries = supabase.queries.filter(
       (query) =>
-        ["recordings", "files", "transcripts"].includes(query.table) &&
+        ["recordings", "library_nodes", "transcripts"].includes(query.table) &&
         query.inserted.length === 0,
     );
     expect(
@@ -243,11 +244,12 @@ async function diarizationFixture(diarization: DiarizationProvider) {
   tempDirs.push(tempDir);
 
   const supabase = new TrackingSupabase({
-    files: [
+    library_nodes: [
       {
         id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
         user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
-        name: "lecture.mp3",
+        title: "lecture.mp3",
+        kind: "audio",
         storage_key: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
       },
     ],
@@ -255,7 +257,7 @@ async function diarizationFixture(diarization: DiarizationProvider) {
       {
         id: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
         user_id: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
-        file_id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+        node_id: "018f4ed8-0d34-73bd-8b71-307768d57b02",
         status: "pending",
         error: null,
       },
@@ -291,7 +293,7 @@ async function diarizationFixture(diarization: DiarizationProvider) {
       data: {
         userId: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
         recordingId: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
-        fileId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+        nodeId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
         storageKey: "018f4ed6-30f2-7838-8b36-2464c4b59e2f/file-lecture-mp3",
         bucket: "library-files",
       },

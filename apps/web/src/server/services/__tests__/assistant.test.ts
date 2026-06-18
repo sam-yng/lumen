@@ -10,6 +10,42 @@ import {
   SYSTEM_PROMPT,
 } from "@/server/services/assistant";
 
+const workspaceId = "018f4ed6-30f2-7838-8b36-2464c4b59e2f";
+
+function pageRow() {
+  return {
+    id: "d1",
+    user_id: userId,
+    workspace_id: workspaceId,
+    parent_id: workspaceId,
+    kind: "page",
+    title: "Biology notes",
+    slug: "biology-notes-d1",
+    content_json: null,
+    content_text: "The mitochondria is the powerhouse of the cell.",
+    content_tsv: null,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+}
+
+function workspaceRow() {
+  return {
+    ...pageRow(),
+    id: workspaceId,
+    workspace_id: workspaceId,
+    parent_id: null,
+    kind: "workspace",
+    title: "Workspace",
+    slug: "workspace",
+    content_text: null,
+  };
+}
+
 describe("SYSTEM_PROMPT", () => {
   it("instructs the model to cite tool-returned sources with [S#] labels", () => {
     expect(SYSTEM_PROMPT).toMatch(/\[S1\]|\[S#\]/);
@@ -26,7 +62,7 @@ describe("SYSTEM_PROMPT", () => {
 
 describe("connectMcpBridge", () => {
   it("lists the MCP tools as Anthropic tool defs", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({ library_nodes: [workspaceRow()] });
     const bridge = await connectMcpBridge(ctx);
     try {
       const names = bridge.tools.map((t) => t.name).sort();
@@ -41,12 +77,12 @@ describe("connectMcpBridge", () => {
   });
 
   it("dispatches a tool call through MCP and returns text", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({ library_nodes: [workspaceRow()] });
     const bridge = await connectMcpBridge(ctx);
     try {
       const result = await bridge.callTool("create_note", {
         title: "Hello",
-        folderId: null,
+        parentId: workspaceId,
       });
       expect(result).toContain("Hello");
     } finally {
@@ -75,7 +111,7 @@ function fakeAnthropic(
 
 describe("runAssistant", () => {
   it("returns the final text with no tool calls", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({ library_nodes: [workspaceRow()] });
     const anthropic = fakeAnthropic([
       {
         stop_reason: "end_turn",
@@ -93,14 +129,7 @@ describe("runAssistant", () => {
 
   it("carries search_notes sources on the result keyed by citation label", async () => {
     const ctx = createContext({
-      documents: [
-        {
-          id: "d1",
-          user_id: userId,
-          title: "Biology notes",
-          content_text: "The mitochondria is the powerhouse of the cell.",
-        },
-      ],
+      library_nodes: [pageRow()],
     });
     const anthropic = fakeAnthropic([
       {
@@ -135,14 +164,7 @@ describe("runAssistant", () => {
 
   it("drops hallucinated citations from sources and flags them", async () => {
     const ctx = createContext({
-      documents: [
-        {
-          id: "d1",
-          user_id: userId,
-          title: "Biology notes",
-          content_text: "The mitochondria is the powerhouse of the cell.",
-        },
-      ],
+      library_nodes: [pageRow()],
     });
     const anthropic = fakeAnthropic([
       {
@@ -178,14 +200,7 @@ describe("runAssistant", () => {
 
   it("filters retrieved sources the answer never cites", async () => {
     const ctx = createContext({
-      documents: [
-        {
-          id: "d1",
-          user_id: userId,
-          title: "Biology notes",
-          content_text: "The mitochondria is the powerhouse of the cell.",
-        },
-      ],
+      library_nodes: [pageRow()],
     });
     const anthropic = fakeAnthropic([
       {
@@ -217,7 +232,7 @@ describe("runAssistant", () => {
   });
 
   it("executes a tool call then returns the follow-up answer", async () => {
-    const ctx = createContext({ documents: [], folders: [] });
+    const ctx = createContext({ library_nodes: [workspaceRow()] });
     const anthropic = fakeAnthropic([
       {
         stop_reason: "tool_use",
@@ -226,7 +241,7 @@ describe("runAssistant", () => {
             type: "tool_use",
             id: "t1",
             name: "create_note",
-            input: { title: "Note", folderId: null },
+            input: { title: "Note", parentId: workspaceId },
           },
         ],
       },

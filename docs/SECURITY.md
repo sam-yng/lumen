@@ -52,26 +52,29 @@ M4 implementation notes:
 
 - Uploads enter through authenticated Route Handlers. The app derives `user.id`
   with `supabase.auth.getUser()`, creates object keys under
-  `<user_id>/<generated-name>`, and stores file/recording rows through the
-  user-scoped client.
+  `<user_id>/<generated-name>`, and stores the `file`/`audio` `library_nodes`
+  row (and any `recordings` row) through the user-scoped client. File and audio
+  bytes are served back only through `/api/library/nodes/:id/content`, which
+  re-resolves the owning node under the caller's session.
 - The private `library-files` bucket has `storage.objects` policies that allow
   authenticated users to access only keys whose first path segment is their
   `auth.uid()`.
-- Worker jobs contain `{ userId, recordingId, fileId, storageKey }` from the
-  authenticated enqueue path. Worker reads/updates for `recordings`, `files`,
-  and `transcripts` include `eq("user_id", userId)`; segment inserts use the
-  transcript id created by that user-scoped transcript insert.
+- Worker jobs contain `{ userId, recordingId, nodeId, storageKey }` from the
+  authenticated enqueue path. Worker reads/updates for `recordings`,
+  `library_nodes`, and `transcripts` include `eq("user_id", userId)`; segment
+  inserts use the transcript id created by that user-scoped transcript insert.
 
 V4 m4 speaker-labeling notes:
 
 - Post-finalize speaker labeling (`worker/speaker-label-worker.ts`) is a second
   service-role write path: it **updates** `transcript_segments.speaker` after a
   live session finalizes. `transcript_segments` has no `user_id` column, so
-  ownership is established transitively — the job first loads the `files` row
-  and the `transcripts` row with explicit `eq("user_id", userId)` (payload
+  ownership is established transitively — the job first loads the audio
+  `library_nodes` row and the `transcripts` row with explicit
+  `eq("user_id", userId)` (payload
   `userId` comes from the authenticated finalize route, like transcription
   jobs), and only then updates segments by the owned `transcript_id`. It also
-  refuses jobs whose `storageKey` doesn't match the user-scoped file row.
+  refuses jobs whose `storageKey` doesn't match the user-scoped audio node row.
 - The job never touches `recordings`: labeling failure cannot change a
   finalized recording's status (degrade-never-fail).
 
@@ -106,8 +109,8 @@ V2 semantic-search notes:
 - Semantic chunks are stored in `semantic_search_chunks`, which is directly
   user-owned and protected by RLS policies keyed on `auth.uid() = user_id`.
 - The schema also enforces parent ownership with composite foreign keys so a
-  chunk row cannot claim one `user_id` while pointing at another user's
-  document, transcript, or recording.
+  chunk row cannot claim one `user_id` while pointing at another user's page
+  node (`node_id`), transcript, or recording.
 - Worker/service-role indexing paths must still scope chunk replacement by
   `user_id`. The semantic indexing service validates source rows before
   embedding and deletes with explicit `user_id`, `source_type`, and source-id

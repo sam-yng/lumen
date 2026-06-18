@@ -22,7 +22,7 @@ const transcriptionJobOptions = {
 export const transcriptionJobPayloadSchema = z.object({
   userId: postgresUuidSchema,
   recordingId: postgresUuidSchema,
-  fileId: postgresUuidSchema,
+  nodeId: postgresUuidSchema,
   storageKey: z.string().min(1),
 });
 

@@ -29,7 +29,9 @@ describe("buildCorpus", () => {
       transcripts: [],
       queries: [],
     });
-    expect(corpus.tables.documents).toHaveLength(2);
+    expect(
+      corpus.tables.library_nodes?.filter((row) => row.kind === "page"),
+    ).toHaveLength(2);
     expect(corpus.chunkRows.length).toBeGreaterThanOrEqual(2);
     for (const chunk of corpus.chunkRows) {
       expect(chunk.userId).toBe("user-1");

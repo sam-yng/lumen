@@ -1,7 +1,7 @@
 # Navigation node tree redesign - design spec
 
 > **Status:** design input for
-> [`exec-plans/queued/cross-cutting/navigation-node-tree.md`](../../exec-plans/queued/cross-cutting/navigation-node-tree.md).
+> [`exec-plans/completed/cross-cutting/navigation-node-tree.md`](../../exec-plans/completed/cross-cutting/navigation-node-tree.md).
 > Date: 2026-06-18.
 
 ## Problem

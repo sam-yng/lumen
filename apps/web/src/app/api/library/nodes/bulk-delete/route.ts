@@ -1,28 +1,25 @@
 import { z } from "zod";
 import {
   getRouteServiceContext,
-  nullableUuidSchema,
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
 } from "@/app/api/library/http";
-import { createFolder } from "@/server/services/folders";
+import { bulkDeleteLibraryNodes } from "@/server/services/library-nodes";
 
-const createFolderSchema = z.object({
-  name: z.string().min(1),
-  parentId: nullableUuidSchema.optional().default(null),
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1),
 });
 
 export async function POST(request: Request) {
   const ctx = await getRouteServiceContext();
   if (!ctx) return unauthorizedResponse();
 
-  const parsed = await parseJsonBody(request, createFolderSchema);
+  const parsed = await parseJsonBody(request, bulkDeleteSchema);
   if (!parsed.ok) return parsed.response;
 
   try {
-    const folder = await createFolder(ctx, parsed.data);
-    return Response.json(folder, { status: 201 });
+    return Response.json(await bulkDeleteLibraryNodes(ctx, parsed.data));
   } catch (error) {
     return serviceErrorResponse(error);
   }

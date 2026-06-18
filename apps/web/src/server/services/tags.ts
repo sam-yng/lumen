@@ -1,4 +1,4 @@
-import type { Database, Tables } from "@/server/db/database.types";
+import type { Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import {
   assertFound,
@@ -8,13 +8,7 @@ import {
 
 type Tag = Tables<"tags">;
 type TagLink = Tables<"tag_links">;
-type TargetType = Database["public"]["Enums"]["tag_target_type"];
-
-const targetTableByType = {
-  document: "documents",
-  file: "files",
-  recording: "recordings",
-} satisfies Record<TargetType, string>;
+type LibraryNode = Tables<"library_nodes">;
 
 function cleanTagName(name: string) {
   return name.trim();
@@ -33,20 +27,16 @@ async function assertTagOwned(ctx: ServiceContext, tagId: string) {
   return data;
 }
 
-async function assertTargetOwned(
-  ctx: ServiceContext,
-  targetType: TargetType,
-  targetId: string,
-) {
+async function assertNodeOwned(ctx: ServiceContext, nodeId: string) {
   const { data, error } = await ctx.supabase
-    .from<Record<string, unknown>>(targetTableByType[targetType])
+    .from<LibraryNode>("library_nodes")
     .select("*")
-    .eq("id", targetId)
+    .eq("id", nodeId)
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  assertNoDatabaseError(error, "Could not load target");
-  assertFound(data, "Target not found.");
+  assertNoDatabaseError(error, "Could not load node");
+  assertFound(data, "Node not found.");
 }
 
 export async function createTag(
@@ -116,19 +106,18 @@ export async function deleteTag(ctx: ServiceContext, input: { id: string }) {
   return data;
 }
 
-export async function linkTagToTarget(
+export async function linkTagToNode(
   ctx: ServiceContext,
-  input: { tagId: string; targetType: TargetType; targetId: string },
+  input: { tagId: string; nodeId: string },
 ) {
   await assertTagOwned(ctx, input.tagId);
-  await assertTargetOwned(ctx, input.targetType, input.targetId);
+  await assertNodeOwned(ctx, input.nodeId);
 
   const { data: existing, error: existingError } = await ctx.supabase
     .from<TagLink>("tag_links")
     .select("*")
     .eq("tag_id", input.tagId)
-    .eq("target_type", input.targetType)
-    .eq("target_id", input.targetId)
+    .eq("node_id", input.nodeId)
     .maybeSingle();
 
   assertNoDatabaseError(existingError, "Could not load tag link");
@@ -138,8 +127,7 @@ export async function linkTagToTarget(
     .from<TagLink>("tag_links")
     .insert({
       tag_id: input.tagId,
-      target_type: input.targetType,
-      target_id: input.targetId,
+      node_id: input.nodeId,
     })
     .select("*")
     .single();
@@ -153,6 +141,16 @@ export async function unlinkTag(
   ctx: ServiceContext,
   input: { linkId: string },
 ) {
+  const { data: existing, error: existingError } = await ctx.supabase
+    .from<TagLink>("tag_links")
+    .select("*")
+    .eq("id", input.linkId)
+    .maybeSingle();
+
+  assertNoDatabaseError(existingError, "Could not load tag link");
+  assertFound(existing, "Tag link not found.");
+  await assertTagOwned(ctx, existing.tag_id);
+
   const { data, error } = await ctx.supabase
     .from<TagLink>("tag_links")
     .delete()
@@ -165,12 +163,10 @@ export async function unlinkTag(
   return data;
 }
 
-type Document = Tables<"documents">;
-
-export async function listDocumentsByTag(
+export async function listPageNodesByTag(
   ctx: ServiceContext,
   input: { tagId: string },
-): Promise<Document[]> {
+): Promise<LibraryNode[]> {
   await assertTagOwned(ctx, input.tagId);
 
   const { data: links, error } = await ctx.supabase
@@ -180,22 +176,21 @@ export async function listDocumentsByTag(
 
   assertNoDatabaseError(error, "Could not load tag links");
 
-  const documentIds = links
-    .filter((link) => link.target_type === "document")
-    .map((link) => link.target_id);
+  const nodeIds = links.map((link) => link.node_id);
 
-  if (documentIds.length === 0) return [];
+  if (nodeIds.length === 0) return [];
 
-  const { data: documents, error: documentsError } = await ctx.supabase
-    .from<Document>("documents")
+  const { data: pages, error: pagesError } = await ctx.supabase
+    .from<LibraryNode>("library_nodes")
     .select("*")
-    .in("id", documentIds)
-    .eq("user_id", ctx.userId);
+    .in("id", nodeIds)
+    .eq("user_id", ctx.userId)
+    .eq("kind", "page");
 
-  assertNoDatabaseError(documentsError, "Could not load documents");
+  assertNoDatabaseError(pagesError, "Could not load tagged pages");
 
-  const orderById = new Map(documentIds.map((id, index) => [id, index]));
-  return [...documents].sort(
+  const orderById = new Map(nodeIds.map((id, index) => [id, index]));
+  return [...pages].sort(
     (a, b) => (orderById.get(a.id) ?? 0) - (orderById.get(b.id) ?? 0),
   );
 }

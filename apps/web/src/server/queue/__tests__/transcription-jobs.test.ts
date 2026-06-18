@@ -11,7 +11,7 @@ import {
 const validPayload: TranscriptionJobPayload = {
   userId: "018f4ed6-30f2-7838-8b36-2464c4b59e2f",
   recordingId: "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7",
-  fileId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
+  nodeId: "018f4ed8-0d34-73bd-8b71-307768d57b02",
   storageKey: "recordings/user/lecture.m4a",
 };
 
@@ -45,7 +45,7 @@ describe("transcription jobs", () => {
     await expect(
       enqueueTranscriptionJob(boss, {
         ...validPayload,
-        fileId: "not-a-uuid",
+        nodeId: "not-a-uuid",
       }),
     ).rejects.toThrow();
 
@@ -127,7 +127,7 @@ describe("speaker label jobs", () => {
       enqueueSpeakerLabelJob({
         enabled: true,
         getBoss,
-        payload: { ...validPayload, fileId: "not-a-uuid" },
+        payload: { ...validPayload, nodeId: "not-a-uuid" },
       }),
     ).resolves.toBeNull();
   });

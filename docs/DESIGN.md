@@ -165,10 +165,11 @@ rather than presenting as shipped — and, **per the product decision on
 The information architecture mirrors what's built. The light redesign restyles
 the existing components rather than rebuilding them.
 
-**Routes:** `/library` (list + actions), `/library/notes/[id]` (full-page note),
-`/library/transcripts/[recordingId]` (full-page transcript), `/library/tags`
-(Tags view). `/` and authenticated auth pages redirect to `/library`. The
-assistant lives at the gated `/assistant` route.
+**Routes:** `/` (root Library — workspace list + actions), `/{workspaceSlug}`
+(workspace contents), `/{workspaceSlug}/{nodeSlug}` (a node — page editor or
+audio transcript). Navigation and content are one `library_nodes` tree
+(`workspace`/`page`/`file`/`audio`). Legacy `/library/**` URLs and authenticated
+auth pages redirect to `/`. The assistant lives at the gated `/assistant` route.
 
 ### 1. Auth (`AuthForm` + `(auth)/layout.tsx`)
 
@@ -192,25 +193,30 @@ assistant lives at the gated `/assistant` route.
   (Sheet).
 - Sidebar (`--surface`, right hairline): header (wordmark + settings); actions
   row (primary "New note" + icon search); nav rows (Library / Recents [disabled]
-  / Tags / **Ask Lumen** [accent sparkle, disabled + "soon" badge]); section
-  label "Library" + new-folder button; recursive folder tree; footer (avatar +
-  name + email + logout).
-- Folder tree rows (height `--row-h`): caret (rotates 90° when open), kind icon,
-  ellipsized label, mono item count. Selected = `--accent-soft` bg + 2px accent
-  left bar + accent-text. Indent ≈ `8 + depth*14` px. Clicking a folder toggles
-  expand AND selects; clicking a leaf opens it.
+  / Tags / **Ask Lumen** [accent sparkle, disabled + "soon" badge]); optional
+  Pinned section (pinned workspaces + container pages); section label "Library" +
+  new-workspace button; recursive node tree; footer (avatar + name + email +
+  logout). Tag rows are compact `#` rows with a linked-node count that swaps to a
+  trash button on hover/focus.
+- Node tree rows (height `--row-h`): caret (rotates 90° when open), kind icon,
+  ellipsized label, mono child count. Selected = `--accent-soft` bg + 2px accent
+  left bar + accent-text. Indent ≈ `8 + depth*14` px. Clicking a container node
+  (workspace/page) toggles expand AND selects; clicking a leaf opens it.
 
 ### 3. Library (`LibraryWorkspace` / `LibraryContent`)
 
 - Top bar (`--topbar-h` 44px, bottom hairline): breadcrumb (clickable ancestors)
   + actions (search, Upload outline-sm, primary New note sm).
-- Content centered (max ~880px): folder title (`--t-h1`) + mono subtitle
-  (`N items`); filter chips ("Filter" label + All + tag pills, selected tints to
-  `--accent-soft`); grouped "Folders" / "Notes & files" lists in a `--r-lg`
-  hairline container.
-- Item rows: 30px kind-icon tile (recording → `--busy-soft`, folder →
-  `--accent-soft`, doc/file → `--surface-2`), name (`--t-sm` 500), mono meta,
-  right-aligned tag pills + status badge + hover-revealed ⋯ button.
+- Content centered (max ~880px): node title (`--t-h1`) + mono subtitle
+  (`N items`); filter chips ("Filter" label + All + tag pills, multi-select with
+  OR semantics, selected tints to `--accent-soft` and toggles off on re-click);
+  grouped child lists (workspaces/pages vs. notes & files) in a `--r-lg` hairline
+  container.
+- Item rows: 30px kind-icon tile (recording → `--busy-soft`, workspace/page →
+  `--accent-soft`, file → `--surface-2`), name (`--t-sm` 500), mono meta,
+  right-aligned tag pills + status badge + hover-revealed ⋯ button. Rows support
+  click / Ctrl-Cmd / Shift selection; a bulk action bar (Move / Delete / Clear)
+  appears while rows are selected.
 - Empty state: dashed `--border-strong` box + accent-soft icon tile + "Nothing
   here yet" + helper copy. Loading = skeleton rows; failed = danger badge +
   retry; processing = busy badge + pulsing dot.
@@ -252,8 +258,9 @@ in `.l-mark` (accent-soft highlight). Click → open item.
 
 - Recents: deferred — the sidebar entry is visible but disabled (explanatory
   `title`).
-- Tags: `/library/tags` view for create/rename/delete with preset colors and tag
-  filtering.
+- Tags: managed from the sidebar tag rows (create/rename/delete) with preset
+  colors; tag links target `library_nodes`, and multi-select filtering uses OR
+  semantics.
 
 ### 8. Ask Lumen (assistant)
 
@@ -266,8 +273,8 @@ note blocks, source cards. Gated behind a per-user Claude key; presented as
 
 ## Interactions & behavior
 
-- **Open rules:** document → editor; recording → transcript viewer; folder →
-  select + expand. Processing/queued recordings are not openable.
+- **Open rules:** page → editor; audio node → transcript viewer; workspace/page
+  container → select + expand. Processing/queued recordings are not openable.
 - **Autosave:** debounce; dot amber while saving, green when saved.
 - **Transcript playback:** active segment derived from `currentTime`; click to
   seek; active auto-scrolls (manual `scrollTo`, never `scrollIntoView`).
@@ -281,7 +288,7 @@ note blocks, source cards. Gated behind a per-user Claude key; presented as
 ## State management
 
 - Server state via **TanStack Query** against the library/recordings/transcripts
-  handlers. Local UI state: selected folder/item, tree expansion set, tag filter,
+  handlers. Local UI state: selected node(s), tree expansion set, tag filter,
   drawer/dialog state.
 - Audio: a real `<audio>` element; segment highlight = derived state from
   `audio.currentTime`.

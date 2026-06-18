@@ -5,22 +5,22 @@ import {
   type Row,
   userId,
 } from "@/server/services/__tests__/fake-supabase";
-import { createDocument, updateDocument } from "@/server/services/documents";
 import { extractTipTapText } from "@/server/services/editor-content";
 import {
   EMBEDDING_DIMENSIONS,
   type EmbeddingProvider,
 } from "@/server/services/embedding-provider";
-import { createFileMetadata } from "@/server/services/files";
 import {
-  createFolder,
-  deleteFolder,
-  moveFolder,
-} from "@/server/services/folders";
-import { getLibrarySnapshot } from "@/server/services/library";
+  bulkDeleteLibraryNodes,
+  bulkMoveLibraryNodes,
+  createPageNode,
+  createWorkspaceNode,
+  getLibraryNodeSnapshot,
+  updateLibraryNode,
+} from "@/server/services/library-nodes";
 import { retryRecordingTranscription } from "@/server/services/recordings";
 import type { StorageProvider } from "@/server/services/storage-provider";
-import { createTag, linkTagToTarget } from "@/server/services/tags";
+import { createTag, linkTagToNode } from "@/server/services/tags";
 import {
   getTranscriptDetail,
   writeRecordingTranscript,
@@ -50,6 +50,20 @@ class FakeStorage implements StorageProvider {
   }
 }
 
+function ownedWorkspaceRows(): Row[] {
+  return [
+    {
+      id: "workspace-a",
+      user_id: userId,
+      workspace_id: "workspace-a",
+      parent_id: null,
+      kind: "workspace",
+      title: "Lectures",
+      slug: "lectures-a",
+    },
+  ];
+}
+
 function vector(value: number) {
   return Array.from({ length: EMBEDDING_DIMENSIONS }, (_, index) =>
     index === 0 ? value : 0,
@@ -77,8 +91,26 @@ function tablesFor(ctx: ReturnType<typeof createContext>) {
 }
 
 describe("library services", () => {
-  it("returns a unified snapshot scoped to the current user", async () => {
+  it("returns a unified node snapshot scoped to the current user", async () => {
     const ctx = createContext({
+      library_nodes: [
+        {
+          id: "workspace-a",
+          user_id: userId,
+          workspace_id: "workspace-a",
+          parent_id: null,
+          kind: "workspace",
+          title: "Course notes",
+        },
+        {
+          id: "workspace-b",
+          user_id: otherUserId,
+          workspace_id: "workspace-b",
+          parent_id: null,
+          kind: "workspace",
+          title: "Private",
+        },
+      ],
       folders: [
         { id: "folder-a", user_id: userId, name: "Course notes" },
         { id: "folder-b", user_id: otherUserId, name: "Someone else" },
@@ -113,25 +145,19 @@ describe("library services", () => {
         {
           id: "link-a",
           tag_id: "tag-a",
-          target_type: "document",
-          target_id: "doc-a",
+          node_id: "workspace-a",
         },
         {
           id: "link-b",
           tag_id: "tag-b",
-          target_type: "document",
-          target_id: "doc-b",
+          node_id: "workspace-b",
         },
       ],
     });
 
-    const snapshot = await getLibrarySnapshot(ctx);
+    const snapshot = await getLibraryNodeSnapshot(ctx);
 
-    expect(snapshot.folders.map((folder) => folder.id)).toEqual(["folder-a"]);
-    expect(snapshot.documents.map((document) => document.id)).toEqual([
-      "doc-a",
-    ]);
-    expect(snapshot.files.map((file) => file.id)).toEqual(["file-a"]);
+    expect(snapshot.nodes.map((node) => node.id)).toEqual(["workspace-a"]);
     expect(snapshot.recordings.map((recording) => recording.id)).toEqual([
       "recording-a",
     ]);
@@ -139,8 +165,34 @@ describe("library services", () => {
     expect(snapshot.tagLinks.map((link) => link.id)).toEqual(["link-a"]);
   });
 
-  it("rejects moving a folder into one of its descendants", async () => {
+  it("rejects moving a node into one of its descendants", async () => {
     const ctx = createContext({
+      library_nodes: [
+        {
+          id: "root",
+          user_id: userId,
+          workspace_id: "root",
+          parent_id: null,
+          kind: "workspace",
+          title: "Root",
+        },
+        {
+          id: "child",
+          user_id: userId,
+          workspace_id: "root",
+          parent_id: "root",
+          kind: "page",
+          title: "Child",
+        },
+        {
+          id: "grandchild",
+          user_id: userId,
+          workspace_id: "root",
+          parent_id: "child",
+          kind: "page",
+          title: "Grandchild",
+        },
+      ],
       folders: [
         { id: "root", user_id: userId, parent_id: null, name: "Root" },
         { id: "child", user_id: userId, parent_id: "root", name: "Child" },
@@ -154,37 +206,55 @@ describe("library services", () => {
     });
 
     await expect(
-      moveFolder(ctx, { id: "root", parentId: "grandchild" }),
+      bulkMoveLibraryNodes(ctx, {
+        ids: ["child"],
+        parentId: "grandchild",
+      }),
     ).rejects.toMatchObject({
       code: "invalid_input",
-      message: "A folder cannot be moved into itself or a descendant.",
+      message: "A node cannot be moved into itself or a descendant.",
     });
   });
 
-  it("creates and deletes folders under the current user", async () => {
-    const ctx = createContext({ folders: [] });
+  it("creates and deletes workspaces under the current user", async () => {
+    const ctx = createContext({ library_nodes: [] });
 
-    const folder = await createFolder(ctx, {
-      name: "Seminars",
-      parentId: null,
-    });
+    const workspace = await createWorkspaceNode(ctx, { title: "Seminars" });
 
-    expect(folder).toMatchObject({
+    expect(workspace).toMatchObject({
       user_id: userId,
-      name: "Seminars",
+      title: "Seminars",
+      kind: "workspace",
       parent_id: null,
     });
 
-    const deleted = await deleteFolder(ctx, { id: String(folder.id) });
+    const deleted = await bulkDeleteLibraryNodes(ctx, { ids: [workspace.id] });
 
-    expect(deleted.id).toBe(folder.id);
+    expect(deleted.map((node) => node.id)).toEqual([workspace.id]);
     expect(ctx.supabase).toMatchObject({
-      tables: { folders: [] },
+      tables: { library_nodes: [] },
     });
   });
 
   it("deletes a folder subtree with its documents and files", async () => {
     const ctx = createContext({
+      library_nodes: [
+        { id: "root", user_id: userId, parent_id: null, kind: "workspace" },
+        { id: "child", user_id: userId, parent_id: "root", kind: "page" },
+        {
+          id: "grandchild",
+          user_id: userId,
+          parent_id: "child",
+          kind: "page",
+        },
+        { id: "outside", user_id: userId, parent_id: null, kind: "workspace" },
+        {
+          id: "foreign-child",
+          user_id: otherUserId,
+          parent_id: "root",
+          kind: "page",
+        },
+      ],
       folders: [
         {
           id: "root",
@@ -283,26 +353,40 @@ describe("library services", () => {
       ],
     });
 
-    const deleted = await deleteFolder(ctx, { id: "root" });
+    const deleted = await bulkDeleteLibraryNodes(ctx, { ids: ["root"] });
     const tables = tablesFor(ctx);
 
-    expect(deleted.id).toBe("root");
-    expect(tables.folders.map((folder) => folder.id).sort()).toEqual([
+    expect(deleted.map((node) => node.id).sort()).toEqual([
+      "child",
+      "grandchild",
+      "root",
+    ]);
+    expect(tables.library_nodes.map((node) => node.id).sort()).toEqual([
       "foreign-child",
       "outside",
     ]);
-    expect(tables.documents.map((document) => document.id).sort()).toEqual([
-      "doc-foreign",
-      "doc-outside",
-    ]);
-    expect(tables.files.map((file) => file.id).sort()).toEqual([
-      "file-foreign",
-      "file-outside",
-    ]);
   });
 
-  it("creates documents under the current user and validates folder ownership", async () => {
+  it("creates pages under the current user and validates parent ownership", async () => {
     const ctx = createContext({
+      library_nodes: [
+        {
+          id: "owned-folder",
+          user_id: userId,
+          workspace_id: "owned-folder",
+          parent_id: null,
+          kind: "workspace",
+          title: "Owned",
+        },
+        {
+          id: "foreign-folder",
+          user_id: otherUserId,
+          workspace_id: "foreign-folder",
+          parent_id: null,
+          kind: "workspace",
+          title: "Foreign",
+        },
+      ],
       folders: [
         { id: "owned-folder", user_id: userId, name: "Owned" },
         { id: "foreign-folder", user_id: otherUserId, name: "Foreign" },
@@ -311,26 +395,25 @@ describe("library services", () => {
     });
 
     await expect(
-      createDocument(ctx, {
+      createPageNode(ctx, {
         title: "Lecture outline",
-        folderId: "foreign-folder",
+        parentId: "foreign-folder",
       }),
     ).rejects.toMatchObject({
       code: "not_found",
-      message: "Folder not found.",
+      message: "Parent node not found.",
     });
 
-    const document = await createDocument(ctx, {
+    const page = await createPageNode(ctx, {
       title: "Lecture outline",
-      folderId: "owned-folder",
+      parentId: "owned-folder",
     });
 
-    expect(document).toMatchObject({
+    expect(page).toMatchObject({
       user_id: userId,
       title: "Lecture outline",
-      folder_id: "owned-folder",
-      content_json: null,
-      content_text: null,
+      parent_id: "owned-folder",
+      kind: "page",
     });
   });
 
@@ -370,14 +453,16 @@ describe("library services", () => {
     expect(text).toBe("Lecture 3 Cells use ATP. Mitochondria");
   });
 
-  it("persists document content JSON and derived plain text", async () => {
+  it("persists page content JSON and derived plain text", async () => {
     const ctx = createContext({
-      documents: [
+      library_nodes: [
         {
           id: "doc-a",
           user_id: userId,
+          workspace_id: "workspace-a",
+          parent_id: "workspace-a",
+          kind: "page",
           title: "Lecture",
-          folder_id: null,
           content_json: null,
           content_text: null,
         },
@@ -394,122 +479,21 @@ describe("library services", () => {
       ],
     };
 
-    const document = await updateDocument(ctx, {
+    const page = await updateLibraryNode(ctx, {
       id: "doc-a",
       contentJson,
     });
 
-    expect(document).toMatchObject({
+    expect(page).toMatchObject({
       id: "doc-a",
       content_json: contentJson,
       content_text: "Saved from TipTap",
     });
   });
 
-  it("refreshes semantic chunks when document content is updated with a provider", async () => {
+  it("uploads a non-audio file into storage and creates a file node", async () => {
     const ctx = createContext({
-      documents: [
-        {
-          id: "doc-a",
-          user_id: userId,
-          title: "Lecture",
-          folder_id: null,
-          content_json: null,
-          content_text: null,
-        },
-      ],
-      semantic_search_chunks: [
-        {
-          id: "owned-stale",
-          user_id: userId,
-          source_type: "document",
-          document_id: "doc-a",
-          transcript_id: null,
-          recording_id: null,
-          start_ms: null,
-          end_ms: null,
-          chunk_index: 0,
-          content: "stale",
-          embedding: "[0]",
-        },
-        {
-          id: "other-user-stale",
-          user_id: otherUserId,
-          source_type: "document",
-          document_id: "doc-a",
-          transcript_id: null,
-          recording_id: null,
-          start_ms: null,
-          end_ms: null,
-          chunk_index: 0,
-          content: "private",
-          embedding: "[0]",
-        },
-      ],
-    });
-    const { calls, provider } = embeddingProvider([vector(0.5)]);
-    const contentJson = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "Indexed from TipTap" }],
-        },
-      ],
-    };
-
-    await updateDocument(ctx, {
-      id: "doc-a",
-      contentJson,
-      embeddingProvider: provider,
-    });
-
-    expect(calls).toEqual([["Indexed from TipTap"]]);
-    const tables = tablesFor(ctx);
-    expect(tables.semantic_search_chunks.map((row) => row.id)).toContain(
-      "other-user-stale",
-    );
-    expect(tables.semantic_search_chunks.map((row) => row.id)).not.toContain(
-      "owned-stale",
-    );
-    expect(tables.semantic_search_chunks.at(-1)).toMatchObject({
-      user_id: userId,
-      source_type: "document",
-      document_id: "doc-a",
-      content: "Indexed from TipTap",
-      embedding: `[${vector(0.5).join(",")}]`,
-    });
-  });
-
-  it("creates metadata-only file records for the current user", async () => {
-    const ctx = createContext({
-      folders: [{ id: "folder-a", user_id: userId, name: "Lectures" }],
-      files: [],
-    });
-
-    const file = await createFileMetadata(ctx, {
-      name: "week-01.pdf",
-      mimeType: "application/pdf",
-      sizeBytes: 42_000,
-      kind: "other",
-      folderId: "folder-a",
-    });
-
-    expect(file).toMatchObject({
-      user_id: userId,
-      folder_id: "folder-a",
-      name: "week-01.pdf",
-      mime_type: "application/pdf",
-      size_bytes: 42_000,
-      kind: "other",
-      storage_key: "metadata/user-1/week-01-pdf",
-    });
-  });
-
-  it("uploads a non-audio file into storage and creates a file row", async () => {
-    const ctx = createContext({
-      folders: [{ id: "folder-a", user_id: userId, name: "Lectures" }],
-      files: [],
+      library_nodes: ownedWorkspaceRows(),
     });
     const storage = new FakeStorage();
     const enqueued: unknown[] = [];
@@ -519,25 +503,26 @@ describe("library services", () => {
       name: "week 01.pdf",
       mimeType: "application/pdf",
       bytes: new Uint8Array([1, 2, 3]),
-      folderId: "folder-a",
+      parentId: "workspace-a",
       storage,
       enqueueTranscription: async (payload) => enqueued.push(payload),
     });
 
     expect(result.recording).toBeNull();
-    expect(result.file).toMatchObject({
+    expect(result.node).toMatchObject({
       user_id: userId,
-      folder_id: "folder-a",
-      name: "week 01.pdf",
+      workspace_id: "workspace-a",
+      parent_id: "workspace-a",
+      title: "week 01.pdf",
       mime_type: "application/pdf",
       size_bytes: 3,
-      kind: "other",
+      kind: "file",
     });
-    expect(String(result.file.storage_key)).toMatch(/^user-1\/.+-week-01-pdf$/);
+    expect(String(result.node.storage_key)).toMatch(/^user-1\/.+-week-01-pdf$/);
     expect(storage.uploaded).toEqual([
       {
         bucket: "library-files",
-        key: result.file.storage_key,
+        key: result.node.storage_key,
         bytes: new Uint8Array([1, 2, 3]),
         contentType: "application/pdf",
       },
@@ -547,7 +532,7 @@ describe("library services", () => {
 
   it("uploads audio, creates a pending recording, and enqueues transcription", async () => {
     const ctx = createContext({
-      files: [],
+      library_nodes: ownedWorkspaceRows(),
       recordings: [],
     });
     const storage = new FakeStorage();
@@ -558,21 +543,23 @@ describe("library services", () => {
       name: "lecture.mp3",
       mimeType: "audio/mpeg",
       bytes: new Uint8Array([4, 5, 6, 7]),
-      folderId: null,
+      parentId: "workspace-a",
       storage,
       enqueueTranscription: async (payload) => enqueued.push(payload),
     });
 
-    expect(result.file).toMatchObject({
+    expect(result.node).toMatchObject({
       user_id: userId,
-      name: "lecture.mp3",
+      workspace_id: "workspace-a",
+      parent_id: "workspace-a",
+      title: "lecture.mp3",
       mime_type: "audio/mpeg",
       size_bytes: 4,
       kind: "audio",
     });
     expect(result.recording).toMatchObject({
       user_id: userId,
-      file_id: result.file.id,
+      node_id: result.node.id,
       status: "pending",
       error: null,
     });
@@ -580,15 +567,15 @@ describe("library services", () => {
       {
         userId,
         recordingId: result.recording?.id,
-        fileId: result.file.id,
-        storageKey: result.file.storage_key,
+        nodeId: result.node.id,
+        storageKey: result.node.storage_key,
       },
     ]);
   });
 
   it("marks the recording failed (not stranded pending) when enqueue fails", async () => {
     const ctx = createContext({
-      files: [],
+      library_nodes: ownedWorkspaceRows(),
       recordings: [],
     });
     const storage = new FakeStorage();
@@ -598,7 +585,7 @@ describe("library services", () => {
       name: "lecture.mp3",
       mimeType: "audio/mpeg",
       bytes: new Uint8Array([8, 9]),
-      folderId: null,
+      parentId: "workspace-a",
       storage,
       enqueueTranscription: async () => {
         throw new Error("queue unavailable");
@@ -618,18 +605,19 @@ describe("library services", () => {
 
   it("retries failed recordings by resetting status and enqueueing transcription", async () => {
     const ctx = createContext({
-      files: [
+      library_nodes: [
         {
-          id: "file-a",
+          id: "node-a",
           user_id: userId,
-          storage_key: "user-1/file-a-lecture-mp3",
+          kind: "audio",
+          storage_key: "user-1/node-a-lecture-mp3",
         },
       ],
       recordings: [
         {
           id: "recording-a",
           user_id: userId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "failed",
           error: "Whisper failed",
         },
@@ -651,26 +639,27 @@ describe("library services", () => {
       {
         userId,
         recordingId: "recording-a",
-        fileId: "file-a",
-        storageKey: "user-1/file-a-lecture-mp3",
+        nodeId: "node-a",
+        storageKey: "user-1/node-a-lecture-mp3",
       },
     ]);
   });
 
   it("reverts a retried recording to failed when re-enqueue fails", async () => {
     const ctx = createContext({
-      files: [
+      library_nodes: [
         {
-          id: "file-a",
+          id: "node-a",
           user_id: userId,
-          storage_key: "user-1/file-a-lecture-mp3",
+          kind: "audio",
+          storage_key: "user-1/node-a-lecture-mp3",
         },
       ],
       recordings: [
         {
           id: "recording-a",
           user_id: userId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "failed",
           error: "Whisper failed",
         },
@@ -708,7 +697,7 @@ describe("library services", () => {
           {
             id: "recording-a",
             user_id: userId,
-            file_id: "file-a",
+            node_id: "node-a",
             status,
             error: null,
           },
@@ -733,7 +722,7 @@ describe("library services", () => {
         {
           id: "recording-a",
           user_id: userId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "processing",
           error: null,
         },
@@ -790,7 +779,7 @@ describe("library services", () => {
         {
           id: "recording-a",
           user_id: userId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "processing",
           error: null,
         },
@@ -828,19 +817,20 @@ describe("library services", () => {
 
   it("reads transcript detail for an owned recording", async () => {
     const ctx = createContext({
-      files: [
+      library_nodes: [
         {
-          id: "file-a",
+          id: "node-a",
           user_id: userId,
-          name: "lecture.mp3",
-          storage_key: "user-1/file-a-lecture-mp3",
+          title: "lecture.mp3",
+          kind: "audio",
+          storage_key: "user-1/node-a-lecture-mp3",
         },
       ],
       recordings: [
         {
           id: "recording-a",
           user_id: userId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "done",
         },
       ],
@@ -877,7 +867,8 @@ describe("library services", () => {
       recordingId: "recording-a",
     });
 
-    expect(detail.file.id).toBe("file-a");
+    expect(detail.node.id).toBe("node-a");
+    expect(detail.node.title).toBe("lecture.mp3");
     expect(detail.recording.id).toBe("recording-a");
     expect(detail.transcript?.id).toBe("transcript-a");
     expect(detail.segments.map((segment) => segment.id)).toEqual([
@@ -892,7 +883,7 @@ describe("library services", () => {
         {
           id: "recording-a",
           user_id: otherUserId,
-          file_id: "file-a",
+          node_id: "node-a",
           status: "done",
         },
       ],
@@ -919,24 +910,28 @@ describe("library services", () => {
     });
   });
 
-  it("rejects linking a tag to a target the current user does not own", async () => {
+  it("rejects linking a tag to a node the current user does not own", async () => {
     const ctx = createContext({
       tags: [{ id: "tag-a", user_id: userId, name: "biology", color: null }],
-      documents: [
-        { id: "foreign-doc", user_id: otherUserId, title: "Private" },
+      library_nodes: [
+        {
+          id: "foreign-node",
+          user_id: otherUserId,
+          kind: "page",
+          title: "Private",
+        },
       ],
       tag_links: [],
     });
 
     await expect(
-      linkTagToTarget(ctx, {
+      linkTagToNode(ctx, {
         tagId: "tag-a",
-        targetType: "document",
-        targetId: "foreign-doc",
+        nodeId: "foreign-node",
       }),
     ).rejects.toMatchObject({
       code: "not_found",
-      message: "Target not found.",
+      message: "Node not found.",
     });
   });
 });

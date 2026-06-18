@@ -11,21 +11,28 @@ const fixtureCtx = () =>
       {
         id: "r1",
         user_id: "user-1",
-        file_id: "f1",
+        node_id: "f1",
         created_at: "2026-01-01T00:00:00Z",
       },
     ],
-    files: [
+    library_nodes: [
       {
         id: "f1",
         user_id: "user-1",
-        name: "lecture.mp3",
-        folder_id: null,
+        workspace_id: "workspace-1",
+        parent_id: "workspace-1",
+        title: "lecture.mp3",
+        slug: "lecture-f1",
         mime_type: "audio/mpeg",
         size_bytes: 1,
         storage_key: "k",
         kind: "audio",
+        content_json: null,
+        content_text: null,
+        content_tsv: null,
+        is_pinned: false,
         created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
       },
     ],
     transcripts: [

@@ -45,7 +45,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const env = getServerEnv();
-    const { file, ...result } = await finalizeLiveSession(
+    const { node, ...result } = await finalizeLiveSession(
       {
         userId: user.id,
         supabase: supabase as unknown as ServiceSupabaseClient,
@@ -69,8 +69,8 @@ export async function POST(request: Request, context: RouteContext) {
       payload: {
         userId: user.id,
         recordingId,
-        fileId: file.id,
-        storageKey: file.storage_key,
+        nodeId: node.id,
+        storageKey: node.storage_key,
       },
     });
 

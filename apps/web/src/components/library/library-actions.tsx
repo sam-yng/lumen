@@ -1,47 +1,30 @@
 "use client";
 
-import { FolderPlus, Plus, Radio, Upload } from "lucide-react";
+import { FolderPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function LibraryActions({
-  onCreateNote,
-  onCreateFolder,
-  onUpload,
-  onStartLiveSession,
+  atRoot,
+  onCreateWorkspace,
+  onCreatePage,
 }: {
-  onCreateNote: () => void;
-  onCreateFolder: () => void;
-  onUpload: () => void;
-  onStartLiveSession: () => void;
+  atRoot: boolean;
+  onCreateWorkspace: () => void;
+  onCreatePage: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-soft)] pb-4">
-      <Button type="button" size="sm" onClick={onCreateNote}>
-        <Plus className="size-4" />
-        New note
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onCreateFolder}
-      >
-        <FolderPlus className="size-4" />
-        New folder
-      </Button>
-      <Button type="button" variant="outline" size="sm" onClick={onUpload}>
-        <Upload className="size-4" />
-        Upload
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onStartLiveSession}
-      >
-        <Radio className="size-4" />
-        Live session
-      </Button>
+      {atRoot ? (
+        <Button type="button" size="sm" onClick={onCreateWorkspace}>
+          <FolderPlus className="size-4" />
+          New workspace
+        </Button>
+      ) : (
+        <Button type="button" size="sm" onClick={onCreatePage}>
+          <Plus className="size-4" />
+          New page
+        </Button>
+      )}
     </div>
   );
 }

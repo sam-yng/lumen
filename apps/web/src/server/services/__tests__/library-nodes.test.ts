@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  createContext,
+  type FakeSupabase,
+  otherUserId,
+  type Row,
+  userId,
+} from "@/server/services/__tests__/fake-supabase";
+import {
   bulkDeleteLibraryNodes,
   bulkMoveLibraryNodes,
   createPageNode,
@@ -8,13 +15,6 @@ import {
   type LibraryNode,
   updateLibraryNode,
 } from "@/server/services/library-nodes";
-import {
-  createContext,
-  type FakeSupabase,
-  otherUserId,
-  type Row,
-  userId,
-} from "@/server/services/__tests__/fake-supabase";
 
 function nodeRow(overrides: Partial<LibraryNode> & { id: string }): Row {
   return {
@@ -143,7 +143,11 @@ describe("library-nodes service", () => {
       library_nodes: [
         nodeRow({ id: "ws", kind: "workspace", workspace_id: "ws" }),
         nodeRow({ id: "container", workspace_id: "ws", parent_id: "ws" }),
-        nodeRow({ id: "leafChild", workspace_id: "ws", parent_id: "container" }),
+        nodeRow({
+          id: "leafChild",
+          workspace_id: "ws",
+          parent_id: "container",
+        }),
         nodeRow({ id: "leaf", workspace_id: "ws", parent_id: "ws" }),
         nodeRow({
           id: "file",
@@ -186,6 +190,26 @@ describe("library-nodes service", () => {
           workspace_id: "other",
         }),
       ],
+      tags: [
+        { id: "tag-a", user_id: userId, name: "Exam", color: null },
+        { id: "tag-b", user_id: otherUserId, name: "Private", color: null },
+      ],
+      tag_links: [
+        { id: "link-a", tag_id: "tag-a", node_id: "a" },
+        { id: "link-b", tag_id: "tag-b", node_id: "other" },
+      ],
+      recordings: [
+        { id: "recording-a", user_id: userId, node_id: "a" },
+        { id: "recording-b", user_id: otherUserId, node_id: "other" },
+      ],
+      transcripts: [
+        { id: "transcript-a", user_id: userId, recording_id: "recording-a" },
+        {
+          id: "transcript-b",
+          user_id: otherUserId,
+          recording_id: "recording-b",
+        },
+      ],
     });
 
     const snapshot = await getLibraryNodeSnapshot(ctx);
@@ -194,5 +218,13 @@ describe("library-nodes service", () => {
     expect(ids).toContain("ws");
     expect(ids).toContain("a");
     expect(ids).not.toContain("other");
+    expect(snapshot.tags.map((tag) => tag.id)).toEqual(["tag-a"]);
+    expect(snapshot.tagLinks.map((link) => link.id)).toEqual(["link-a"]);
+    expect(snapshot.recordings.map((recording) => recording.id)).toEqual([
+      "recording-a",
+    ]);
+    expect(snapshot.transcripts.map((transcript) => transcript.id)).toEqual([
+      "transcript-a",
+    ]);
   });
 });

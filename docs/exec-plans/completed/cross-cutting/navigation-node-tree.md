@@ -4,27 +4,56 @@
 
 ## ⚠️ Implementation status / handoff (2026-06-18)
 
-**Branch:** `navigation-node-tree` (committed + pushed; NOT merged).
+**Branch:** `navigation-node-tree` (working tree updated; NOT merged).
 
-**Done — Milestone 1 only (Tasks 1–3):**
+**Done — Milestones 1–3 (Tasks 1–7):**
 - Migration `apps/web/supabase/migrations/20260618120000_library_nodes.sql` written + applied (`db reset`). `seed.sql` rewritten onto nodes.
 - `database.types.ts` + `docs/generated/db-schema.md` regenerated.
 - `src/server/services/library-nodes.ts` implemented; `__tests__/library-nodes.test.ts` 7/7; full service suite 176/176. `fake-supabase.ts` now returns inserted rows from `insert().select()`.
+- Node API handlers, client helpers, root/workspace/node App Router pages, legacy `/library/**` redirects, and the authenticated auth-page redirect to `/` are implemented. Focused M2 suites pass 14/14.
+- The library shell now resolves node slugs, renders parent-chain breadcrumbs, provides first-run workspace creation, displays nested workspace/page navigation with pinned containers, and supports desktop row selection plus bulk move/delete/clear with a blocking delete state. Focused M3 suites pass 9/9; pinned React Doctor 0.5.1 reports 0 issues.
 
-**🔴 `bun run check` is RED on this commit — intentionally.** The destructive
-migration drops the `folders`/`documents`/`files` tables+types, so ~60 files
-that still import `Tables<"folders"|"documents"|"files">` (services, the
-`app/api/library/**` routes, App Router pages, library UI, tags, uploads,
-workers, search, assistant, MCP) no longer typecheck. There is **no green
-checkpoint until M2–M5 land**; the whole change goes green again only once every
-consumer is retargeted to `library_nodes`. Do not "fix" the migration to make
-check pass — finish the migration.
+**Done — Milestone 4 Task 9:**
+- Uploads and live sessions now create and return file/audio nodes; recordings and transcript detail use `node_id`; transcription and speaker-label payloads carry `nodeId`; both workers load `library_nodes` with explicit `user_id` scoping.
+- Root live-session audio nodes validate workspace ownership, and parented audio nodes reject workspace mismatches.
+- RED verified against the committed pre-Task-9 implementation (30/52 focused tests failed for the intended legacy-contract reasons); GREEN verified in the working tree (53/53 focused tests passed).
 
-**Resume at Milestone 2, Task 4.** Recommended order to claw typecheck back to
-green: M2 (API + routes) → M4 Task 9 (uploads/workers/recordings/transcripts) →
-M5 (search/assistant/MCP) → M3 (library UI) → M4 Task 8 (tags) → M4 Task 10
-(editor/transcript) → M6 (docs + browser happy-path). Run
-`bun run typecheck` to enumerate the remaining broken files as a live worklist.
+**Done — Milestone 4 Task 8:**
+- Tag links now use owned `library_nodes` through `linkTagToNode`; unlinking verifies the linked tag belongs to the caller instead of relying on RLS alone.
+- The node snapshot includes owned tags and tag links, multi-tag filtering uses OR semantics, selected tags toggle independently, and the sidebar renders compact `#` rows with linked-node counts plus hover/focus rename/delete actions.
+- Focused Task 8 and affected regression suites pass 40/40; the complete web suite passes.
+
+**Done — Milestone 4 Task 10:**
+- Page nodes now render the TipTap editor and autosave through `updateLibraryNode`; audio nodes resolve their recording by `node_id` and render node-backed transcript data.
+- The node snapshot includes owned recordings/transcripts, audio playback uses the owned `/api/library/nodes/:id/content` route, and obsolete folder/document services, APIs, client helpers, and tests were removed.
+- Task 10 RED covered page/audio route rendering, node-backed editor/viewer data, snapshot ownership, workspace integration, and node content download. Focused GREEN passes 25/25; React Doctor 0.5.1 reports 0 issues.
+
+**Done — Milestone 5 Task 11:**
+- Lexical and semantic search now read `page`, `file`, and `audio` rows from `library_nodes`; transcript hydration resolves recording `node_id` values to owned audio-node titles.
+- Semantic page chunks persist as `source_type = 'page'` with `node_id`, and RPC `nodeId` payloads are adapted to the stable document-shaped citation/search contracts pending Task 12.
+- Focused search/index/retrieval suites pass 69/69; the complete service suite passes 175/175, including the offline retrieval-quality harness.
+
+**Done — Milestone 5 Task 12:**
+- Stable MCP names and citation payloads are preserved, while `get_document`, `create_note`, `list_by_tag`, and the document resource now read/create page nodes and return canonical `/{workspaceSlug}/{nodeSlug}` routes.
+- MCP and assistant descriptions now say pages/notes; transcript prompts and MCP fixtures use audio nodes and recording `node_id`.
+- The combined service + MCP suites pass 191/191.
+
+**Done — Milestone 6 (Tasks 13–14):**
+- All four narrative docs (`ARCHITECTURE.md`, `docs/SECURITY.md`,
+  `docs/FRONTEND.md`, `docs/DESIGN.md`) retargeted from the folder/document model
+  to `library_nodes`; `docs/generated/db-schema.md` regenerated from migrations.
+- Full gate GREEN and the authenticated browser happy path ran end-to-end
+  against local Supabase + `bun run dev` (see Task 14 Step 3 record).
+- Verification surfaced + fixed a seed bug: NIL-style seed UUIDs failed the
+  route's zod `.uuid()` on `parentId`; seed node IDs are now valid v4.
+
+**🟢 `bun run check` is GREEN:** 55 test files and 334 tests pass, alongside
+Biome, plan lifecycle, worker Dockerfile, and workspace typecheck gates.
+
+**Implementation + verification complete; ready for human review.** All tasks
+done, gate green, browser happy path verified. Local Supabase was started and
+migrations applied for this run. Paused here for the human review checkpoint
+before promoting this plan to `completed` and merging the branch.
 
 **Gotchas already handled (do not redo):**
 - The plan's two `drop constraint if exists` names for the per-source unique
@@ -32,7 +61,7 @@ M5 (search/assistant/MCP) → M3 (library UI) → M4 Task 8 (tags) → M4 Task 1
   (`..._document_id_chun_key`, `..._transcript_id_ch_key`), verified against the
   live DB. If you add a fresh migration, re-introspect names with
   `select conname from pg_constraint where conrelid = 'public.<table>'::regclass;`.
-- `crypto.randomUUID()` is used for node IDs in the service (matches `folders.ts`).
+- `crypto.randomUUID()` is used for node IDs in the service.
 
 ---
 
@@ -435,14 +464,14 @@ Expected: PASS.
 - Create: `apps/web/src/app/api/library/__tests__/nodes-route.test.ts`
 - Modify: `apps/web/src/components/library/library-api.ts`
 
-- [ ] **Step 1: Write route tests**
+- [x] **Step 1: Write route tests**
 
 Add `apps/web/src/app/api/library/__tests__/nodes-route.test.ts` with tests
 for create/update/bulk move/bulk delete request validation and service error
 responses. Follow the route-handler test style used by
 `apps/web/src/app/api/assistant/__tests__/route.test.ts`.
 
-- [ ] **Step 2: Implement routes**
+- [x] **Step 2: Implement routes**
 
 Use zod request schemas:
 
@@ -462,7 +491,7 @@ const updateNodeSchema = z.object({
 
 Keep file/audio creation inside upload/live-session routes so raw file metadata is not hand-posted by the UI.
 
-- [ ] **Step 3: Update client API helpers**
+- [x] **Step 3: Update client API helpers**
 
 Expose:
 
@@ -488,11 +517,11 @@ Remove old folder/document/file helpers after consumers are updated.
 - Modify: `apps/web/src/proxy.ts`
 - Modify: `apps/web/src/__tests__/proxy.test.ts`
 
-- [ ] **Step 1: Write failing route/proxy tests**
+- [x] **Step 1: Write failing route/proxy tests**
 
 Assert authenticated auth-page redirect target is `/`, `/library` redirects to `/`, and workspace/node pages pass slugs to route components.
 
-- [ ] **Step 2: Implement pages and redirects**
+- [x] **Step 2: Implement pages and redirects**
 
 `page.tsx` renders root Library. Dynamic pages render the same workspace shell with selected workspace/node resolved client-side or server-side through node snapshot services.
 
@@ -506,7 +535,7 @@ export default function LegacyLibraryPage() {
 }
 ```
 
-- [ ] **Step 3: Verify focused tests**
+- [x] **Step 3: Verify focused tests**
 
 Run:
 
@@ -515,6 +544,12 @@ bun run --filter @lumen/web test src/__tests__/proxy.test.ts
 ```
 
 Expected: PASS.
+
+> M2 checkpoint (2026-06-18): `nodes-route.test.ts`,
+> `navigation-pages.test.tsx`, and `proxy.test.ts` pass 14/14. `bun run check`
+> passes Biome, plan lifecycle, and worker Dockerfile checks, then remains red
+> at web typecheck on the explicitly documented M3–M5 consumers of removed
+> `folders`/`documents`/`files` types. No M2 route/page/proxy type errors remain.
 
 ## Milestone 3: Library UI, First Run, Selection, Bulk Actions
 
@@ -527,7 +562,7 @@ Expected: PASS.
 - Modify: `apps/web/src/components/library/library-paths.ts`
 - Modify tests under `apps/web/src/components/library/__tests__/`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Cover:
 
@@ -538,11 +573,11 @@ it("renders pinned container nodes above Library", async () => {});
 it("builds breadcrumbs from parent links", async () => {});
 ```
 
-- [ ] **Step 2: Implement node snapshot rendering**
+- [x] **Step 2: Implement node snapshot rendering**
 
 Replace `selectedFolderId` with selected workspace/node IDs derived from route slugs. Render children by `parent_id`. Root `/` renders workspace nodes. Workspace route renders children of the workspace node.
 
-- [ ] **Step 3: Implement first-run modal**
+- [x] **Step 3: Implement first-run modal**
 
 Use the existing Dialog primitives. The modal is blocking while there are no workspace nodes:
 
@@ -566,11 +601,11 @@ On submit, call `createWorkspace({ title })` and navigate to `/${workspace.slug}
 - Test: `apps/web/src/components/library/__tests__/library-item-row.test.tsx`
 - Test: `apps/web/src/components/library/__tests__/library-content.test.tsx`
 
-- [ ] **Step 1: Write failing selection tests**
+- [x] **Step 1: Write failing selection tests**
 
 Test single click, Ctrl/Cmd toggle, Shift range, and double-click open.
 
-- [ ] **Step 2: Implement selected/hover row state**
+- [x] **Step 2: Implement selected/hover row state**
 
 `ItemRow` props:
 
@@ -583,7 +618,7 @@ onOpen: (nodeId: string) => void;
 
 Use `onClick` for selection and `onDoubleClick` for open. Add classes for selected state and hover state.
 
-- [ ] **Step 3: Implement bulk action bar**
+- [x] **Step 3: Implement bulk action bar**
 
 `LibraryItemActions` props:
 
@@ -597,9 +632,16 @@ onClear: () => void;
 
 Show Move, Delete, Clear. Disable while busy.
 
-- [ ] **Step 4: Implement delete loading state**
+- [x] **Step 4: Implement delete loading state**
 
 In `LibraryContent`, set `isDeleting` before confirming the bulk delete mutation. While true, render a loading overlay and disable row interactions.
+
+> M3 checkpoint (2026-06-18): focused workspace, sidebar, path, row, and
+> content suites pass 9/9. The locally installed and lockfile-pinned React
+> Doctor 0.5.1 diff scan reports 0 issues (score unavailable because its score
+> API is unreachable). `bun run check` passes Biome, plan lifecycle, and worker
+> Dockerfile checks, then remains red at web typecheck on the documented M4–M5
+> consumers of removed legacy table types; no M3 component errors remain.
 
 ## Milestone 4: Tags, Uploads, Live Sessions, Editor, Transcript
 
@@ -615,15 +657,15 @@ In `LibraryContent`, set `isDeleting` before confirming the bulk delete mutation
 - Test: `apps/web/src/server/services/__tests__/tags-read.test.ts`
 - Test: `apps/web/src/components/library/__tests__/library-sidebar.test.tsx`
 
-- [ ] **Step 1: Write failing tag tests**
+- [x] **Step 1: Write failing tag tests**
 
 Assert tag links target node IDs, multiple selected tags use OR semantics, selected tag click deselects, and hover/focus shows delete action in the right count slot.
 
-- [ ] **Step 2: Implement service/API changes**
+- [x] **Step 2: Implement service/API changes**
 
 Replace polymorphic target validation with `library_nodes` ownership validation.
 
-- [ ] **Step 3: Implement compact tag rows**
+- [x] **Step 3: Implement compact tag rows**
 
 Render `#`, tag name, count, and hover/focus trash button replacing the count.
 
@@ -640,15 +682,15 @@ Render `#`, tag name, count, and hover/focus trash button replacing the count.
 - Modify: worker tests under `apps/web/worker/__tests__/`
 - Modify service tests under `apps/web/src/server/services/__tests__/`
 
-- [ ] **Step 1: Write failing service/worker tests**
+- [x] **Step 1: Write failing service/worker tests**
 
 Assert uploads create `file` or `audio` nodes, recordings reference `node_id`, transcript detail hydrates audio node title/storage key, and worker queries include `user_id` filters.
 
-- [ ] **Step 2: Implement services**
+- [x] **Step 2: Implement services**
 
 Replace file row creation with `createFileNode`/`createAudioNode`. Update enqueue payload to carry `nodeId` and `storageKey`.
 
-- [ ] **Step 3: Update workers**
+- [x] **Step 3: Update workers**
 
 Workers load audio nodes from `library_nodes` by `node_id` and `user_id`, then continue the existing storage/transcription flow.
 
@@ -660,11 +702,11 @@ Workers load audio nodes from `library_nodes` by `node_id` and `user_id`, then c
 - Modify: `apps/web/src/components/editor/document-editor.tsx`
 - Modify tests for editor/transcript components.
 
-- [ ] **Step 1: Write failing route component tests**
+- [x] **Step 1: Write failing route component tests**
 
 Assert page nodes render editor content and audio nodes render transcript viewer data.
 
-- [ ] **Step 2: Implement node-based components**
+- [x] **Step 2: Implement node-based components**
 
 Keep component filenames unchanged in this milestone. `DocumentEditor` should
 consume a page `library_nodes` row instead of `documents`.
@@ -679,11 +721,11 @@ consume a page `library_nodes` row instead of `documents`.
 - Modify: `apps/web/src/server/services/grounded-retrieval.ts`
 - Modify: tests under `apps/web/src/server/services/__tests__/`
 
-- [ ] **Step 1: Write failing search/index tests**
+- [x] **Step 1: Write failing search/index tests**
 
 Assert page nodes are indexed and found where documents were previously indexed/found; transcript search hydrates audio node names.
 
-- [ ] **Step 2: Implement node-based indexing**
+- [x] **Step 2: Implement node-based indexing**
 
 Replace document table reads with `library_nodes` reads filtered to `kind = 'page'`. Keep transcript indexing tied to transcripts/recordings.
 
@@ -695,11 +737,11 @@ Replace document table reads with `library_nodes` reads filtered to `kind = 'pag
 - Modify: `apps/web/src/server/mcp/resources.ts`
 - Modify: MCP and assistant tests.
 
-- [ ] **Step 1: Write failing MCP/assistant tests**
+- [x] **Step 1: Write failing MCP/assistant tests**
 
 Assert document/list/read tools operate on page nodes and return stable node routes.
 
-- [ ] **Step 2: Implement tool updates**
+- [x] **Step 2: Implement tool updates**
 
 Keep external MCP tool names stable for this pass. Update tool descriptions and
 response copy to say "pages/notes" rather than old documents when the schema
@@ -717,13 +759,25 @@ type leaks into user-facing text.
 - Modify: `docs/generated/db-schema.md`
 - Modify: `docs/PLANS.md` when promoting lifecycle.
 
-- [ ] **Step 1: Replace old navigation model references**
+- [x] **Step 1: Replace old navigation model references**
 
 Document `library_nodes`, destructive current-dev migration approval, route shape, RLS model, worker service-role caveat, and pinned/tag behavior.
 
+> Done (2026-06-18): `ARCHITECTURE.md` (intro, new node-tree "Shipped in"
+> section, Data model), `docs/SECURITY.md` (M4 worker payload `nodeId` +
+> `library_nodes`, speaker-label load, semantic page-node ownership, node
+> content route), `docs/FRONTEND.md` (node routes, first-run, selection/bulk,
+> page editor, node content route, search), and `docs/DESIGN.md` (routes,
+> node tree, pinned, bulk selection, compact tags, open rules) all updated.
+> `docs/generated/db-schema.md` regenerated from migrations — note the generator
+> only parses `create table` and ignores `drop table`, so the dropped
+> `folders`/`documents`/`files` sections still render; that is a pre-existing
+> generator limitation (not hand-editable per AGENTS.md), flagged as a separate
+> follow-up.
+
 ### Task 14: Full verification
 
-- [ ] **Step 1: Run full gate**
+- [x] **Step 1: Run full gate**
 
 Run:
 
@@ -733,7 +787,10 @@ bun run check
 
 Expected: PASS.
 
-- [ ] **Step 2: Run browser happy path**
+> Done (2026-06-18): `bun run check` GREEN — 55 test files / 334 tests pass,
+> alongside Biome, plan-lifecycle, worker Dockerfile, and workspace typecheck.
+
+- [x] **Step 2: Run browser happy path**
 
 Run the app locally:
 
@@ -754,6 +811,34 @@ Manual/browser checks:
 - Create tags and select multiple filters; OR semantics are visible.
 - Upload or record audio if local dependencies allow.
 
-- [ ] **Step 3: Record verification**
+- [x] **Step 3: Record verification**
 
 Append observed focused tests, `bun run check`, and browser verification results to this plan before moving it to `completed`.
+
+> **Browser happy path (2026-06-18, local Supabase + `bun run dev`, demo +
+> fresh users):**
+> - Sign in as `demo@lumen.test` → land at `/` (root Library lists workspaces).
+> - Fresh user (`fresh@lumen.test`, no workspace) → blocking **Create a
+>   workspace** dialog (no Cancel) → submit → navigates to
+>   `/my-first-workspace-<id>`.
+> - Double-click workspace → `/{workspaceSlug}`; double-click page →
+>   `/{workspaceSlug}/{nodeSlug}` with the TipTap editor rendering node content
+>   and an autosave indicator.
+> - Create nested page via the **New page** dialog and the `/api/library/nodes`
+>   API (201, `parent_id` set, slug derived).
+> - Ctrl/Cmd multi-select → "2 selected" bulk bar (Move / Delete / Clear);
+>   bulk delete → confirm dialog ("Delete 1 selected? … descendants …") →
+>   node removed.
+> - Tag filter chip toggles (`aria-pressed`); pin a workspace → **PINNED**
+>   sidebar section; compact `# biology 1` tag row.
+> - Legacy `/library/notes/abc` → redirects to `/`; unauthenticated `/` → `/login`.
+> - **Bug found + fixed during verification:** `seed.sql` used NIL-style UUIDs
+>   (`00000000-0000-0000-0000-0000000000f1/a1`) whose version/variant nibbles are
+>   zero, so the route's zod `.uuid()` rejected them as a `parentId` — creating a
+>   page under the *seeded* workspace returned 400. Production node IDs are
+>   `crypto.randomUUID()` (v4) and were unaffected. Fixed the two seed node IDs to
+>   valid v4 (`…-4000-8000-…f1/a1`); re-ran `db reset` and confirmed page create
+>   under the seeded workspace returns 201.
+> - Not exercised: audio upload/record + transcription (local whisper/ffmpeg /
+>   model deps out of scope for this checkpoint); Shift-range selection (covered
+>   by `library-item-row` unit tests).

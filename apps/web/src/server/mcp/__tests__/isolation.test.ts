@@ -18,18 +18,27 @@ function contextFor(
 const userBDocument = {
   id: "doc-b",
   user_id: otherUserId,
-  folder_id: null,
+  workspace_id: "workspace-b",
+  parent_id: "workspace-b",
+  kind: "page",
   title: "User B secret",
+  slug: "user-b-secret",
   content_json: null,
   content_text: "secret",
   content_tsv: null,
+  mime_type: null,
+  size_bytes: null,
+  storage_key: null,
+  is_pinned: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };
 
 describe("MCP tenant isolation", () => {
   it("user A cannot read user B's document via get_document", async () => {
-    const ctx = contextFor(userId, { documents: [{ ...userBDocument }] });
+    const ctx = contextFor(userId, {
+      library_nodes: [{ ...userBDocument }],
+    });
     const result = await runGetDocument(ctx, { id: "doc-b" });
     expect(result.isError).toBe(true);
     expect(String((result.content[0] as { text: string }).text)).toContain(
@@ -41,7 +50,7 @@ describe("MCP tenant isolation", () => {
     const ctx = contextFor(userId, {
       tags: [{ id: "tag-b", user_id: otherUserId, name: "b", color: null }],
       tag_links: [],
-      documents: [{ ...userBDocument }],
+      library_nodes: [{ ...userBDocument }],
     });
     const result = await runListByTag(ctx, { tagId: "tag-b" });
     expect(result.isError).toBe(true);

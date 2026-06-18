@@ -1,22 +1,24 @@
 import { randomUUID } from "node:crypto";
-import type { Database, Tables } from "@/server/db/database.types";
+import type { Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
 import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
+import {
+  createAudioNode,
+  createFileNode,
+  type LibraryNode,
+} from "@/server/services/library-nodes";
 import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
 import {
   type StorageProvider,
   storageKeyForUpload,
 } from "@/server/services/storage-provider";
 
-type FileRow = Tables<"files">;
-type FolderRow = Tables<"folders">;
 type RecordingRow = Tables<"recordings">;
-type FileKind = Database["public"]["Enums"]["file_kind"];
 
 export type EnqueueTranscriptionPayload = {
   userId: string;
   recordingId: string;
-  fileId: string;
+  nodeId: string;
   storageKey: string;
 };
 
@@ -25,7 +27,7 @@ type CreateUploadedFileInput = {
   name: string;
   mimeType: string;
   bytes: Uint8Array;
-  folderId: string | null;
+  parentId: string;
   storage: StorageProvider;
   enqueueTranscription: (
     payload: EnqueueTranscriptionPayload,
@@ -36,62 +38,28 @@ function isAudioMimeType(mimeType: string) {
   return mimeType.toLowerCase().startsWith("audio/");
 }
 
-async function assertFolderOwned(ctx: ServiceContext, folderId: string | null) {
-  if (folderId === null) return;
-
+async function getOwnedParent(ctx: ServiceContext, parentId: string) {
   const { data, error } = await ctx.supabase
-    .from<FolderRow>("folders")
+    .from<LibraryNode>("library_nodes")
     .select("*")
-    .eq("id", folderId)
+    .eq("id", parentId)
     .eq("user_id", ctx.userId)
     .maybeSingle();
-
-  assertNoDatabaseError(error, "Could not load folder");
-  assertFound(data, "Folder not found.");
-}
-
-async function createFileRow(
-  ctx: ServiceContext,
-  input: {
-    id: string;
-    folderId: string | null;
-    name: string;
-    mimeType: string;
-    sizeBytes: number;
-    kind: FileKind;
-    storageKey: string;
-  },
-) {
-  const { data, error } = await ctx.supabase
-    .from<FileRow>("files")
-    .insert({
-      id: input.id,
-      user_id: ctx.userId,
-      folder_id: input.folderId,
-      name: input.name.trim(),
-      mime_type: input.mimeType.trim(),
-      size_bytes: input.sizeBytes,
-      kind: input.kind,
-      storage_key: input.storageKey,
-    })
-    .select("*")
-    .single();
-
-  assertNoDatabaseError(error, "Could not create file");
-  assertFound(data, "File not found.");
+  assertNoDatabaseError(error, "Could not load parent node");
+  assertFound(data, "Parent node not found.");
   return data;
 }
 
 async function createRecordingRow(
   ctx: ServiceContext,
-  input: { id: string; fileId: string },
+  input: { id: string; nodeId: string },
 ) {
   const { data, error } = await ctx.supabase
     .from<RecordingRow>("recordings")
     .insert({
       id: input.id,
       user_id: ctx.userId,
-      file_id: input.fileId,
+      node_id: input.nodeId,
       status: "pending",
       duration_sec: null,
       error: null,
@@ -107,16 +75,13 @@ async function createRecordingRow(
 export async function createUploadedFile(
   ctx: ServiceContext,
   input: CreateUploadedFileInput,
-): Promise<{ file: FileRow; recording: RecordingRow | null }> {
-  await assertFolderOwned(ctx, input.folderId);
+): Promise<{ node: LibraryNode; recording: RecordingRow | null }> {
+  const parent = await getOwnedParent(ctx, input.parentId);
+  const uploadId = randomUUID();
+  const storageKey = storageKeyForUpload(ctx.userId, input.name, uploadId);
+  const isAudio = isAudioMimeType(input.mimeType);
 
-  const fileId = randomUUID();
-  const storageKey = storageKeyForUpload(ctx.userId, input.name, fileId);
-  const kind: FileKind = isAudioMimeType(input.mimeType) ? "audio" : "other";
-
-  // Cap audio enqueues per user (transcription is the cost-sensitive path).
-  // Enforce before any storage/DB write so a limited upload leaves no orphans.
-  if (kind === "audio") {
+  if (isAudio) {
     await enforceRateLimit(ctx, LIMITS.transcriptionEnqueue);
   }
 
@@ -128,48 +93,45 @@ export async function createUploadedFile(
   });
 
   try {
-    const file = await createFileRow(ctx, {
-      id: fileId,
-      folderId: input.folderId,
-      name: input.name,
+    const metadata = {
+      title: input.name,
+      parentId: input.parentId,
       mimeType: input.mimeType,
       sizeBytes: input.bytes.byteLength,
-      kind,
       storageKey,
-    });
+    };
+    const node = isAudio
+      ? await createAudioNode(ctx, {
+          ...metadata,
+          workspaceId: parent.workspace_id,
+        })
+      : await createFileNode(ctx, metadata);
 
-    if (kind !== "audio") return { file, recording: null };
+    if (!isAudio) return { node, recording: null };
 
     const recording = await createRecordingRow(ctx, {
       id: randomUUID(),
-      fileId: file.id,
+      nodeId: node.id,
     });
 
     try {
       await input.enqueueTranscription({
         userId: ctx.userId,
         recordingId: recording.id,
-        fileId: file.id,
-        storageKey: file.storage_key,
+        nodeId: node.id,
+        storageKey,
       });
     } catch (enqueueError) {
-      // The file + recording rows are already committed. Nothing advances a
-      // recording that has no job behind it, so leaving it "pending" would
-      // strand it forever. Surface it as "failed" (which the UI shows and the
-      // user can retry) and keep the stored audio so the retry can re-enqueue
-      // without re-uploading the bytes.
       const failed = await markRecordingEnqueueFailed(
         ctx,
         recording.id,
         enqueueError,
       );
-      return { file, recording: failed };
+      return { node, recording: failed };
     }
 
-    return { file, recording };
+    return { node, recording };
   } catch (error) {
-    // Failure before the recording row is committed (storage/file/recording
-    // insert): no rows to keep, so remove the orphaned object and rethrow.
     await input.storage.remove({ bucket: input.bucket, key: storageKey });
     throw error;
   }

@@ -10,7 +10,8 @@ import { startLiveSession } from "@/server/services/live-sessions";
 
 const startSchema = z.object({
   name: z.string().min(1).max(200),
-  folderId: nullableUuidSchema,
+  parentId: nullableUuidSchema,
+  workspaceId: z.string().uuid(),
 });
 
 export async function POST(request: Request) {

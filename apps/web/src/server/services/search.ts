@@ -39,16 +39,16 @@ export type SearchResult =
 
 export type SearchInputs = {
   query: string;
-  documentBodyHits: Tables<"documents">[];
+  pageBodyHits: Tables<"library_nodes">[];
   transcriptHits: Tables<"transcripts">[];
-  documentTitleHits: Tables<"documents">[];
-  fileNameHits: Tables<"files">[];
-  semanticDocumentHits?: SemanticDocumentHit[];
+  pageTitleHits: Tables<"library_nodes">[];
+  fileNodeHits: Tables<"library_nodes">[];
+  semanticPageHits?: SemanticPageHit[];
   semanticTranscriptHits?: SemanticTranscriptHit[];
 };
 
-type SemanticDocumentHit = {
-  document: Tables<"documents">;
+type SemanticPageHit = {
+  page: Tables<"library_nodes">;
   snippet: string;
   similarity: number;
 };
@@ -63,7 +63,7 @@ type SemanticTranscriptHit = {
 type SemanticSearchRow = {
   id: string;
   user_id: string;
-  source_type: "document" | "transcript";
+  source_type: "page" | "transcript";
   source: unknown;
   chunk_index: number;
   content: string;
@@ -97,7 +97,7 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
   const docById = new Map<
     string,
     {
-      row: Tables<"documents">;
+      row: Tables<"library_nodes">;
       tier: SearchTier;
       snippet: string;
       semanticScore: number | null;
@@ -105,7 +105,7 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
   >();
 
   function upsertDocument(input: {
-    row: Tables<"documents">;
+    row: Tables<"library_nodes">;
     tier: SearchTier;
     snippet: string;
     semanticScore?: number;
@@ -129,16 +129,16 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
     }
   }
 
-  for (const row of inputs.documentTitleHits)
+  for (const row of inputs.pageTitleHits)
     upsertDocument({ row, tier: 2, snippet: "" });
-  for (const hit of inputs.semanticDocumentHits ?? [])
+  for (const hit of inputs.semanticPageHits ?? [])
     upsertDocument({
-      row: hit.document,
+      row: hit.page,
       tier: 1,
       snippet: hit.snippet,
       semanticScore: hit.similarity,
     });
-  for (const row of inputs.documentBodyHits)
+  for (const row of inputs.pageBodyHits)
     upsertDocument({
       row,
       tier: 0,
@@ -154,7 +154,7 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
         kind: "document" as const,
         id: row.id,
         title: row.title,
-        folderId: row.folder_id,
+        folderId: row.parent_id,
         snippet,
         tier,
       } satisfies DocumentSearchResult,
@@ -221,14 +221,14 @@ export function rankResults(inputs: SearchInputs): SearchResult[] {
 
   const transcripts = [...transcriptById.values()];
 
-  const files = inputs.fileNameHits.map((row) => ({
+  const files = inputs.fileNodeHits.map((row) => ({
     ts: row.created_at,
     semanticScore: null,
     result: {
       kind: "file" as const,
       id: row.id,
-      name: row.name,
-      folderId: row.folder_id,
+      name: row.title,
+      folderId: row.parent_id,
       tier: 2 as const,
     } satisfies FileSearchResult,
   }));
@@ -260,11 +260,12 @@ export async function searchLibrary(
   if (query.length === 0) return [];
   const pattern = `%${escapeLikePattern(query)}%`;
 
-  const [documentBody, transcripts, documentTitle, files] = await Promise.all([
+  const [pageBody, transcripts, pageTitle, files] = await Promise.all([
     ctx.supabase
-      .from<Tables<"documents">>("documents")
+      .from<Tables<"library_nodes">>("library_nodes")
       .select("*")
       .eq("user_id", ctx.userId)
+      .eq("kind", "page")
       .textSearch("content_tsv", query, { type: "websearch" }),
     ctx.supabase
       .from<Tables<"transcripts">>("transcripts")
@@ -272,39 +273,38 @@ export async function searchLibrary(
       .eq("user_id", ctx.userId)
       .textSearch("full_text_tsv", query, { type: "websearch" }),
     ctx.supabase
-      .from<Tables<"documents">>("documents")
+      .from<Tables<"library_nodes">>("library_nodes")
       .select("*")
       .eq("user_id", ctx.userId)
+      .eq("kind", "page")
       .ilike("title", pattern),
     ctx.supabase
-      .from<Tables<"files">>("files")
+      .from<Tables<"library_nodes">>("library_nodes")
       .select("*")
       .eq("user_id", ctx.userId)
-      .ilike("name", pattern),
+      .in("kind", ["file", "audio"])
+      .ilike("title", pattern),
   ]);
 
-  assertNoDatabaseError(documentBody.error, "Could not search documents");
+  assertNoDatabaseError(pageBody.error, "Could not search pages");
   assertNoDatabaseError(transcripts.error, "Could not search transcripts");
-  assertNoDatabaseError(
-    documentTitle.error,
-    "Could not search document titles",
-  );
+  assertNoDatabaseError(pageTitle.error, "Could not search page titles");
   assertNoDatabaseError(files.error, "Could not search files");
 
   const semanticHits = options.embeddingProvider
     ? await searchSemanticChunks(ctx, query, options.embeddingProvider, [
-        ...documentBody.data,
-        ...documentTitle.data,
+        ...pageBody.data,
+        ...pageTitle.data,
       ])
     : { documents: [], transcripts: [] };
 
   return rankResults({
     query,
-    documentBodyHits: documentBody.data,
+    pageBodyHits: pageBody.data,
     transcriptHits: transcripts.data,
-    documentTitleHits: documentTitle.data,
-    fileNameHits: files.data,
-    semanticDocumentHits: semanticHits.documents,
+    pageTitleHits: pageTitle.data,
+    fileNodeHits: files.data,
+    semanticPageHits: semanticHits.documents,
     semanticTranscriptHits: semanticHits.transcripts,
   });
 }
@@ -313,7 +313,7 @@ async function searchSemanticChunks(
   ctx: ServiceContext,
   query: string,
   provider: EmbeddingProvider,
-  knownDocuments: Tables<"documents">[],
+  knownPages: Tables<"library_nodes">[],
 ) {
   const embeddings = await provider.embed([query]);
   if (embeddings.length !== 1) {
@@ -338,20 +338,20 @@ async function searchSemanticChunks(
 
   assertNoDatabaseError(error, "Could not search semantic chunks");
 
-  const semanticDocuments = parseSemanticDocumentRows(data);
-  const documentById = await getSemanticDocumentMap(
+  const semanticPages = parseSemanticPageRows(data);
+  const pageById = await getSemanticPageMap(
     ctx,
-    semanticDocuments.map((hit) => hit.documentId),
-    knownDocuments,
+    semanticPages.map((hit) => hit.nodeId),
+    knownPages,
   );
 
   return {
-    documents: semanticDocuments.flatMap((hit) => {
-      const document = documentById.get(hit.documentId);
-      return document
+    documents: semanticPages.flatMap((hit) => {
+      const page = pageById.get(hit.nodeId);
+      return page
         ? [
             {
-              document,
+              page,
               snippet: hit.content,
               similarity: hit.similarity,
             },
@@ -362,15 +362,15 @@ async function searchSemanticChunks(
   };
 }
 
-function parseSemanticDocumentRows(rows: SemanticSearchRow[]) {
+function parseSemanticPageRows(rows: SemanticSearchRow[]) {
   return rows.flatMap((row) => {
-    if (row.source_type !== "document" || !isRecord(row.source)) return [];
-    const documentId = row.source.documentId;
-    if (typeof documentId !== "string") return [];
+    if (row.source_type !== "page" || !isRecord(row.source)) return [];
+    const nodeId = row.source.nodeId;
+    if (typeof nodeId !== "string") return [];
 
     return [
       {
-        documentId,
+        nodeId,
         content: row.content,
         similarity: row.similarity,
       },
@@ -398,38 +398,39 @@ function parseSemanticTranscriptRows(rows: SemanticSearchRow[]) {
   });
 }
 
-async function getSemanticDocumentMap(
+async function getSemanticPageMap(
   ctx: ServiceContext,
-  documentIds: string[],
-  knownDocuments: Tables<"documents">[],
+  nodeIds: string[],
+  knownPages: Tables<"library_nodes">[],
 ) {
-  const wantedIds = new Set(documentIds);
-  const documentById = new Map(
-    knownDocuments
-      .filter((document) => wantedIds.has(document.id))
-      .map((document) => [document.id, document]),
+  const wantedIds = new Set(nodeIds);
+  const pageById = new Map(
+    knownPages
+      .filter((page) => wantedIds.has(page.id))
+      .map((page) => [page.id, page]),
   );
-  const missingIds = [...wantedIds].filter((id) => !documentById.has(id));
+  const missingIds = [...wantedIds].filter((id) => !pageById.has(id));
 
   if (missingIds.length === 0) {
-    return documentById;
+    return pageById;
   }
 
   const { data, error } = await ctx.supabase
-    .from<Tables<"documents">>("documents")
+    .from<Tables<"library_nodes">>("library_nodes")
     .select("*")
     .eq("user_id", ctx.userId)
+    .eq("kind", "page")
     .in("id", missingIds);
 
-  assertNoDatabaseError(error, "Could not load semantic documents");
+  assertNoDatabaseError(error, "Could not load semantic pages");
 
-  for (const document of data) {
-    if (wantedIds.has(document.id)) {
-      documentById.set(document.id, document);
+  for (const page of data) {
+    if (wantedIds.has(page.id)) {
+      pageById.set(page.id, page);
     }
   }
 
-  return documentById;
+  return pageById;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

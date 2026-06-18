@@ -22,9 +22,10 @@ function TagControls({ tag }: { tag: TagRow }) {
     <>
       <Button
         type="button"
-        variant="outline"
-        size="sm"
+        variant="ghost"
+        size="icon-xs"
         title={`Rename ${tag.name}`}
+        className="absolute right-7 hidden group-hover:inline-flex group-focus-within:inline-flex"
         data-drawer-stay
         onClick={() => setRenameOpen(true)}
       >
@@ -33,9 +34,10 @@ function TagControls({ tag }: { tag: TagRow }) {
       </Button>
       <Button
         type="button"
-        variant="outline"
-        size="sm"
+        variant="ghost"
+        size="icon-xs"
         title={`Delete ${tag.name}`}
+        className="absolute right-1 hidden group-hover:inline-flex group-focus-within:inline-flex"
         data-drawer-stay
         onClick={() => setDeleteOpen(true)}
       >
@@ -55,7 +57,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title={`Delete ${tag.name}?`}
-        description="The tag is removed from every note and file."
+        description="The tag is removed from every linked node."
         confirmLabel="Delete"
         onConfirm={() => remove.mutate(tag.id)}
       />
@@ -65,12 +67,14 @@ function TagControls({ tag }: { tag: TagRow }) {
 
 export function TagPanel({
   tags,
-  selectedTagId,
-  onSelectTag,
+  tagLinks,
+  selectedTagIds,
+  onToggleTag,
 }: {
   tags: TagRow[];
-  selectedTagId: string | null;
-  onSelectTag: (tagId: string | null) => void;
+  tagLinks: Tables<"tag_links">[];
+  selectedTagIds: ReadonlySet<string>;
+  onToggleTag: (tagId: string) => void;
 }) {
   const create = useLibraryMutation(createTag);
   const [color, setColor] = useState<string>(TAG_COLOR_PRESETS[0].value);
@@ -106,29 +110,34 @@ export function TagPanel({
           </Button>
         </div>
       </form>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={selectedTagId === null ? "default" : "outline"}
-          size="sm"
-          onClick={() => onSelectTag(null)}
-        >
-          All
-        </Button>
+      <div className="space-y-1">
         {tags.map((tag) => (
-          <div key={tag.id} className="inline-flex items-center gap-1">
-            <Button
+          <div
+            key={tag.id}
+            className="group relative flex min-w-0 items-center"
+          >
+            <button
               type="button"
-              variant={selectedTagId === tag.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => onSelectTag(tag.id)}
+              aria-label={`Filter by ${tag.name}`}
+              aria-pressed={selectedTagIds.has(tag.id)}
+              onClick={() => onToggleTag(tag.id)}
+              className={`flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 pr-16 text-left text-[13px] transition hover:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-soft)] ${
+                selectedTagIds.has(tag.id)
+                  ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
+                  : "text-[var(--text-2)]"
+              }`}
             >
               <span
-                className="size-2 rounded-full"
-                style={{ backgroundColor: tag.color ?? "#64748b" }}
-              />
-              {tag.name}
-            </Button>
+                className="font-mono text-sm font-medium"
+                style={{ color: tag.color ?? "var(--text-3)" }}
+              >
+                #
+              </span>
+              <span className="truncate">{tag.name}</span>
+              <span className="ml-auto text-xs tabular-nums text-[var(--text-4)] group-hover:hidden group-focus-within:hidden">
+                {tagLinks.filter((link) => link.tag_id === tag.id).length}
+              </span>
+            </button>
             <TagControls tag={tag} />
           </div>
         ))}

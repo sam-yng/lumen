@@ -33,23 +33,27 @@ export type ProcessSpeakerLabelJobDeps = {
   convertToWav?: FfmpegRunner;
 };
 
-async function getJobFile(
+async function getJobAudioNode(
   supabase: ServiceSupabaseClient,
   payload: SpeakerLabelJobPayload,
 ) {
   const { data, error } = await supabase
-    .from<{ id: string; user_id: string; name: string; storage_key: string }>(
-      "files",
-    )
+    .from<{
+      id: string;
+      user_id: string;
+      title: string;
+      kind: string;
+      storage_key: string;
+    }>("library_nodes")
     .select("*")
-    .eq("id", payload.fileId)
+    .eq("id", payload.nodeId)
     .eq("user_id", payload.userId)
     .maybeSingle();
 
-  if (error) throw new Error(`Could not load file: ${error.message}`);
-  if (!data) throw new Error("File not found.");
+  if (error) throw new Error(`Could not load audio node: ${error.message}`);
+  if (!data || data.kind !== "audio") throw new Error("Audio node not found.");
   if (data.storage_key !== payload.storageKey) {
-    throw new Error("Job storage key does not match file.");
+    throw new Error("Job storage key does not match audio node.");
   }
 
   return data;
@@ -97,7 +101,7 @@ export async function processSpeakerLabelJob(
   }
 
   const bucket = job.data.bucket ?? deps.bucket;
-  const file = await getJobFile(deps.supabase, payload);
+  const node = await getJobAudioNode(deps.supabase, payload);
   const transcript = await getOwnedTranscript(deps.supabase, payload);
 
   const { data: segments, error: segmentsError } = await deps.supabase
@@ -113,7 +117,7 @@ export async function processSpeakerLabelJob(
     return { recordingId: payload.recordingId, labeled: 0 };
   }
 
-  const extension = extname(file.name) || ".webm";
+  const extension = extname(node.title) || ".webm";
   const audioPath = join(
     deps.tempDir,
     `${payload.recordingId}-label${extension}`,
@@ -128,7 +132,7 @@ export async function processSpeakerLabelJob(
       key: payload.storageKey,
     });
 
-    if (!downloaded) throw new Error("Storage provider cannot download files.");
+    if (!downloaded) throw new Error("Storage provider cannot download audio.");
 
     await writeFile(audioPath, downloaded.bytes);
 

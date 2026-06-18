@@ -2,10 +2,15 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod/v3";
 import type { ServiceContext } from "@/server/services/context";
-import { createDocument, getDocumentDetail } from "@/server/services/documents";
 import { ServiceError } from "@/server/services/errors";
 import { retrieveGroundedSources } from "@/server/services/grounded-retrieval";
-import { listDocumentsByTag } from "@/server/services/tags";
+import {
+  canonicalLibraryNodeRoute,
+  createPageNode,
+  getLibraryNodeSnapshot,
+  getPageNodeDetail,
+} from "@/server/services/library-nodes";
+import { listPageNodesByTag } from "@/server/services/tags";
 import { getTranscriptDetail } from "@/server/services/transcripts";
 
 function ok(value: unknown): CallToolResult {
@@ -38,7 +43,7 @@ export function runSearchNotes(ctx: ServiceContext, args: { query: string }) {
 }
 
 export function runGetDocument(ctx: ServiceContext, args: { id: string }) {
-  return guard(async () => ok(await getDocumentDetail(ctx, { id: args.id })));
+  return guard(async () => ok(await getPageNodeDetail(ctx, { id: args.id })));
 }
 
 export function runGetTranscript(
@@ -52,19 +57,29 @@ export function runGetTranscript(
 
 export function runCreateNote(
   ctx: ServiceContext,
-  args: { title: string; folderId: string | null },
+  args: { title: string; parentId: string },
 ) {
-  return guard(async () =>
-    ok(
-      await createDocument(ctx, { title: args.title, folderId: args.folderId }),
-    ),
-  );
+  return guard(async () => {
+    const node = await createPageNode(ctx, {
+      title: args.title,
+      parentId: args.parentId,
+    });
+    const { nodes } = await getLibraryNodeSnapshot(ctx);
+    return ok({ node, route: canonicalLibraryNodeRoute(nodes, node) });
+  });
 }
 
 export function runListByTag(ctx: ServiceContext, args: { tagId: string }) {
-  return guard(async () =>
-    ok(await listDocumentsByTag(ctx, { tagId: args.tagId })),
-  );
+  return guard(async () => {
+    const pages = await listPageNodesByTag(ctx, { tagId: args.tagId });
+    const { nodes } = await getLibraryNodeSnapshot(ctx);
+    return ok(
+      pages.map((node) => ({
+        node,
+        route: canonicalLibraryNodeRoute(nodes, node),
+      })),
+    );
+  });
 }
 
 // Zod v4 + MCP SDK type instantiation is excessively deep when registerTool is
@@ -84,7 +99,7 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     {
       title: "Search notes",
       description:
-        "Search the user's documents and transcripts and return citation-ready sources. " +
+        "Search the user's pages/notes and transcripts and return citation-ready sources. " +
         "Each source has a stable citationId (S1, S2, …); cite claims only with those labels.",
       inputSchema: { query: z.string().min(1).max(200) },
     },
@@ -94,8 +109,8 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
   rt<{ id: string }>(
     "get_document",
     {
-      title: "Get document",
-      description: "Fetch a single document by id.",
+      title: "Get page",
+      description: "Fetch a single page/note node by id with its stable route.",
       inputSchema: { id: z.string().uuid() },
     },
     (args) => runGetDocument(ctx, args),
@@ -111,14 +126,14 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
     (args) => runGetTranscript(ctx, args),
   );
 
-  rt<{ title: string; folderId: string | null }>(
+  rt<{ title: string; parentId: string }>(
     "create_note",
     {
       title: "Create note",
-      description: "Create a new document, optionally inside a folder.",
+      description: "Create a new page/note inside a workspace or page node.",
       inputSchema: {
         title: z.string().min(1).max(200),
-        folderId: z.string().uuid().nullable(),
+        parentId: z.string().uuid(),
       },
     },
     (args) => runCreateNote(ctx, args),
@@ -127,8 +142,8 @@ export function registerMcpTools(server: McpServer, ctx: ServiceContext) {
   rt<{ tagId: string }>(
     "list_by_tag",
     {
-      title: "List documents by tag",
-      description: "List documents linked to a tag.",
+      title: "List pages by tag",
+      description: "List page/note nodes linked to a tag with stable routes.",
       inputSchema: { tagId: z.string().uuid() },
     },
     (args) => runListByTag(ctx, args),

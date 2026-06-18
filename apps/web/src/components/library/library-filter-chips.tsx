@@ -6,12 +6,14 @@ type TagRow = Tables<"tags">;
 
 export function LibraryFilterChips({
   tags,
-  selectedTagId,
-  onSelectTag,
+  selectedTagIds,
+  onToggleTag,
+  onClearTags,
 }: {
   tags: TagRow[];
-  selectedTagId: string | null;
-  onSelectTag: (tagId: string | null) => void;
+  selectedTagIds: ReadonlySet<string>;
+  onToggleTag: (tagId: string) => void;
+  onClearTags: () => void;
 }) {
   if (tags.length === 0) return null;
 
@@ -25,10 +27,10 @@ export function LibraryFilterChips({
       </span>
       <button
         type="button"
-        onClick={() => onSelectTag(null)}
-        aria-pressed={selectedTagId === null}
+        onClick={onClearTags}
+        aria-pressed={selectedTagIds.size === 0}
         className={`${base} ${
-          selectedTagId === null
+          selectedTagIds.size === 0
             ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--accent-text)]"
             : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)] hover:border-[var(--border-strong)]"
         }`}
@@ -36,12 +38,12 @@ export function LibraryFilterChips({
         All
       </button>
       {tags.map((tag) => {
-        const selected = selectedTagId === tag.id;
+        const selected = selectedTagIds.has(tag.id);
         return (
           <button
             key={tag.id}
             type="button"
-            onClick={() => onSelectTag(selected ? null : tag.id)}
+            onClick={() => onToggleTag(tag.id)}
             aria-pressed={selected}
             className={`${base} ${
               selected

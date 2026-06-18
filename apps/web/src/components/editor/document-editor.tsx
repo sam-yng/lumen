@@ -28,10 +28,7 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  libraryQueryKey,
-  updateDocument,
-} from "@/components/library/library-api";
+import { libraryQueryKey, updateNode } from "@/components/library/library-api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Json, Tables } from "@/server/db/database.types";
 
-type DocumentRow = Tables<"documents">;
+type PageNode = Tables<"library_nodes">;
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 
 function emptyDocument(): Content {
@@ -67,9 +64,8 @@ function documentFromText(text: string | null): Content {
   };
 }
 
-function initialContent(document: DocumentRow): Content {
-  return (document.content_json ??
-    documentFromText(document.content_text)) as Content;
+function initialContent(page: PageNode): Content {
+  return (page.content_json ?? documentFromText(page.content_text)) as Content;
 }
 
 function ToolbarButton({
@@ -118,7 +114,7 @@ function useDocumentAutosave({
     const timeout = window.setTimeout(async () => {
       setSaveState("saving");
       try {
-        await updateDocument({
+        await updateNode({
           id: documentId,
           contentJson: editor.getJSON() as Json,
         });
@@ -425,16 +421,16 @@ function useEditorLinkDialog(editor: Editor | null) {
 
 function useDocumentEditorState({
   citationBlockIndex,
-  document,
+  page,
 }: {
   citationBlockIndex: number | null;
-  document: DocumentRow;
+  page: PageNode;
 }) {
   const queryClient = useQueryClient();
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const editorShellRef = useRef<HTMLDivElement | null>(null);
-  const content = useMemo(() => initialContent(document), [document]);
+  const content = useMemo(() => initialContent(page), [page]);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -471,7 +467,7 @@ function useDocumentEditorState({
   });
 
   useDocumentAutosave({
-    documentId: document.id,
+    documentId: page.id,
     editor,
     queryClient,
     saveState,
@@ -482,8 +478,8 @@ function useDocumentEditorState({
 
   const linkDialog = useEditorLinkDialog(editor);
   const anchorScopeId = `note-anchor-${linkDialog.fieldId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const updated = document.updated_at
-    ? new Date(document.updated_at).toLocaleDateString()
+  const updated = page.updated_at
+    ? new Date(page.updated_at).toLocaleDateString()
     : "Not saved";
   const wordCount =
     editor?.getText().trim().split(/\s+/).filter(Boolean).length ?? 0;
@@ -501,10 +497,10 @@ function useDocumentEditorState({
 }
 
 export function DocumentEditor({
-  document,
+  page,
   citationBlockIndex = null,
 }: {
-  document: DocumentRow;
+  page: PageNode;
   citationBlockIndex?: number | null;
 }) {
   const {
@@ -516,7 +512,7 @@ export function DocumentEditor({
     saveState,
     updated,
     wordCount,
-  } = useDocumentEditorState({ citationBlockIndex, document });
+  } = useDocumentEditorState({ citationBlockIndex, page });
 
   if (!editor) {
     return (
@@ -531,7 +527,7 @@ export function DocumentEditor({
       data-testid="document-editor-shell"
       className="flex h-[calc(100dvh-var(--topbar-h)-2rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)] lg:h-[calc(100dvh-var(--topbar-h)-3rem)]"
     >
-      <DocumentHeader saveState={saveState} title={document.title} />
+      <DocumentHeader saveState={saveState} title={page.title} />
       <EditorToolbar editor={editor} onOpenLinkDialog={linkDialog.openDialog} />
 
       <div

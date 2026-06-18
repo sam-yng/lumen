@@ -139,7 +139,7 @@ export function chooseBestTranscriptSegment(
 export type GroundedSemanticRow = {
   id: string;
   user_id: string;
-  source_type: "document" | "transcript";
+  source_type: "page" | "transcript";
   source: unknown;
   chunk_index: number;
   content: string;
@@ -180,12 +180,12 @@ export function parseGroundedSemanticRows(rows: GroundedSemanticRow[]): {
   for (const row of rows) {
     if (!isRecord(row.source)) continue;
 
-    if (row.source_type === "document") {
-      const documentId = row.source.documentId;
-      if (typeof documentId !== "string") continue;
+    if (row.source_type === "page") {
+      const nodeId = row.source.nodeId;
+      if (typeof nodeId !== "string") continue;
       const anchor = parseDocumentAnchor(row.source.anchor);
       documents.push({
-        documentId,
+        documentId: nodeId,
         ...(anchor ? { anchor } : {}),
         content: row.content,
         similarity: row.similarity,
@@ -260,16 +260,18 @@ async function collectLexicalCandidates(
 ): Promise<RawCandidate[]> {
   const pattern = `%${escapeLikePattern(query)}%`;
 
-  const [documentBody, documentTitle, transcripts] = await Promise.all([
+  const [pageBody, pageTitle, transcripts] = await Promise.all([
     ctx.supabase
-      .from<Tables<"documents">>("documents")
+      .from<Tables<"library_nodes">>("library_nodes")
       .select("*")
       .eq("user_id", ctx.userId)
+      .eq("kind", "page")
       .textSearch("content_tsv", query, { type: "websearch" }),
     ctx.supabase
-      .from<Tables<"documents">>("documents")
+      .from<Tables<"library_nodes">>("library_nodes")
       .select("*")
       .eq("user_id", ctx.userId)
+      .eq("kind", "page")
       .ilike("title", pattern),
     ctx.supabase
       .from<Tables<"transcripts">>("transcripts")
@@ -278,16 +280,13 @@ async function collectLexicalCandidates(
       .textSearch("full_text_tsv", query, { type: "websearch" }),
   ]);
 
-  assertNoDatabaseError(documentBody.error, "Could not search documents");
-  assertNoDatabaseError(
-    documentTitle.error,
-    "Could not search document titles",
-  );
+  assertNoDatabaseError(pageBody.error, "Could not search pages");
+  assertNoDatabaseError(pageTitle.error, "Could not search page titles");
   assertNoDatabaseError(transcripts.error, "Could not search transcripts");
 
   // Dedupe documents by id; a body hit's snippet beats a title-only hit.
   const documentCandidates = new Map<string, RawCandidate>();
-  for (const row of documentBody.data) {
+  for (const row of pageBody.data) {
     documentCandidates.set(row.id, {
       kind: "document",
       snippet: buildSnippet(row.content_text, query),
@@ -295,7 +294,7 @@ async function collectLexicalCandidates(
       documentId: row.id,
     });
   }
-  for (const row of documentTitle.data) {
+  for (const row of pageTitle.data) {
     if (documentCandidates.has(row.id)) continue;
     documentCandidates.set(row.id, {
       kind: "document",
@@ -499,11 +498,12 @@ async function loadDocumentTitles(
 ): Promise<Map<string, string>> {
   if (documentIds.length === 0) return new Map();
   const { data, error } = await ctx.supabase
-    .from<Tables<"documents">>("documents")
+    .from<Tables<"library_nodes">>("library_nodes")
     .select("*")
     .eq("user_id", ctx.userId)
+    .eq("kind", "page")
     .in("id", documentIds);
-  assertNoDatabaseError(error, "Could not load grounded documents");
+  assertNoDatabaseError(error, "Could not load grounded pages");
   return new Map(data.map((row) => [row.id, row.title]));
 }
 
@@ -519,21 +519,22 @@ async function loadRecordingTitles(
     .in("id", recordingIds);
   assertNoDatabaseError(recordingError, "Could not load grounded recordings");
 
-  const fileIds = uniqueStrings(recordings.map((row) => row.file_id));
-  if (fileIds.length === 0) return new Map();
+  const nodeIds = uniqueStrings(recordings.map((row) => row.node_id));
+  if (nodeIds.length === 0) return new Map();
 
-  const { data: files, error: fileError } = await ctx.supabase
-    .from<Tables<"files">>("files")
+  const { data: nodes, error: nodeError } = await ctx.supabase
+    .from<Tables<"library_nodes">>("library_nodes")
     .select("*")
     .eq("user_id", ctx.userId)
-    .in("id", fileIds);
-  assertNoDatabaseError(fileError, "Could not load grounded files");
+    .eq("kind", "audio")
+    .in("id", nodeIds);
+  assertNoDatabaseError(nodeError, "Could not load grounded audio nodes");
 
-  const nameByFile = new Map(files.map((row) => [row.id, row.name]));
+  const titleByNode = new Map(nodes.map((row) => [row.id, row.title]));
   const titleByRecording = new Map<string, string>();
   for (const recording of recordings) {
-    const name = nameByFile.get(recording.file_id);
-    if (name !== undefined) titleByRecording.set(recording.id, name);
+    const title = titleByNode.get(recording.node_id);
+    if (title !== undefined) titleByRecording.set(recording.id, title);
   }
   return titleByRecording;
 }

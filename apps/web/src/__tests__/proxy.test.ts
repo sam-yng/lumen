@@ -44,4 +44,11 @@ describe("proxy auth guard", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/login");
   });
+
+  it("redirects an authenticated user from an auth page to the root", async () => {
+    state.user = { id: "user-1" };
+    const response = await proxy(request("/login"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/");
+  });
 });

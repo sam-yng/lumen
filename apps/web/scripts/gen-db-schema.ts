@@ -6,8 +6,11 @@
  * never hand-edit the output. Run via `bun run docs:db-schema`.
  *
  * The parser is intentionally lightweight: it recognises `create table`,
+ * `drop table`, `alter table ... rename to`,
  * `alter table ... enable row level security`, and `create policy` statements.
- * It does not attempt to be a full SQL parser.
+ * `create`/`drop`/`rename` are folded in source order so the emitted schema
+ * reflects the final post-migration state. It does not attempt to be a full
+ * SQL parser.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -43,16 +46,30 @@ function readMigrations(): string {
     .join("\n");
 }
 
-/** Extract the parenthesised body of `create table <name> ( ... )`. */
-function parseTables(sql: string): Map<string, Table> {
-  const tables = new Map<string, Table>();
+type CreateEvent = {
+  kind: "create";
+  index: number;
+  name: string;
+  body: string;
+};
+type DropEvent = { kind: "drop"; index: number; name: string };
+type RenameEvent = {
+  kind: "rename";
+  index: number;
+  from: string;
+  to: string;
+};
+type TableEvent = CreateEvent | DropEvent | RenameEvent;
+
+const unquote = (raw: string): string => raw.replace(/"/g, "");
+
+/** Collect `create table <name> ( ... )` events with their source positions. */
+function collectCreateEvents(sql: string): CreateEvent[] {
+  const events: CreateEvent[] = [];
   const re =
     /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?("?\w+"?)\s*\(/gi;
-  let match: RegExpExecArray | null;
-
-  match = re.exec(sql);
+  let match: RegExpExecArray | null = re.exec(sql);
   while (match !== null) {
-    const name = match[1].replace(/"/g, "");
     // Walk forward from the opening paren, tracking depth, to find its match.
     let depth = 0;
     let i = match.index + match[0].length - 1;
@@ -64,14 +81,78 @@ function parseTables(sql: string): Map<string, Table> {
         if (depth === 0) break;
       }
     }
-    const body = sql.slice(start, i);
-    tables.set(name, {
-      name,
-      columns: parseColumns(body),
-      rls: false,
-      policies: [],
+    events.push({
+      kind: "create",
+      index: match.index,
+      name: unquote(match[1]),
+      body: sql.slice(start, i),
     });
     match = re.exec(sql);
+  }
+  return events;
+}
+
+/** Collect `drop table [if exists] <name>[, <name>...]` events. */
+function collectDropEvents(sql: string): DropEvent[] {
+  const events: DropEvent[] = [];
+  const re = /drop\s+table\s+(?:if\s+exists\s+)?([^;]+);/gi;
+  for (const match of sql.matchAll(re)) {
+    for (const ref of match[1].split(",")) {
+      const name = unquote(ref.trim())
+        .replace(/^public\./i, "")
+        .replace(/\s+(cascade|restrict)\s*$/i, "")
+        .trim();
+      if (name) events.push({ kind: "drop", index: match.index, name });
+    }
+  }
+  return events;
+}
+
+/** Collect `alter table <name> rename to <name>` (table rename) events. */
+function collectRenameEvents(sql: string): RenameEvent[] {
+  const events: RenameEvent[] = [];
+  const re =
+    /alter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?("?\w+"?)\s+rename\s+to\s+(?:public\.)?("?\w+"?)/gi;
+  for (const match of sql.matchAll(re)) {
+    events.push({
+      kind: "rename",
+      index: match.index,
+      from: unquote(match[1]),
+      to: unquote(match[2]),
+    });
+  }
+  return events;
+}
+
+/**
+ * Fold create/drop/rename events in source order into the final table set, so
+ * dropped tables disappear and renamed tables move to their final name.
+ */
+export function parseTables(sql: string): Map<string, Table> {
+  const tables = new Map<string, Table>();
+  const events: TableEvent[] = [
+    ...collectCreateEvents(sql),
+    ...collectDropEvents(sql),
+    ...collectRenameEvents(sql),
+  ].sort((a, b) => a.index - b.index);
+
+  for (const event of events) {
+    if (event.kind === "create") {
+      tables.set(event.name, {
+        name: event.name,
+        columns: parseColumns(event.body),
+        rls: false,
+        policies: [],
+      });
+    } else if (event.kind === "drop") {
+      tables.delete(event.name);
+    } else {
+      const table = tables.get(event.from);
+      if (!table) continue;
+      tables.delete(event.from);
+      table.name = event.to;
+      tables.set(event.to, table);
+    }
   }
   return tables;
 }
@@ -188,7 +269,7 @@ function render(tables: Map<string, Table>): string {
   return lines.join("\n");
 }
 
-function main(): void {
+export function main(): void {
   const sql = readMigrations();
   const tables = parseTables(sql);
   applyAddedColumns(sql, tables);
@@ -197,4 +278,4 @@ function main(): void {
   console.log(`Wrote ${OUTPUT} (${tables.size} tables).`);
 }
 
-main();
+if ((import.meta as { main?: boolean }).main) main();

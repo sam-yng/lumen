@@ -48,12 +48,6 @@ same rule when it gains content.
     — make the Railway worker image prebuild and verify `whisper-cli` so the
     service can return to an empty custom start command.
 - **cross-cutting** — product navigation and focused UI polish
-  - [navigation-node-tree.md](exec-plans/active/cross-cutting/navigation-node-tree.md)
-    — replace `/library` with root Library at `/`, migrate to a single
-    `library_nodes` tree for workspaces/pages/files/audio, add pinned
-    container pages, desktop row multi-select, bulk actions, delete loading,
-    and compact multi-tag filtering. Design:
-    [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md).
   - [tag-color-picker-custom.md](exec-plans/active/cross-cutting/tag-color-picker-custom.md)
     — replace the native tag color select with a custom color-block picker and
     align the tag create controls on desktop.
@@ -177,6 +171,14 @@ same rule when it gains content.
   — PR-triggered `quality-gate` + Supabase-backed `e2e-smoke` CI jobs; dirty-kitchen rule
 - [planning-lifecycle-enforcement.md](exec-plans/completed/cross-cutting/planning-lifecycle-enforcement.md)
   — `check:plans` gate enforcing the exec-plan-before-build rule
+- [navigation-node-tree.md](exec-plans/completed/cross-cutting/navigation-node-tree.md)
+  (2026-06-18) — replaced `/library` folder/document model with a root Library
+  at `/` over a single `library_nodes` tree (workspaces/pages/files/audio),
+  pinned containers, desktop multi-select + bulk actions, and compact multi-tag
+  OR filtering; destructive current-dev migration seeding one `Imported
+  workspace` per profile. `bun run check` green (334 tests) + browser happy path
+  verified (design:
+  [2026-06-18-navigation-node-tree-design.md](superpowers/specs/2026-06-18-navigation-node-tree-design.md))
 
 ## Archive
 
