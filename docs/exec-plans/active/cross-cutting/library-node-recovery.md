@@ -7,6 +7,7 @@
 **Area:** library navigation, routes, node UI, uploads/live sessions, recents
 **Created:** 2026-06-18
 **Depends on:** [`completed/cross-cutting/navigation-node-tree.md`](../../completed/cross-cutting/navigation-node-tree.md)
+**Design:** [`library-workspace-hardening-design.md`](../../../superpowers/specs/2026-06-18-library-workspace-hardening-design.md)
 
 **Goal:** Keep the `library_nodes` foundation while restoring the feature set and interaction quality that regressed during the navigation-node-tree implementation.
 
@@ -118,6 +119,65 @@
 - [x] Run `bun run check`.
 - [x] Run browser happy path: create workspace, create folder, create note, edit standalone note, upload a file, start/cancel live session, visit recents, select rows, clear selection, filter by tags, inspect disabled assistant nav.
 - [x] Record verification notes in this plan before promotion.
+
+### Task 8: Harden Workspace Architecture And Route Dispatch
+
+**Files:**
+- Modify: `apps/web/src/app/(app)/[workspaceSlug]/[nodeSlug]/page.tsx`
+- Modify: `apps/web/src/app/(app)/__tests__/navigation-pages.test.tsx`
+- Modify: `apps/web/src/components/library/library-workspace.tsx`
+- Create focused reducer/presentation modules under `apps/web/src/components/library/`
+- Modify: `apps/web/src/components/library/__tests__/library-workspace.test.tsx`
+- Add focused tests under `apps/web/src/components/library/__tests__/`
+
+**Interfaces:**
+- Route resolution consumes `LibraryNodeSnapshot`, `workspaceSlug`, and
+  `nodeSlug`; it produces a container render or a note/transcript redirect URL.
+- Workspace reducer consumes dialog/tag actions and produces one active dialog
+  plus the selected tag ID set.
+- Extracted presentation modules consume data/callback props only; query and
+  mutation ownership stays in `LibraryWorkspace`.
+
+- [ ] Write route-resolution tests for note redirect, transcript redirect,
+  container rendering, and audio-without-recording fallback; run the focused
+  test and confirm RED because route resolution still happens in effects.
+- [ ] Implement server-side route resolution and remove both navigation effects;
+  run the focused tests and confirm GREEN.
+- [ ] Write reducer tests for dialog exclusivity, tag toggle, and clear; run the
+  focused test and confirm RED because the reducer does not exist.
+- [ ] Implement the reducer-backed hook, extract focused presentation/dialog
+  modules, and replace the upload `onSubmit` handler with a form action.
+- [ ] Run `bun run check` after each production patch and keep the gate green.
+- [ ] Run `bunx react-doctor@latest --verbose --diff`; confirm all seven reported
+  warnings are gone and the score does not regress.
+
+### Task 9: Stabilize Smoke Coverage And Audit The Test Suite
+
+**Files:**
+- Modify: `apps/web/playwright.config.ts`
+- Modify as justified: tests under `apps/web/e2e/`, `apps/web/src/**/__tests__/`,
+  `apps/web/worker/__tests__/`, and `apps/web/scripts/__tests__/`
+- Modify: this plan with the final audit and verification record
+
+**Interfaces:**
+- Playwright expectations remain locator/URL condition waits; CI receives a
+  cold-compilation-aware timeout without fixed sleeps.
+- Every test retained must map to a current production module, security
+  invariant, user journey, or distinct regression risk.
+
+- [ ] Add a configuration test or inspectable assertion for the CI expectation
+  budget; confirm RED against the five-second default.
+- [ ] Add the minimal CI-aware expectation budget and rerun the targeted smoke.
+- [ ] Inventory all test files, production imports, overlapping assertions,
+  skipped paths, obsolete terminology, and tests for modules without production
+  consumers.
+- [ ] Delete or consolidate only cases with evidence of staleness/redundancy;
+  run `bun run check` after every patch.
+- [ ] Record a strict audit table in Verification Notes: removed, consolidated,
+  retained, and gaps that require new coverage.
+- [ ] Run the full Playwright suite and the manual library happy path.
+- [ ] Run docs-sanity-check's six read-only checks and report all groups before
+  applying any human-authored documentation fixes.
 
 ## Verification Notes
 
