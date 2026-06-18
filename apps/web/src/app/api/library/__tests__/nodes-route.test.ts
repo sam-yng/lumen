@@ -31,6 +31,7 @@ import {
 const ctx = { userId: "user-1", supabase: {} } as never;
 const nodeId = "11111111-1111-4111-8111-111111111111";
 const parentId = "22222222-2222-4222-8222-222222222222";
+const seededParentId = "00000000-0000-0000-0000-0000000000f1";
 
 function request(path: string, body: unknown) {
   return new Request(`http://x/api/library/${path}`, {
@@ -64,6 +65,26 @@ describe("library node routes", () => {
     expect(createPageNode).toHaveBeenCalledWith(ctx, {
       title: "Notes",
       parentId,
+    });
+  });
+
+  it("accepts UUID-shaped seeded node ids when creating a note", async () => {
+    vi.mocked(createPageNode).mockResolvedValue({ id: nodeId } as never);
+
+    const response = await POST(
+      request("nodes", {
+        kind: "page",
+        title: "Seed child",
+        parentId: seededParentId,
+        role: "note",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createPageNode).toHaveBeenCalledWith(ctx, {
+      title: "Seed child",
+      parentId: seededParentId,
+      role: "note",
     });
   });
 

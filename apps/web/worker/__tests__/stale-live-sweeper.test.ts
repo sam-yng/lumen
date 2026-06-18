@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Tables } from "@/server/db/database.types";
 import type { ServiceSupabaseClient } from "@/server/services/context";
 import {
   isStaleLiveSession,
@@ -11,12 +12,27 @@ const USER_ID = "018f4ed6-30f2-7838-8b36-2464c4b59e2f";
 const OTHER_USER_ID = "018f4ed6-30f2-7838-8b36-2464c4b59e30";
 const RECORDING_ID = "018f4ed7-47c4-7583-8207-1e5ce4d0a2a7";
 const OTHER_RECORDING_ID = "018f4ed7-47c4-7583-8207-1e5ce4d0a2a8";
-const FILE_ID = "018f4ed8-0d34-73bd-8b71-307768d57b02";
+const NODE_ID = "018f4ed8-0d34-73bd-8b71-307768d57b02";
 const TRANSCRIPT_ID = "018f4ed9-1111-7000-8000-000000000001";
 const OTHER_TRANSCRIPT_ID = "018f4ed9-2222-7000-8000-000000000002";
 
 const NOW = new Date("2026-06-12T12:00:00Z");
 const STALE_MINUTES = 45;
+
+function recordingRow(
+  overrides: Partial<Tables<"recordings">> = {},
+): Tables<"recordings"> {
+  return {
+    id: RECORDING_ID,
+    user_id: USER_ID,
+    node_id: NODE_ID,
+    status: "live",
+    duration_sec: null,
+    error: null,
+    created_at: minutesAgo(120),
+    ...overrides,
+  };
+}
 
 function minutesAgo(minutes: number) {
   return new Date(NOW.getTime() - minutes * 60_000).toISOString();
@@ -82,15 +98,9 @@ function fixture(input: {
 }) {
   return new TrackingSupabase({
     recordings: [
-      {
-        id: RECORDING_ID,
-        user_id: USER_ID,
-        file_id: FILE_ID,
-        status: "live",
-        duration_sec: null,
-        error: null,
+      recordingRow({
         created_at: input.recordingCreatedAt,
-      },
+      }),
     ],
     transcripts: [
       {
@@ -191,24 +201,15 @@ describe("sweepStaleLiveSessions", () => {
   it("scopes every write by the owning user_id across users", async () => {
     const supabase = new TrackingSupabase({
       recordings: [
-        {
-          id: RECORDING_ID,
-          user_id: USER_ID,
-          file_id: FILE_ID,
-          status: "live",
-          duration_sec: null,
-          error: null,
+        recordingRow({
           created_at: minutesAgo(120),
-        },
-        {
+        }),
+        recordingRow({
           id: OTHER_RECORDING_ID,
           user_id: OTHER_USER_ID,
-          file_id: "018f4ed8-0d34-73bd-8b71-307768d57b03",
-          status: "live",
-          duration_sec: null,
-          error: null,
+          node_id: "018f4ed8-0d34-73bd-8b71-307768d57b03",
           created_at: minutesAgo(120),
-        },
+        }),
       ],
       transcripts: [
         {
@@ -284,16 +285,15 @@ describe("sweepStaleLiveSessions", () => {
     });
     // A second stale husk for another user, listed first so its failure
     // would mask the first user's sweep if errors were not contained.
-    supabase.tables.recordings.unshift({
-      id: OTHER_RECORDING_ID,
-      user_id: OTHER_USER_ID,
-      file_id: "018f4ed8-0d34-73bd-8b71-307768d57b03",
-      status: "live",
-      duration_sec: null,
-      error: null,
-      // Unparseable timestamp forces a per-recording error.
-      created_at: "not-a-timestamp",
-    });
+    supabase.tables.recordings.unshift(
+      recordingRow({
+        id: OTHER_RECORDING_ID,
+        user_id: OTHER_USER_ID,
+        node_id: "018f4ed8-0d34-73bd-8b71-307768d57b03",
+        // Unparseable timestamp forces a per-recording error.
+        created_at: "not-a-timestamp",
+      }),
+    );
 
     const result = await sweep(supabase);
 

@@ -5,10 +5,10 @@ import {
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import { bulkMoveLibraryNodes } from "@/server/services/library-nodes";
 
-const uuidSchema = z.string().uuid();
 const bulkMoveSchema = z.object({
   ids: z.array(uuidSchema).min(1),
   parentId: nullableUuidSchema,

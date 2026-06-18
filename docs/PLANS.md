@@ -43,6 +43,11 @@ same rule when it gains content.
     dependency.
 ## Active
 
+- **cross-cutting** — library node recovery
+  - [library-node-recovery.md](exec-plans/active/cross-cutting/library-node-recovery.md)
+    — recover user-facing features and route behavior regressed during the
+    navigation-node-tree implementation while keeping the `library_nodes`
+    foundation.
 - **production** — targeted production deployment fixes
   - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
     — make the Railway worker image prebuild and verify `whisper-cli` so the

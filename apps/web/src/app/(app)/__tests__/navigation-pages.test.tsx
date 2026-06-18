@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { redirect } = vi.hoisted(() => ({ redirect: vi.fn() }));
+const { getLibraryNodeSnapshot, redirect } = vi.hoisted(() => ({
+  getLibraryNodeSnapshot: vi.fn(),
+  redirect: vi.fn(),
+}));
 const nodeId = "11111111-1111-4111-8111-111111111111";
 
 vi.mock("next/navigation", () => ({ redirect }));
@@ -11,23 +14,52 @@ vi.mock("@/server/db/client", () => ({
   createServerSupabase: async () => ({
     auth: {
       getUser: async () => ({
-        data: { user: { email: "reader@example.com" } },
+        data: { user: { id: "user-1", email: "reader@example.com" } },
       }),
     },
   }),
 }));
+vi.mock("@/server/services/library-nodes", () => ({
+  getLibraryNodeSnapshot,
+}));
 vi.mock("@/components/library/library-workspace", () => ({
   LibraryWorkspace: ({
+    view,
     workspaceSlug,
     nodeSlug,
   }: {
+    view?: "library" | "recents";
     workspaceSlug?: string;
     nodeSlug?: string;
   }) => (
     <div>
+      <span data-testid="view">{view ?? "library"}</span>
       <span data-testid="workspace-slug">{workspaceSlug ?? "root"}</span>
       <span data-testid="node-slug">{nodeSlug ?? "none"}</span>
     </div>
+  ),
+}));
+vi.mock("@/components/library/live-session-route", () => ({
+  LiveSessionRoute: ({
+    parentId,
+    workspaceId,
+  }: {
+    parentId: string | null;
+    workspaceId: string;
+  }) => (
+    <div data-testid="live-route">
+      {workspaceId}:{parentId ?? "root"}
+    </div>
+  ),
+}));
+vi.mock("@/components/library/note-route", () => ({
+  NoteRoute: ({ nodeId }: { nodeId: string }) => (
+    <div data-testid="note-route">{nodeId}</div>
+  ),
+}));
+vi.mock("@/components/library/transcript-route", () => ({
+  TranscriptRoute: ({ recordingId }: { recordingId: string }) => (
+    <div data-testid="transcript-route">{recordingId}</div>
   ),
 }));
 
@@ -48,6 +80,32 @@ async function renderPage(page: Promise<ReactNode> | ReactNode) {
 describe("node navigation pages", () => {
   beforeEach(() => {
     redirect.mockClear();
+    getLibraryNodeSnapshot.mockResolvedValue({
+      nodes: [
+        {
+          id: "workspace-1",
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: null,
+          kind: "workspace",
+          title: "Research",
+          slug: "research-abcd1234",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+      ],
+      recordings: [],
+      transcripts: [],
+      tags: [],
+      tagLinks: [],
+    });
   });
 
   it("renders the root library shell without route slugs", async () => {
@@ -83,16 +141,101 @@ describe("node navigation pages", () => {
     expect(screen.getByTestId("node-slug")).toHaveTextContent("notes-efab5678");
   });
 
-  it("redirects the legacy library route to the root", async () => {
-    await LegacyLibraryPage();
-    await LegacyLivePage({ searchParams: Promise.resolve({}) });
-    await LegacyNotePage({ params: Promise.resolve({ id: nodeId }) });
-    await LegacyRecentsPage();
-    await LegacyTagsPage();
-    await LegacyTranscriptPage({
-      params: Promise.resolve({ recordingId: nodeId }),
+  it("redirects a leaf note before rendering the workspace shell", async () => {
+    getLibraryNodeSnapshot.mockResolvedValue({
+      nodes: [
+        {
+          id: "workspace-1",
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: null,
+          kind: "workspace",
+          title: "Research",
+          slug: "research-abcd1234",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+        {
+          id: nodeId,
+          user_id: "user-1",
+          workspace_id: "workspace-1",
+          parent_id: "workspace-1",
+          kind: "page",
+          title: "Notes",
+          slug: "notes-efab5678",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          mime_type: null,
+          size_bytes: null,
+          storage_key: null,
+          is_pinned: false,
+          created_at: "2026-06-18T00:00:00.000Z",
+          updated_at: "2026-06-18T00:00:00.000Z",
+        },
+      ],
+      recordings: [],
+      transcripts: [],
+      tags: [],
+      tagLinks: [],
     });
-    expect(redirect).toHaveBeenCalledTimes(6);
+
+    await renderPage(
+      NodePage({
+        params: Promise.resolve({
+          workspaceSlug: "research-abcd1234",
+          nodeSlug: "notes-efab5678",
+        }),
+      }),
+    );
+
+    expect(redirect).toHaveBeenCalledWith(`/library/notes/${nodeId}`);
+  });
+
+  it("keeps the legacy library route redirected to the root", async () => {
+    await LegacyLibraryPage();
+    await LegacyTagsPage();
+    expect(redirect).toHaveBeenCalledTimes(2);
     expect(redirect).toHaveBeenCalledWith("/");
+  });
+
+  it("renders recents instead of redirecting it", async () => {
+    await renderPage(LegacyRecentsPage());
+    expect(screen.getByTestId("view")).toHaveTextContent("recents");
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("renders live, note, and transcript standalone routes", async () => {
+    await renderPage(
+      LegacyLivePage({
+        searchParams: Promise.resolve({
+          parentId: "22222222-2222-4222-8222-222222222222",
+          workspaceId: nodeId,
+        }),
+      }),
+    );
+    expect(screen.getByTestId("live-route")).toHaveTextContent(
+      `${nodeId}:22222222-2222-4222-8222-222222222222`,
+    );
+
+    await renderPage(
+      LegacyNotePage({ params: Promise.resolve({ id: nodeId }) }),
+    );
+    expect(screen.getByTestId("note-route")).toHaveTextContent(nodeId);
+
+    await renderPage(
+      LegacyTranscriptPage({
+        params: Promise.resolve({ recordingId: nodeId }),
+      }),
+    );
+    expect(screen.getByTestId("transcript-route")).toHaveTextContent(nodeId);
+    expect(redirect).not.toHaveBeenCalled();
   });
 });

@@ -55,6 +55,12 @@ function renderSidebar(ui: React.ReactNode) {
 }
 
 describe("LibrarySidebar", () => {
+  const Sidebar = LibrarySidebar as React.ComponentType<
+    React.ComponentProps<typeof LibrarySidebar> & {
+      view?: "library" | "recents";
+    }
+  >;
+
   it("renders pinned containers above the nested Library tree", () => {
     const nodes = [
       node("workspace-1", "workspace", {
@@ -74,7 +80,8 @@ describe("LibrarySidebar", () => {
     ];
 
     renderSidebar(
-      <LibrarySidebar
+      <Sidebar
+        view="library"
         nodes={nodes}
         tags={[]}
         tagLinks={[]}
@@ -110,7 +117,8 @@ describe("LibrarySidebar", () => {
 
   it("renders compact tag rows with counts and a delete action in the count slot", () => {
     renderSidebar(
-      <LibrarySidebar
+      <Sidebar
+        view="library"
         nodes={[]}
         tags={[
           { id: "tag-1", user_id: "user-1", name: "Exam", color: "#22c55e" },
@@ -171,5 +179,79 @@ describe("LibrarySidebar", () => {
     );
 
     expect(filtered.map((item) => item.id)).toEqual(["page-1", "page-2"]);
+  });
+
+  it("keeps Library active for workspace routes and shows disabled Ask Lumen", () => {
+    renderSidebar(
+      <Sidebar
+        view="library"
+        nodes={[]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Library" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Recents" })).toHaveAttribute(
+      "href",
+      "/library/recents",
+    );
+    expect(screen.getByText("Ask Lumen")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
+  it("marks Recents active without marking Library active", () => {
+    renderSidebar(
+      <Sidebar
+        view="recents"
+        nodes={[]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Library" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    expect(screen.getByRole("link", { name: "Recents" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("keeps the filter row visible when no tags exist", () => {
+    render(
+      <LibraryFilterChips
+        tags={[]}
+        selectedTagIds={new Set()}
+        onToggleTag={vi.fn()}
+        onClearTags={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Filter")).toBeVisible();
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

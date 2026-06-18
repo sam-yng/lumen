@@ -16,10 +16,11 @@ export function LibraryItemActions({
   onDelete: () => void;
   onClear: () => void;
 }) {
-  if (selectedCount === 0) return null;
+  const hasSelection = selectedCount > 0;
+  const disabled = isBusy || !hasSelection;
 
   return (
-    <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] p-2 shadow-[var(--shadow-pop)]">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] p-2 shadow-[var(--shadow-pop)]">
       <span className="mr-auto px-1 text-sm font-medium">
         {selectedCount} selected
       </span>
@@ -27,7 +28,7 @@ export function LibraryItemActions({
         type="button"
         variant="outline"
         size="sm"
-        disabled={isBusy}
+        disabled={disabled}
         onClick={onMove}
       >
         <FolderInput className="size-4" /> Move
@@ -36,7 +37,7 @@ export function LibraryItemActions({
         type="button"
         variant="destructive"
         size="sm"
-        disabled={isBusy}
+        disabled={disabled}
         onClick={onDelete}
       >
         <Trash2 className="size-4" /> Delete
@@ -45,7 +46,7 @@ export function LibraryItemActions({
         type="button"
         variant="ghost"
         size="sm"
-        disabled={isBusy}
+        disabled={disabled}
         onClick={onClear}
       >
         <X className="size-4" /> Clear

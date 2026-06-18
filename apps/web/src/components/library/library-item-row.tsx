@@ -3,6 +3,7 @@
 import { Check, File as FileIcon, FileText, Folder, Mic } from "lucide-react";
 import type { MouseEvent } from "react";
 import type { LibraryNode } from "@/server/services/library-nodes";
+import { nodeMetaLabel } from "./library-node-ui";
 
 const iconByKind = {
   workspace: Folder,
@@ -13,13 +14,14 @@ const iconByKind = {
 
 const metaByKind = {
   workspace: "Workspace",
-  page: "Page",
+  page: "Note",
   file: "File",
   audio: "Audio",
 } satisfies Record<LibraryNode["kind"], string>;
 
 export function ItemRow({
   node,
+  nodes = [node],
   isSelected,
   selectionIndex,
   disabled = false,
@@ -27,6 +29,7 @@ export function ItemRow({
   onOpen,
 }: {
   node: LibraryNode;
+  nodes?: LibraryNode[];
   isSelected: boolean;
   selectionIndex: number;
   disabled?: boolean;
@@ -37,7 +40,7 @@ export function ItemRow({
   const meta =
     node.kind === "file" || node.kind === "audio"
       ? `${node.mime_type ?? metaByKind[node.kind]} · ${node.size_bytes ?? 0} bytes`
-      : metaByKind[node.kind];
+      : nodeMetaLabel(node, nodes);
 
   return (
     <li

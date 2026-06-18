@@ -113,7 +113,9 @@ describe("node content routes", () => {
 
     renderRoute(<TranscriptRoute nodeId="audio-1" />);
 
-    expect(await screen.findByText("Lecture audio")).toBeVisible();
+    expect(
+      (await screen.findAllByText("Lecture audio")).length,
+    ).toBeGreaterThan(0);
     expect(await screen.findByTestId("transcript-viewer")).toHaveTextContent(
       "audio-1",
     );

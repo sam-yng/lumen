@@ -4,12 +4,13 @@ import {
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import { linkTagToNode } from "@/server/services/tags";
 
 const createTagLinkSchema = z.object({
-  tagId: z.string().uuid(),
-  nodeId: z.string().uuid(),
+  tagId: uuidSchema,
+  nodeId: uuidSchema,
 });
 
 export async function POST(request: Request) {

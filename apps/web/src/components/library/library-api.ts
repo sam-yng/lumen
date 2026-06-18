@@ -57,10 +57,28 @@ export function createWorkspace(input: { title: string }) {
   });
 }
 
-export function createPage(input: { title: string; parentId: string }) {
+export function createPage(input: {
+  title: string;
+  parentId: string;
+  role?: "note" | "folder";
+}) {
   return requestJson<LibraryNode>("/api/library/nodes", {
     method: "POST",
     body: JSON.stringify({ kind: "page", ...input }),
+  });
+}
+
+export function createNote(input: { title: string; parentId: string }) {
+  return requestJson<LibraryNode>("/api/library/nodes", {
+    method: "POST",
+    body: JSON.stringify({ kind: "page", role: "note", ...input }),
+  });
+}
+
+export function createFolder(input: { title: string; parentId: string }) {
+  return requestJson<LibraryNode>("/api/library/nodes", {
+    method: "POST",
+    body: JSON.stringify({ kind: "page", role: "folder", ...input }),
   });
 }
 
@@ -92,6 +110,18 @@ export function bulkDeleteNodes(input: { ids: string[] }) {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export function uploadFile(input: { file: File; parentId: string }) {
+  const body = new FormData();
+  body.set("file", input.file);
+  body.set("name", input.file.name);
+  body.set("parentId", input.parentId);
+
+  return requestForm<{
+    node: LibraryNode;
+    recording: Tables<"recordings"> | null;
+  }>("/api/library/uploads", body);
 }
 
 export function retryRecording(id: string) {

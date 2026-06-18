@@ -16,7 +16,7 @@ async function login(page: import("@playwright/test").Page) {
 
 test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   // Unique per run so leftovers from interrupted runs can't collide.
-  const pageName = `Mobile page ${Date.now()}`;
+  const noteName = `Mobile note ${Date.now()}`;
 
   await login(page);
 
@@ -42,22 +42,32 @@ test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   await nodes.getByRole("button", { name: "Course notes" }).dblclick();
   await expect(page).toHaveURL(/\/course-notes/);
 
-  // Drawer: create a page from the sidebar action.
+  // Drawer: create a note from the sidebar action. Notes open in the
+  // standalone editor rather than staying inside the workspace shell.
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "New page" })
+    .getByRole("button", { name: "New note" })
     .click();
-  await page.getByLabel("Page title").fill(pageName);
-  await page.getByRole("button", { name: "Create page" }).click();
-  await expect(nodes.getByRole("button", { name: pageName })).toBeVisible();
+  await page.getByLabel("Note title").fill(noteName);
+  await page.getByRole("button", { name: "Create note" }).click();
+  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
+  await expect(
+    page
+      .getByTestId("document-editor-shell")
+      .getByRole("heading", { name: noteName }),
+  ).toBeVisible();
+
+  await page.getByRole("link", { name: "Back to library" }).click();
+  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
+  await expect(nodes.getByRole("button", { name: noteName })).toBeVisible();
 
   // The node tree has no per-row menu: select the row, then delete through the
   // bulk action bar + confirmation dialog.
-  await nodes.getByRole("button", { name: pageName }).click();
+  await nodes.getByRole("button", { name: noteName }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("button", { name: "Delete selected" }).click();
-  await expect(nodes.getByRole("button", { name: pageName })).toHaveCount(0);
+  await expect(nodes.getByRole("button", { name: noteName })).toHaveCount(0);
 });
 
 test("tag rename from the drawer survives the drawer close-on-click handler", async ({

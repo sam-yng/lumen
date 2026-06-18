@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import { getServerEnv } from "@/server/config/env";
 import { createServerSupabase } from "@/server/db/client";
@@ -11,7 +12,7 @@ import type { ServiceSupabaseClient } from "@/server/services/context";
 import { SupabaseStorageProvider } from "@/server/services/storage-provider";
 import { createUploadedFile } from "@/server/services/uploads";
 
-const parentIdSchema = z.string().uuid();
+const parentIdSchema = uuidSchema;
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);

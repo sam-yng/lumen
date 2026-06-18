@@ -1,19 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { LibraryActions } from "./library-actions";
 import {
@@ -21,16 +12,22 @@ import {
   createWorkspace,
   fetchLibrarySnapshot,
   libraryQueryKey,
+  uploadFile,
 } from "./library-api";
 import { LibraryContent } from "./library-content";
-import { TextInputDialog } from "./library-dialogs";
 import { LibraryFilterChips } from "./library-filter-chips";
+import { isFolderNode, isNoteNode } from "./library-node-ui";
 import { canonicalNodePath, nodePath } from "./library-paths";
+import { LibraryRecentsContent } from "./library-recents-content";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 import { filterNodesBySelectedTags } from "./library-tags";
-import { NoteRoute } from "./note-route";
-import { TranscriptRoute } from "./transcript-route";
+import { LibraryWorkspaceDialogs } from "./library-workspace-dialogs";
+import {
+  createLibraryWorkspaceState,
+  libraryWorkspaceReducer,
+} from "./library-workspace-state";
+import { LibraryWorkspaceTopBar } from "./library-workspace-top-bar";
 
 type SignOutAction = () => Promise<void>;
 
@@ -39,25 +36,45 @@ export function LibraryWorkspace({
   userEmail,
   workspaceSlug,
   nodeSlug,
+  view = "library",
 }: {
   signOutAction: SignOutAction;
   userEmail: string;
   workspaceSlug?: string;
   nodeSlug?: string;
+  view?: "library" | "recents";
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
-  const [pageDialogOpen, setPageDialogOpen] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(
-    () => new Set(),
+  const [{ activeDialog, selectedTagIds }, dispatch] = useReducer(
+    libraryWorkspaceReducer,
+    undefined,
+    createLibraryWorkspaceState,
   );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
   });
-
+  const { nodes = [], tags = [], tagLinks = [], recordings = [] } = data ?? {};
+  const workspace = workspaceSlug
+    ? nodes.find(
+        (node) => node.kind === "workspace" && node.slug === workspaceSlug,
+      )
+    : null;
+  const selectedNode = nodeSlug
+    ? (nodes.find(
+        (node) => node.slug === nodeSlug && node.workspace_id === workspace?.id,
+      ) ?? null)
+    : workspace;
+  const selectedNodeIsContainer =
+    selectedNode?.kind === "workspace" ||
+    (selectedNode ? isFolderNode(selectedNode, nodes) : false);
+  const selectedContainer = selectedNodeIsContainer ? selectedNode : null;
+  const parentContainer = selectedNode?.parent_id
+    ? (nodes.find((node) => node.id === selectedNode.parent_id) ?? null)
+    : null;
+  const pageParent = selectedContainer ?? parentContainer ?? workspace;
   const createWorkspaceMutation = useMutation({
     mutationFn: createWorkspace,
     onSuccess: async (node) => {
@@ -69,7 +86,17 @@ export function LibraryWorkspace({
     mutationFn: createPage,
     onSuccess: async (node) => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
-      if (data) router.push(canonicalNodePath(data.nodes, node));
+      if (node.kind === "page" && !isFolderNode(node, [node])) {
+        router.push(`/library/notes/${node.id}`);
+      } else if (data) {
+        router.push(canonicalNodePath(data.nodes, node));
+      }
+    },
+  });
+  const uploadMutation = useMutation({
+    mutationFn: uploadFile,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     },
   });
 
@@ -87,92 +114,41 @@ export function LibraryWorkspace({
       </div>
     );
   }
-
-  const { nodes, tags = [], tagLinks = [] } = data;
   const filteredNodes = filterNodesBySelectedTags(
     nodes,
     tagLinks,
     selectedTagIds,
   );
-  const toggleTag = (tagId: string) => {
-    setSelectedTagIds((current) => {
-      const next = new Set(current);
-      if (next.has(tagId)) next.delete(tagId);
-      else next.add(tagId);
-      return next;
-    });
-  };
-  const workspace = workspaceSlug
-    ? nodes.find(
-        (node) => node.kind === "workspace" && node.slug === workspaceSlug,
-      )
-    : null;
-  const selectedNode = nodeSlug
-    ? (nodes.find(
-        (node) => node.slug === nodeSlug && node.workspace_id === workspace?.id,
-      ) ?? null)
-    : workspace;
-  const selectedContainer =
-    selectedNode?.kind === "workspace" || selectedNode?.kind === "page"
-      ? selectedNode
-      : null;
-  const parentContainer = selectedNode?.parent_id
-    ? (nodes.find((node) => node.id === selectedNode.parent_id) ?? null)
-    : null;
-  const pageParent = selectedContainer ?? parentContainer ?? workspace;
+  const toggleTag = (tagId: string) => dispatch({ type: "toggleTag", tagId });
   const atRoot = workspaceSlug === undefined;
+  const isRecentsView = view === "recents";
   const hasWorkspace = nodes.some((node) => node.kind === "workspace");
-  const firstRun = workspaceSlug === undefined && !hasWorkspace;
+  const firstRun =
+    !isRecentsView && workspaceSlug === undefined && !hasWorkspace;
   const crumbs = nodePath(nodes, selectedNode?.id ?? null);
-  const openNode = (node: LibraryNode) =>
+  const openNode = (node: LibraryNode) => {
+    if (isNoteNode(node, nodes)) {
+      router.push(`/library/notes/${node.id}`);
+      return;
+    }
+    if (node.kind === "audio") {
+      const recording = recordings.find((item) => item.node_id === node.id);
+      if (recording) router.push(`/library/transcripts/${recording.id}`);
+      return;
+    }
     router.push(canonicalNodePath(nodes, node));
+  };
   const openNodeById = (id: string) => {
     const node = nodes.find((candidate) => candidate.id === id);
     if (node) openNode(node);
   };
-
-  const topBar = (
-    <div className="flex min-h-[var(--topbar-h)] w-full min-w-0 items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
-        <button
-          type="button"
-          className="shrink-0 hover:text-foreground"
-          onClick={() => router.push("/")}
-        >
-          Library
-        </button>
-        {crumbs.map((crumb) => (
-          <span key={crumb.id} className="flex min-w-0 items-center gap-2">
-            <ChevronRight className="size-4 shrink-0" />
-            <button
-              type="button"
-              onClick={() => openNode(crumb)}
-              className="truncate hover:text-foreground"
-              aria-current={crumb.id === selectedNode?.id ? "page" : undefined}
-            >
-              {crumb.title}
-            </button>
-          </span>
-        ))}
-      </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        title="Search"
-        onClick={() => searchInputRef.current?.focus()}
-      >
-        <span className="sr-only">Search</span>
-        <Search className="size-4" />
-      </Button>
-    </div>
-  );
 
   return (
     <LibraryShell
       sidebar={
         <LibrarySidebar
           nodes={nodes}
+          view={isRecentsView ? "recents" : "library"}
           tags={tags}
           tagLinks={tagLinks}
           selectedTagIds={selectedTagIds}
@@ -180,20 +156,40 @@ export function LibraryWorkspace({
           userEmail={userEmail}
           signOutAction={signOutAction}
           onCreatePage={() =>
-            pageParent ? setPageDialogOpen(true) : setWorkspaceDialogOpen(true)
+            dispatch({
+              type: "openDialog",
+              dialog: pageParent ? "note" : "workspace",
+            })
           }
           onFocusSearch={() => searchInputRef.current?.focus()}
           onToggleTag={toggleTag}
         />
       }
-      topBar={topBar}
+      topBar={
+        <LibraryWorkspaceTopBar
+          canRecord={pageParent !== null}
+          crumbs={crumbs}
+          isRecentsView={isRecentsView}
+          onFocusSearch={() => searchInputRef.current?.focus()}
+          onOpenLibrary={() => router.push("/")}
+          onOpenNode={openNode}
+          onRecord={(file) => {
+            if (pageParent) {
+              uploadMutation.mutate({ file, parentId: pageParent.id });
+            }
+          }}
+          selectedNodeId={selectedNode?.id ?? null}
+        />
+      }
     >
       <div className="mb-5">
         <h2 className="text-2xl font-semibold">
-          {selectedNode?.title ?? "Library"}
+          {isRecentsView ? "Recents" : (selectedNode?.title ?? "Library")}
         </h2>
         <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-          {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
+          {isRecentsView
+            ? `${nodes.filter((node) => isNoteNode(node, nodes)).length} notes`
+            : `${nodes.length} ${nodes.length === 1 ? "item" : "items"}`}
         </p>
       </div>
 
@@ -204,106 +200,80 @@ export function LibraryWorkspace({
         onSelectFile={openNodeById}
       />
 
-      <div className="space-y-5">
-        <LibraryFilterChips
-          tags={tags}
-          selectedTagIds={selectedTagIds}
-          onToggleTag={toggleTag}
-          onClearTags={() => setSelectedTagIds(new Set())}
-        />
-        {atRoot || selectedContainer ? (
-          <LibraryActions
-            atRoot={atRoot}
-            onCreateWorkspace={() => setWorkspaceDialogOpen(true)}
-            onCreatePage={() => setPageDialogOpen(true)}
+      {isRecentsView ? (
+        <LibraryRecentsContent nodes={filteredNodes} onOpen={openNodeById} />
+      ) : (
+        <div className="space-y-5">
+          <LibraryFilterChips
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onToggleTag={toggleTag}
+            onClearTags={() => dispatch({ type: "clearTags" })}
           />
-        ) : null}
-        {selectedNode?.kind === "page" ? (
-          <>
-            <NoteRoute nodeId={selectedNode.id} />
-            <LibraryContent
-              nodes={filteredNodes}
-              parentId={selectedNode.id}
-              atRoot={false}
-              onOpen={openNodeById}
+          {atRoot || selectedContainer ? (
+            <LibraryActions
+              atRoot={atRoot}
+              onCreateWorkspace={() =>
+                dispatch({ type: "openDialog", dialog: "workspace" })
+              }
+              onCreateNote={() =>
+                dispatch({ type: "openDialog", dialog: "note" })
+              }
+              onCreateFolder={() =>
+                dispatch({ type: "openDialog", dialog: "folder" })
+              }
+              onUpload={() =>
+                dispatch({ type: "openDialog", dialog: "upload" })
+              }
+              onStartLiveSession={() => {
+                if (!pageParent) return;
+                router.push(
+                  `/library/live?workspaceId=${pageParent.workspace_id}&parentId=${pageParent.id}`,
+                );
+              }}
             />
-          </>
-        ) : selectedNode?.kind === "audio" ? (
-          <TranscriptRoute nodeId={selectedNode.id} />
-        ) : (
+          ) : null}
           <LibraryContent
             nodes={filteredNodes}
             parentId={selectedNode?.id ?? null}
             atRoot={atRoot}
             onOpen={openNodeById}
           />
-        )}
-      </div>
+        </div>
+      )}
 
-      <TextInputDialog
-        open={workspaceDialogOpen}
-        onOpenChange={setWorkspaceDialogOpen}
-        title="Create a workspace"
-        label="Workspace name"
-        placeholder="Workspace name"
-        submitLabel="Create workspace"
-        onSubmit={(title) => createWorkspaceMutation.mutate({ title })}
-      />
-      <TextInputDialog
-        open={pageDialogOpen}
-        onOpenChange={setPageDialogOpen}
-        title="Create a page"
-        label="Page title"
-        placeholder="Untitled page"
-        submitLabel="Create page"
-        onSubmit={(title) => {
+      <LibraryWorkspaceDialogs
+        activeDialog={activeDialog}
+        createWorkspacePending={createWorkspaceMutation.isPending}
+        firstRun={firstRun}
+        onCreateFolder={(title) => {
           if (pageParent) {
             createPageMutation.mutate({
               title,
               parentId: pageParent.id,
+              role: "folder",
             });
           }
         }}
+        onCreateNote={(title) => {
+          if (pageParent) {
+            createPageMutation.mutate({
+              title,
+              parentId: pageParent.id,
+              role: "note",
+            });
+          }
+        }}
+        onCreateWorkspace={(title) => createWorkspaceMutation.mutate({ title })}
+        onDialogOpenChange={(dialog, open) =>
+          dispatch({ type: "setDialogOpen", dialog, open })
+        }
+        onUpload={(file) => {
+          if (pageParent) {
+            uploadMutation.mutate({ file, parentId: pageParent.id });
+          }
+        }}
       />
-
-      <Dialog open={firstRun}>
-        <DialogContent
-          aria-describedby={undefined}
-          onEscapeKeyDown={(event) => event.preventDefault()}
-          onPointerDownOutside={(event) => event.preventDefault()}
-        >
-          <DialogTitle className="text-sm font-semibold">
-            Create a workspace
-          </DialogTitle>
-          <form
-            className="mt-3 space-y-4"
-            action={(formData) => {
-              const title = String(formData.get("title") ?? "").trim();
-              if (title) createWorkspaceMutation.mutate({ title });
-            }}
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="first-workspace-name">Workspace name</Label>
-              <Input
-                id="first-workspace-name"
-                name="title"
-                placeholder="My workspace"
-                autoFocus
-                required
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={createWorkspaceMutation.isPending}
-              >
-                Create workspace
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </LibraryShell>
   );
 }

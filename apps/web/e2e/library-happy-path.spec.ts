@@ -13,7 +13,7 @@ test("demo user manages the library through routes", async ({ page }) => {
   // Unique per run so reruns against the same seed can't collide.
   const stamp = Date.now();
   const workspaceName = `Testing ${stamp}`;
-  const pageName = `Route note ${stamp}`;
+  const noteName = `Route note ${stamp}`;
 
   const consoleWarnings: string[] = [];
   page.on("console", (message) => {
@@ -31,33 +31,35 @@ test("demo user manages the library through routes", async ({ page }) => {
   await page.getByRole("button", { name: "Create workspace" }).click();
   await expect(page).toHaveURL(/\/testing-[a-z0-9-]+$/i);
 
-  // Create a page inside it; creating it auto-navigates to its editor route.
-  await page.getByRole("button", { name: "New page" }).first().click();
-  await page.getByLabel("Page title").fill(pageName);
-  await page.getByRole("button", { name: "Create page" }).click();
-  await expect(page).toHaveURL(/\/testing-[a-z0-9-]+\/route-note-[a-z0-9-]+$/i);
+  // Create a note inside it; creating it opens the standalone editor route.
+  await page.getByRole("button", { name: "New note" }).first().click();
+  await page.getByLabel("Note title").fill(noteName);
+  await page.getByRole("button", { name: "Create note" }).click();
+  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
+  await expect(
+    page
+      .getByTestId("document-editor-shell")
+      .getByRole("heading", { name: noteName }),
+  ).toBeVisible();
 
-  // The breadcrumb (a button, distinct from the sidebar "Library" link) returns
-  // to the root library.
-  await page.getByRole("button", { name: "Library" }).click();
+  // Notes keep editing out of the workspace shell.
+  await page.getByRole("link", { name: "Back to library" }).click();
   await expect(page).toHaveURL(/\/$/);
 
-  // Search opens the seeded note on its node route.
+  // Search opens the seeded note on its standalone editor route.
   await page.getByLabel("Search notes and transcripts").fill("mitochondria");
   const result = page.getByRole("button", { name: /Welcome to Lumen/i });
   await expect(result).toBeVisible();
   await result.click();
-  await expect(page).toHaveURL(
-    /\/course-notes-[a-z0-9-]+\/welcome-to-lumen-[a-z0-9-]+$/i,
-  );
+  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
   await expect(
     page
       .getByTestId("document-editor-shell")
       .getByRole("heading", { name: "Welcome to Lumen" }),
   ).toBeVisible();
 
-  // Cleanup: delete the created workspace (cascades the page).
-  await page.getByRole("button", { name: "Library" }).click();
+  // Cleanup: delete the created workspace (cascades the note).
+  await page.getByRole("link", { name: "Back to library" }).click();
   await expect(page).toHaveURL(/\/$/);
   await nodes.getByRole("button", { name: workspaceName }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();

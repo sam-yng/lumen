@@ -4,19 +4,20 @@ import {
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import {
   createPageNode,
   createWorkspaceNode,
 } from "@/server/services/library-nodes";
 
-const uuidSchema = z.string().uuid();
 const createNodeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("workspace"), title: z.string().min(1) }),
   z.object({
     kind: z.literal("page"),
     title: z.string().min(1),
     parentId: uuidSchema,
+    role: z.enum(["note", "folder"]).optional(),
   }),
 ]);
 
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
         : await createPageNode(ctx, {
             title: parsed.data.title,
             parentId: parsed.data.parentId,
+            role: parsed.data.role,
           });
     return Response.json(node, { status: 201 });
   } catch (error) {

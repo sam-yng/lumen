@@ -110,6 +110,7 @@ function NodeTree({
 
 export function LibrarySidebar({
   nodes,
+  view = "library",
   tags,
   tagLinks,
   selectedTagIds,
@@ -121,6 +122,7 @@ export function LibrarySidebar({
   onToggleTag,
 }: {
   nodes: LibraryNode[];
+  view?: "library" | "recents";
   tags: Tables<"tags">[];
   tagLinks: Tables<"tag_links">[];
   selectedTagIds: ReadonlySet<string>;
@@ -136,6 +138,8 @@ export function LibrarySidebar({
     .toSorted((a, b) => a.title.localeCompare(b.title));
   const navItem =
     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px]";
+  const navActive =
+    "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]";
   const navIdle = "text-[var(--text-2)] hover:bg-[var(--surface-2)]";
 
   return (
@@ -153,7 +157,7 @@ export function LibrarySidebar({
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <Button type="button" onClick={onCreatePage}>
             <Plus className="size-4" />
-            New page
+            New note
           </Button>
           <Button
             type="button"
@@ -168,11 +172,19 @@ export function LibrarySidebar({
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-4">
         <nav className="mb-4 space-y-1" aria-label="Primary">
-          <Link href="/" className={`${navItem} ${navIdle}`}>
+          <Link
+            href="/"
+            aria-current={view === "library" ? "page" : undefined}
+            className={`${navItem} ${view === "library" ? navActive : navIdle}`}
+          >
             <LibraryIcon className="size-4" />
             Library
           </Link>
-          <Link href="/" className={`${navItem} ${navIdle}`}>
+          <Link
+            href="/library/recents"
+            aria-current={view === "recents" ? "page" : undefined}
+            className={`${navItem} ${view === "recents" ? navActive : navIdle}`}
+          >
             <Clock className="size-4" />
             Recents
           </Link>
@@ -181,7 +193,20 @@ export function LibrarySidebar({
               <Sparkles className="size-4 text-[var(--accent-text)]" />
               Ask Lumen
             </Link>
-          ) : null}
+          ) : (
+            <span
+              aria-disabled="true"
+              title="Ask Lumen — enabling after launch"
+              className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-60`}
+            >
+              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              Ask Lumen
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-1.5 py-px font-mono text-[10px] text-[var(--accent-text)] uppercase">
+                <span className="size-[5px] rounded-full bg-[var(--accent)]" />
+                soon
+              </span>
+            </span>
+          )}
         </nav>
 
         {pinned.length > 0 ? (

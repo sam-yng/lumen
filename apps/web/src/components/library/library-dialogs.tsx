@@ -39,7 +39,7 @@ export function TextInputDialog({
   // open remounts the input fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         <form
           className="mt-3 space-y-4"
@@ -102,7 +102,7 @@ export function SelectDialog({
   // open remounts the select fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         <form
           className="mt-3 space-y-4"

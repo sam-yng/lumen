@@ -105,6 +105,7 @@ export function LibraryContent({
             <ItemRow
               key={node.id}
               node={node}
+              nodes={nodes}
               isSelected={selectedIds.has(node.id)}
               selectionIndex={index}
               disabled={isDeleting}
@@ -123,7 +124,7 @@ export function LibraryContent({
             </div>
             <h3 className="mt-4 text-lg font-semibold">Nothing here yet</h3>
             <p className="mt-1 text-sm text-[var(--text-3)]">
-              Create a page to start building this workspace.
+              Create a note, folder, or file to start building this workspace.
             </p>
           </div>
         </div>
@@ -132,8 +133,12 @@ export function LibraryContent({
       <LibraryItemActions
         selectedCount={selectedIds.size}
         isBusy={isDeleting || moveMutation.isPending}
-        onMove={() => setMoveOpen(true)}
-        onDelete={() => setDeleteOpen(true)}
+        onMove={() => {
+          if (selectedIds.size > 0) setMoveOpen(true);
+        }}
+        onDelete={() => {
+          if (selectedIds.size > 0) setDeleteOpen(true);
+        }}
         onClear={() => {
           anchorIndex.current = null;
           setSelectedIds(new Set());

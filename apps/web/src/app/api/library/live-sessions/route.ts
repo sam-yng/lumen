@@ -5,13 +5,14 @@ import {
   parseJsonBody,
   serviceErrorResponse,
   unauthorizedResponse,
+  uuidSchema,
 } from "@/app/api/library/http";
 import { startLiveSession } from "@/server/services/live-sessions";
 
 const startSchema = z.object({
   name: z.string().min(1).max(200),
   parentId: nullableUuidSchema,
-  workspaceId: z.string().uuid(),
+  workspaceId: uuidSchema,
 });
 
 export async function POST(request: Request) {

@@ -15,8 +15,6 @@ export function LibraryFilterChips({
   onToggleTag: (tagId: string) => void;
   onClearTags: () => void;
 }) {
-  if (tags.length === 0) return null;
-
   const base =
     "relative inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-[background,border-color,color] duration-150 ease-[var(--ease)] pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-['']";
 
