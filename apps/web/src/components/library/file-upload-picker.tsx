@@ -18,7 +18,7 @@ export function FileUploadPicker({ name }: { name: string }) {
     <div className="flex flex-wrap items-center gap-2">
       <label
         htmlFor={inputId}
-        className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-3 text-[13px] text-[var(--text-2)] transition hover:border-[var(--border-strong)] hover:text-foreground"
+        className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border-soft bg-surface-2 px-3 text-[13px] text-text-2 transition hover:border-border-strong hover:text-foreground"
       >
         <Upload className="size-4" />
         Choose file
@@ -35,7 +35,7 @@ export function FileUploadPicker({ name }: { name: string }) {
         }
       />
       {selectedFile ? (
-        <span className="inline-flex items-center gap-2 text-[13px] text-[var(--text-2)]">
+        <span className="inline-flex items-center gap-2 text-[13px] text-text-2">
           <span className="max-w-[200px] truncate">{selectedFile.name}</span>
           <Button
             type="button"

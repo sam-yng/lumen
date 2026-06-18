@@ -321,14 +321,14 @@ function LiveSessionSetupView({
   onStart(): void;
 }) {
   return (
-    <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-6">
+    <section className="mx-auto max-w-2xl space-y-4 rounded-md border border-border-soft bg-surface p-4 sm:p-6">
       <div className="flex items-center gap-3">
-        <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] text-[var(--danger)]">
+        <div className="grid size-10 shrink-0 place-items-center rounded-md border border-(--danger-soft) bg-(--danger-soft) text-danger">
           <Mic className="size-5" />
         </div>
         <div>
           <h3 className="text-[19px] font-semibold">Live session</h3>
-          <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+          <p className="font-mono text-[11.5px] text-text-3">
             transcribed on-device while you record · nothing but text leaves
             your machine until you save
           </p>
@@ -336,7 +336,7 @@ function LiveSessionSetupView({
       </div>
 
       {error ? (
-        <div className="flex items-start gap-2 rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-[13px] text-[var(--danger)]">
+        <div className="flex items-start gap-2 rounded-md border border-(--danger-soft) bg-(--danger-soft) p-3 text-[13px] text-danger">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -374,11 +374,11 @@ function LiveSessionStartingView({
   asrStatus: AsrStatus | null;
 }) {
   return (
-    <section className="mx-auto grid min-h-60 max-w-2xl place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+    <section className="mx-auto grid min-h-60 max-w-2xl place-items-center rounded-md border border-border-soft bg-surface p-6">
       <div className="space-y-3 text-center">
-        <Loader2 className="mx-auto size-6 animate-spin text-[var(--busy)]" />
+        <Loader2 className="mx-auto size-6 animate-spin text-busy" />
         <p className="text-sm">Starting live session…</p>
-        <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+        <p className="font-mono text-[11.5px] text-text-3">
           {statusLabel(asrStatus)}
         </p>
       </div>
@@ -395,7 +395,7 @@ function TranscriptRows({
 }) {
   if (finals.length === 0 && !interim) {
     return (
-      <p className="grid min-h-48 place-items-center text-center font-mono text-[11.5px] text-[var(--text-3)]">
+      <p className="grid min-h-48 place-items-center text-center font-mono text-[11.5px] text-text-3">
         Listening… transcript appears here as you speak.
       </p>
     );
@@ -408,7 +408,7 @@ function TranscriptRows({
           key={`${segment.startMs}-${segment.endMs}`}
           className="grid grid-cols-1 gap-0.5 rounded-md px-3 py-2 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3"
         >
-          <span className="font-mono text-[11.5px] text-[var(--text-3)]">
+          <span className="font-mono text-[11.5px] text-text-3">
             {formatTime(segment.startMs)}
           </span>
           <span className="font-serif text-[16.5px] leading-7 text-foreground">
@@ -418,10 +418,8 @@ function TranscriptRows({
       ))}
       {interim ? (
         <div className="grid grid-cols-1 gap-0.5 rounded-md px-3 py-2 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3">
-          <span className="font-mono text-[11.5px] text-[var(--text-4)]">
-            …
-          </span>
-          <span className="font-serif text-[16.5px] italic leading-7 text-[var(--text-3)]">
+          <span className="font-mono text-[11.5px] text-text-4">…</span>
+          <span className="font-serif text-[16.5px] italic leading-7 text-text-3">
             {interim}
           </span>
         </div>
@@ -456,26 +454,26 @@ function LiveSessionRecordingView({
   const saving = phase === "saving";
 
   return (
-    <section className="mx-auto max-w-3xl overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] p-4">
+    <section className="mx-auto max-w-3xl overflow-hidden rounded-md border border-border-soft bg-surface">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft p-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--danger-soft)] text-[var(--danger)]">
+          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-(--danger-soft) text-danger">
             <Mic className={`size-5 ${saving ? "" : "animate-pulse"}`} />
           </span>
           <div className="min-w-0">
             <h3 className="truncate text-[17px] font-semibold">
               {name.trim() || "Live session"}
             </h3>
-            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+            <p className="font-mono text-[11.5px] text-text-3">
               {statusLabel(asrStatus)}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="l-badge bg-[var(--danger-soft)] text-[var(--danger)]">
+          <span className="l-badge bg-(--danger-soft) text-danger">
             {saving ? "saving" : "recording"}
           </span>
-          <span className="w-12 font-mono text-[13px] text-[var(--text-2)]">
+          <span className="w-12 font-mono text-[13px] text-text-2">
             {formatElapsed(elapsed)}
           </span>
           <Button type="button" onClick={onStopAndSave} disabled={saving}>
@@ -501,7 +499,7 @@ function LiveSessionRecordingView({
       </header>
 
       {asrWarning ? (
-        <div className="flex items-start gap-2 border-b border-[var(--border-soft)] bg-[var(--warn-soft)] p-3 text-[13px] text-[var(--warn)]">
+        <div className="flex items-start gap-2 border-b border-border-soft bg-(--warn-soft) p-3 text-[13px] text-warn">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{asrWarning}</span>
         </div>

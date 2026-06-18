@@ -95,14 +95,14 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
     return (
       <Card
         key="otp"
-        className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
+        className="w-full max-w-[360px] border-border-soft bg-surface shadow-(--shadow-pop)"
       >
         <CardHeader className="gap-2">
           <LumenMark className="mb-1 size-10 min-[860px]:hidden" />
           <CardTitle className="text-[22px] font-semibold leading-tight">
             Check your email
           </CardTitle>
-          <CardDescription className="text-[var(--text-2)]">
+          <CardDescription className="text-text-2">
             Enter the confirmation code from your inbox.
           </CardDescription>
         </CardHeader>
@@ -111,7 +111,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="email"
-                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+                className="font-mono text-[11.5px] font-medium text-text-2"
               >
                 Email
               </Label>
@@ -126,7 +126,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="token"
-                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+                className="font-mono text-[11.5px] font-medium text-text-2"
               >
                 Confirmation code
               </Label>
@@ -144,7 +144,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
                 {pendingOtpState.error}
               </p>
             ) : pendingOtpState.resent ? (
-              <output className="text-sm text-[var(--text-3)]">
+              <output className="text-sm text-text-3">
                 New code sent to your email.
               </output>
             ) : null}
@@ -160,12 +160,12 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
           className="flex flex-col gap-2 px-6 pb-6 text-center"
         >
           <input type="hidden" name="email" value={pendingOtpState.email} />
-          <p className="text-sm text-[var(--text-3)]">
+          <p className="text-sm text-text-3">
             Didn’t get a code?{" "}
             <Button
               type="submit"
               variant="link"
-              className="h-auto p-0 font-medium text-[var(--accent-text)]"
+              className="h-auto p-0 font-medium text-accent-text"
               disabled={resendPending}
             >
               {resendPending ? "Sending…" : "Resend code"}
@@ -179,14 +179,14 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
   return (
     <Card
       key="credentials"
-      className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]"
+      className="w-full max-w-[360px] border-border-soft bg-surface shadow-(--shadow-pop)"
     >
       <CardHeader className="gap-2">
         <LumenMark className="mb-1 size-10 min-[860px]:hidden" />
         <CardTitle className="text-[22px] font-semibold leading-tight">
           {copy.title}
         </CardTitle>
-        <CardDescription className="text-[var(--text-2)]">
+        <CardDescription className="text-text-2">
           {copy.description}
         </CardDescription>
       </CardHeader>
@@ -195,10 +195,10 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
         <Button type="submit" variant="outline" className="w-full">
           Continue with Google
         </Button>
-        <div className="flex w-full items-center gap-3 text-xs text-[var(--text-4)]">
-          <span className="h-px flex-1 bg-[var(--border-soft)]" />
+        <div className="flex w-full items-center gap-3 text-xs text-text-4">
+          <span className="h-px flex-1 bg-border-soft" />
           <span>or</span>
-          <span className="h-px flex-1 bg-[var(--border-soft)]" />
+          <span className="h-px flex-1 bg-border-soft" />
         </div>
       </form>
       <form action={formAction}>
@@ -206,7 +206,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="email"
-              className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              className="font-mono text-[11.5px] font-medium text-text-2"
             >
               Email
             </Label>
@@ -221,7 +221,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="password"
-              className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              className="font-mono text-[11.5px] font-medium text-text-2"
             >
               Password
             </Label>
@@ -239,7 +239,7 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="confirmPassword"
-                className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+                className="font-mono text-[11.5px] font-medium text-text-2"
               >
                 Confirm password
               </Label>
@@ -263,20 +263,20 @@ export function AuthForm({ mode, action, initialState }: AuthFormProps) {
             {pending ? "…" : copy.submit}
           </Button>
           {mode === "login" ? (
-            <p className="text-sm text-[var(--text-3)]">
+            <p className="text-sm text-text-3">
               <Link
                 href="/forgot-password"
-                className="font-medium text-[var(--accent-text)] underline-offset-4 hover:underline"
+                className="font-medium text-accent-text underline-offset-4 hover:underline"
               >
                 Forgot password?
               </Link>
             </p>
           ) : null}
-          <p className="text-sm text-[var(--text-3)]">
+          <p className="text-sm text-text-3">
             {copy.altPrompt}{" "}
             <Link
               href={copy.altHref}
-              className="font-medium text-[var(--accent-text)] underline-offset-4 hover:underline"
+              className="font-medium text-accent-text underline-offset-4 hover:underline"
             >
               {copy.altLabel}
             </Link>

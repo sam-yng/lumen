@@ -12,12 +12,12 @@ export function Select({
     <div className={cn("relative", className)}>
       <select
         data-slot="select"
-        className="h-8 w-full appearance-none rounded-md border border-[var(--border)] bg-[var(--canvas)] pr-8 pl-3 text-[16px] text-foreground sm:text-[13px] transition-[border-color,box-shadow,background] duration-150 ease-[var(--ease)] outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] disabled:pointer-events-none disabled:opacity-50"
+        className="h-8 w-full appearance-none rounded-md border border-border bg-canvas pr-8 pl-3 text-[16px] text-foreground sm:text-[13px] transition-[border-color,box-shadow,background] duration-150 ease-(--ease) outline-none focus-visible:border-(--accent-line) focus-visible:ring-3 focus-visible:ring-(--accent-soft) disabled:pointer-events-none disabled:opacity-50"
         {...props}
       >
         {children}
       </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-[var(--text-3)]" />
+      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-text-3" />
     </div>
   );
 }

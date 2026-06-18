@@ -157,7 +157,7 @@ export function ConfirmDialog({
       <DialogContent>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         {description ? (
-          <DialogDescription className="mt-1.5 text-[13px] text-[var(--text-3)]">
+          <DialogDescription className="mt-1.5 text-[13px] text-text-3">
             {description}
           </DialogDescription>
         ) : null}

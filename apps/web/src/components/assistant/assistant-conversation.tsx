@@ -50,7 +50,7 @@ export function AssistantConversation() {
 
   return (
     <div className="flex h-dvh flex-col bg-background">
-      <header className="flex items-center gap-3 border-b border-[var(--border-soft)] px-4 py-3">
+      <header className="flex items-center gap-3 border-b border-border-soft px-4 py-3">
         <Button asChild variant="ghost" size="icon-sm" title="Back to library">
           <Link href="/">
             <span className="sr-only">Back to library</span>
@@ -78,7 +78,7 @@ export function AssistantConversation() {
             turns.map((turn) =>
               turn.role === "user" ? (
                 <div key={turn.id} className="flex justify-end">
-                  <p className="max-w-[80%] rounded-2xl bg-[var(--surface-2)] px-4 py-2 whitespace-pre-wrap">
+                  <p className="max-w-[80%] rounded-2xl bg-surface-2 px-4 py-2 whitespace-pre-wrap">
                     {turn.content}
                   </p>
                 </div>
@@ -144,9 +144,9 @@ export function AssistantConversation() {
         </div>
       </div>
 
-      <div className="border-t border-[var(--border-soft)]">
+      <div className="border-t border-border-soft">
         <div className="mx-auto w-full max-w-3xl px-4 py-3">
-          <div className="flex items-end gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-2">
+          <div className="flex items-end gap-2 rounded-2xl border border-border-soft bg-surface p-2">
             <textarea
               aria-label="Ask the assistant"
               placeholder="Ask…"

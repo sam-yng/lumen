@@ -13,10 +13,10 @@ export function LiveSessionRoute({
 }) {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
-      <header className="sticky top-0 z-20 flex min-h-[var(--topbar-h)] items-center gap-3 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+      <header className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center gap-3 border-b border-border-soft bg-background/95 px-4 backdrop-blur lg:px-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 rounded-md text-[13px] text-[var(--text-3)] transition hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-md text-[13px] text-text-3 transition hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
           Back to library

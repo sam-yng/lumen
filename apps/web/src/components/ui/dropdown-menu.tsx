@@ -17,7 +17,7 @@ export function DropdownMenuContent({
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-[180px] overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--canvas)] p-1 shadow-[var(--shadow-pop)]",
+          "z-50 min-w-[180px] overflow-hidden rounded-md border border-border-soft bg-canvas p-1 shadow-(--shadow-pop)",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 motion-reduce:animate-none",
           className,
         )}
@@ -37,9 +37,9 @@ export function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "flex h-8 cursor-default items-center gap-2 rounded-[4px] px-2 text-[13px] text-[var(--text-2)] outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-highlighted:bg-[var(--surface-3)] data-highlighted:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
+        "flex h-8 cursor-default items-center gap-2 rounded-[4px] px-2 text-[13px] text-text-2 outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-surface-3 data-highlighted:text-foreground [&_svg]:size-4 [&_svg]:shrink-0",
         variant === "destructive" &&
-          "text-destructive data-highlighted:bg-[var(--danger-soft)] data-highlighted:text-destructive",
+          "text-destructive data-highlighted:bg-(--danger-soft) data-highlighted:text-destructive",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ export function DropdownMenuSeparator({
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
   return (
     <DropdownMenuPrimitive.Separator
-      className={cn("-mx-1 my-1 h-px bg-[var(--border-soft)]", className)}
+      className={cn("-mx-1 my-1 h-px bg-border-soft", className)}
       {...props}
     />
   );

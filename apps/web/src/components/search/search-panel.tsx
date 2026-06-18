@@ -51,13 +51,13 @@ export function SearchPanel({
     <div className="mb-5 flex flex-col gap-2">
       <div className="relative">
         <Search
-          className="absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--text-3)]"
+          className="absolute top-1/2 left-4 size-4 -translate-y-1/2 text-text-3"
           aria-hidden
         />
         <Input
           ref={inputRef}
           aria-label="Search notes and transcripts"
-          className="h-14 rounded-lg border-[var(--border-soft)] bg-[var(--surface)] pl-11 text-[16px] focus-visible:border-[var(--accent-line)] sm:text-[15px]"
+          className="h-14 rounded-lg border-border-soft bg-surface pl-11 text-[16px] focus-visible:border-(--accent-line) sm:text-[15px]"
           placeholder="Search notes and transcripts…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -65,15 +65,15 @@ export function SearchPanel({
       </div>
 
       {debouncedQuery.length > 0 && (
-        <div className="overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
+        <div className="overflow-hidden rounded-md border border-border-soft bg-surface">
           {isFetching && results.length === 0 ? (
-            <p className="flex items-center gap-2 p-3 text-sm text-[var(--text-3)]">
+            <p className="flex items-center gap-2 p-3 text-sm text-text-3">
               <Loader2 className="size-4 animate-spin" aria-hidden /> Searching…
             </p>
           ) : results.length === 0 ? (
-            <p className="p-3 text-sm text-[var(--text-3)]">No results.</p>
+            <p className="p-3 text-sm text-text-3">No results.</p>
           ) : (
-            <ul className="divide-y divide-[var(--border-soft)]">
+            <ul className="divide-y divide-border-soft">
               {results.map((result) => (
                 <li key={`${result.kind}-${result.id}`}>
                   <SearchResultRow
@@ -107,7 +107,7 @@ function SearchResultRow({
   "onOpenDocument" | "onOpenTranscript" | "onSelectFile"
 >) {
   const rowClass =
-    "flex min-h-[44px] w-full items-start gap-3 p-3 text-left transition hover:bg-[var(--surface-2)]";
+    "flex min-h-[44px] w-full items-start gap-3 p-3 text-left transition hover:bg-surface-2";
 
   if (result.kind === "document") {
     return (
@@ -117,7 +117,7 @@ function SearchResultRow({
         onClick={() => onOpenDocument(result.id)}
       >
         <FileText
-          className="mt-0.5 size-4 shrink-0 text-[var(--accent-text)]"
+          className="mt-0.5 size-4 shrink-0 text-accent-text"
           aria-hidden
         />
         <span className="flex min-w-0 flex-col">
@@ -125,7 +125,7 @@ function SearchResultRow({
             {highlightMatch(result.title, query)}
           </span>
           {result.snippet && (
-            <span className="font-serif text-[13px] leading-5 text-[var(--text-2)]">
+            <span className="font-serif text-[13px] leading-5 text-text-2">
               {highlightMatch(result.snippet, query)}
             </span>
           )}
@@ -141,13 +141,10 @@ function SearchResultRow({
         className={rowClass}
         onClick={() => onOpenTranscript(result.recordingId)}
       >
-        <FileAudio
-          className="mt-0.5 size-4 shrink-0 text-[var(--busy)]"
-          aria-hidden
-        />
+        <FileAudio className="mt-0.5 size-4 shrink-0 text-busy" aria-hidden />
         <span className="flex min-w-0 flex-col">
           <span className="text-sm font-medium">Transcript</span>
-          <span className="font-serif text-[13px] leading-5 text-[var(--text-2)]">
+          <span className="font-serif text-[13px] leading-5 text-text-2">
             {highlightMatch(result.snippet, query)}
           </span>
         </span>
@@ -161,10 +158,7 @@ function SearchResultRow({
       className={rowClass}
       onClick={() => onSelectFile(result.id, result.folderId)}
     >
-      <FileIcon
-        className="mt-0.5 size-4 shrink-0 text-[var(--text-3)]"
-        aria-hidden
-      />
+      <FileIcon className="mt-0.5 size-4 shrink-0 text-text-3" aria-hidden />
       <span className="truncate text-sm font-medium">
         {highlightMatch(result.name, query)}
       </span>

@@ -65,18 +65,18 @@ export function TagColorPicker({
         aria-label="Tag color"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="flex size-8 shrink-0 touch-manipulation items-center justify-center rounded-md border border-[var(--border-soft)] bg-[var(--canvas)] p-1 transition-[border-color,box-shadow,transform] duration-150 ease-[var(--ease)] outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] active:translate-y-px"
+        className="flex size-8 shrink-0 touch-manipulation items-center justify-center rounded-md border border-border-soft bg-canvas p-1 transition-[border-color,box-shadow,transform] duration-150 ease-(--ease) outline-none focus-visible:border-(--accent-line) focus-visible:ring-3 focus-visible:ring-(--accent-soft) active:translate-y-px"
       >
         <span
           aria-hidden
-          className="size-5 shrink-0 rounded-md border border-[var(--border-soft)]"
+          className="size-5 shrink-0 rounded-md border border-border-soft"
           style={{ backgroundColor: selected }}
         />
       </button>
       {open ? (
         <div
           data-testid="tag-color-options"
-          className="absolute top-full left-0 z-20 mt-1 grid w-max grid-cols-5 gap-1 rounded-md border border-[var(--border)] bg-[var(--canvas)] p-1 shadow-[var(--shadow-pop)]"
+          className="absolute top-full left-0 z-20 mt-1 grid w-max grid-cols-5 gap-1 rounded-md border border-border bg-canvas p-1 shadow-(--shadow-pop)"
         >
           {TAG_COLOR_PRESETS.map((preset) => (
             <button
@@ -87,14 +87,14 @@ export function TagColorPicker({
               title={preset.label}
               onClick={() => choose(preset.value)}
               className={cn(
-                "flex size-8 shrink-0 touch-manipulation items-center justify-center rounded-md border border-[var(--border-soft)] bg-[var(--canvas)] p-1 transition-[border-color,box-shadow,transform] duration-150 ease-[var(--ease)] outline-none focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] active:translate-y-px",
+                "flex size-8 shrink-0 touch-manipulation items-center justify-center rounded-md border border-border-soft bg-canvas p-1 transition-[border-color,box-shadow,transform] duration-150 ease-(--ease) outline-none focus-visible:border-(--accent-line) focus-visible:ring-3 focus-visible:ring-(--accent-soft) active:translate-y-px",
                 selected === preset.value &&
-                  "border-[var(--border-strong)] ring-2 ring-[var(--accent-soft)]",
+                  "border-border-strong ring-2 ring-(--accent-soft)",
               )}
             >
               <span
                 aria-hidden
-                className="size-5 shrink-0 rounded-md border border-[var(--border-soft)]"
+                className="size-5 shrink-0 rounded-md border border-border-soft"
                 style={{ backgroundColor: preset.value }}
               />
             </button>

@@ -45,10 +45,10 @@ export function ItemRow({
   return (
     <li
       data-selection-index={selectionIndex}
-      className={`group border-b border-[var(--border-soft)] last:border-b-0 ${
+      className={`group border-b border-border-soft last:border-b-0 ${
         isSelected
-          ? "rounded-md bg-[var(--accent-soft)] outline outline-1 outline-[var(--accent-line)]"
-          : "hover:bg-[var(--surface-2)]"
+          ? "rounded-md bg-(--accent-soft) outline outline-1 outline-(--accent-line)"
+          : "hover:bg-surface-2"
       }`}
     >
       <button
@@ -62,8 +62,8 @@ export function ItemRow({
         <span
           className={`grid size-[34px] shrink-0 place-items-center rounded-md border ${
             isSelected
-              ? "border-[var(--accent-line)] bg-[var(--canvas)] text-[var(--accent-text)]"
-              : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)]"
+              ? "border-(--accent-line) bg-canvas text-accent-text"
+              : "border-border-soft bg-surface-2 text-text-2"
           }`}
         >
           {isSelected ? (
@@ -76,7 +76,7 @@ export function ItemRow({
           <span className="block truncate font-medium text-foreground">
             {node.title}
           </span>
-          <span className="block truncate font-mono text-[11.5px] text-[var(--text-3)]">
+          <span className="block truncate font-mono text-[11.5px] text-text-3">
             {meta}
           </span>
         </span>

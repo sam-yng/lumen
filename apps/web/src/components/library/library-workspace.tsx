@@ -186,7 +186,7 @@ export function LibraryWorkspace({
         <h2 className="text-2xl font-semibold">
           {isRecentsView ? "Recents" : (selectedNode?.title ?? "Library")}
         </h2>
-        <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+        <p className="font-mono text-[11.5px] text-text-3">
           {isRecentsView
             ? `${nodes.filter((node) => isNoteNode(node, nodes)).length} notes`
             : `${nodes.length} ${nodes.length === 1 ? "item" : "items"}`}
