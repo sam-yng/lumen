@@ -29,6 +29,7 @@ export class FakeQuery implements ServiceQuery<Row> {
   private pendingSelect = false;
   private pendingUpdate: Row | null = null;
   private pendingDelete = false;
+  private insertedRows: Row[] | null = null;
 
   constructor(
     private readonly table: string,
@@ -81,6 +82,7 @@ export class FakeQuery implements ServiceQuery<Row> {
   insert(values: Row | Row[]) {
     const insertedRows = Array.isArray(values) ? values : [values];
     this.rows.push(...insertedRows);
+    this.insertedRows = insertedRows;
     this.queryLog.push({
       action: "insert",
       table: this.table,
@@ -96,7 +98,7 @@ export class FakeQuery implements ServiceQuery<Row> {
   }
 
   async single() {
-    const matchingRows = this.applyFilters(this.rows);
+    const matchingRows = this.applyFilters(this.insertedRows ?? this.rows);
     this.logPendingSelect();
     this.logPendingMutation();
     if (this.pendingUpdate) {
@@ -118,7 +120,7 @@ export class FakeQuery implements ServiceQuery<Row> {
       | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): PromiseLike<TResult1 | TResult2> {
-    const matchingRows = this.applyFilters(this.rows);
+    const matchingRows = this.applyFilters(this.insertedRows ?? this.rows);
     this.logPendingSelect();
     this.logPendingMutation();
     if (this.pendingUpdate) {

@@ -1,16 +1,7 @@
-import { Suspense } from "react";
-import { NoteRoute } from "@/components/library/note-route";
+import { redirect } from "next/navigation";
 
-export default async function NotePage({
-  params,
-}: {
+export default function LegacyNotePage(_props: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  return (
-    // NoteRoute reads useSearchParams for document citation block anchors.
-    <Suspense>
-      <NoteRoute documentId={id} />
-    </Suspense>
-  );
+  redirect("/");
 }

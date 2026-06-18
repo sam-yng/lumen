@@ -19,8 +19,8 @@ function chunk(over: Partial<FixtureChunkRow> = {}): FixtureChunkRow {
   return {
     id: "c1",
     userId: "user-1",
-    sourceType: "document",
-    documentId: "d1",
+    sourceType: "page",
+    nodeId: "d1",
     transcriptId: null,
     recordingId: null,
     startMs: null,
@@ -151,8 +151,8 @@ describe("matchSemanticSearchChunksReference", () => {
     expect(row).toMatchObject({
       id: "c1",
       user_id: "user-1",
-      source_type: "document",
-      source: { documentId: "d1", anchor: { blockStart: 2, blockEnd: 3 } },
+      source_type: "page",
+      source: { nodeId: "d1", anchor: { blockStart: 2, blockEnd: 3 } },
       chunk_index: 4,
       content: "mitochondria produce energy",
     });
@@ -164,7 +164,7 @@ describe("matchSemanticSearchChunksReference", () => {
       chunks: [
         chunk({
           sourceType: "transcript",
-          documentId: null,
+          nodeId: null,
           transcriptId: "t1",
           recordingId: "r1",
           startMs: 1000,

@@ -11,7 +11,7 @@ import {
   enqueueFailureMessage,
 } from "@/server/services/uploads";
 
-type FileRow = Tables<"files">;
+type NodeRow = Tables<"library_nodes">;
 type RecordingRow = Tables<"recordings">;
 
 export async function retryRecordingTranscription(
@@ -44,15 +44,15 @@ export async function retryRecordingTranscription(
   // we flip the recording back to pending.
   await enforceRateLimit(ctx, LIMITS.transcriptionEnqueue);
 
-  const { data: file, error: fileError } = await ctx.supabase
-    .from<FileRow>("files")
+  const { data: node, error: nodeError } = await ctx.supabase
+    .from<NodeRow>("library_nodes")
     .select("*")
-    .eq("id", recording.file_id)
+    .eq("id", recording.node_id)
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  assertNoDatabaseError(fileError, "Could not load file");
-  assertFound(file, "File not found.");
+  assertNoDatabaseError(nodeError, "Could not load audio node");
+  assertFound(node, "Audio node not found.");
 
   const { data: updated, error: updateError } = await ctx.supabase
     .from<RecordingRow>("recordings")
@@ -69,8 +69,8 @@ export async function retryRecordingTranscription(
     await input.enqueueTranscription({
       userId: ctx.userId,
       recordingId: updated.id,
-      fileId: file.id,
-      storageKey: file.storage_key,
+      nodeId: node.id,
+      storageKey: node.storage_key ?? "",
     });
   } catch (enqueueError) {
     // We just flipped the recording back to "pending"; if the enqueue fails it

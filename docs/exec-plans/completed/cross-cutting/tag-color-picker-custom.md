@@ -1,5 +1,9 @@
 # Custom Tag Color Picker Implementation Plan
 
+> **Status: COMPLETED.** Shipped (`cf001ce`); the custom color-block picker is
+> live in `components/library/tag-color-picker.tsx` and remains valid under the
+> navigation-node-tree tag UI.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the tag color native select with a custom color-block picker and align the create-tag controls on desktop.

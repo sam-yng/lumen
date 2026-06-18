@@ -5,12 +5,11 @@ import {
   serviceErrorResponse,
   unauthorizedResponse,
 } from "@/app/api/library/http";
-import { linkTagToTarget } from "@/server/services/tags";
+import { linkTagToNode } from "@/server/services/tags";
 
 const createTagLinkSchema = z.object({
   tagId: z.string().uuid(),
-  targetType: z.enum(["document", "file", "recording"]),
-  targetId: z.string().uuid(),
+  nodeId: z.string().uuid(),
 });
 
 export async function POST(request: Request) {
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
   if (!parsed.ok) return parsed.response;
 
   try {
-    const link = await linkTagToTarget(ctx, parsed.data);
+    const link = await linkTagToNode(ctx, parsed.data);
     return Response.json(link, { status: 201 });
   } catch (error) {
     return serviceErrorResponse(error);

@@ -1,8 +1,8 @@
-import type { Database, Json, Tables } from "@/server/db/database.types";
-import type { LibrarySnapshot } from "@/server/services/library";
-
-type FileKind = Database["public"]["Enums"]["file_kind"];
-type TargetType = Database["public"]["Enums"]["tag_target_type"];
+import type { Json, Tables } from "@/server/db/database.types";
+import type {
+  LibraryNode,
+  LibraryNodeSnapshot,
+} from "@/server/services/library-nodes";
 
 async function requestJson<T>(
   path: string,
@@ -47,106 +47,50 @@ export const transcriptQueryKey = (recordingId: string) =>
   ["transcript", recordingId] as const;
 
 export function fetchLibrarySnapshot() {
-  return requestJson<LibrarySnapshot>("/api/library");
+  return requestJson<LibraryNodeSnapshot>("/api/library");
 }
 
-export function createFolder(input: { name: string; parentId: string | null }) {
-  return requestJson<Tables<"folders">>("/api/library/folders", {
+export function createWorkspace(input: { title: string }) {
+  return requestJson<LibraryNode>("/api/library/nodes", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify({ kind: "workspace", ...input }),
   });
 }
 
-export function updateFolder(input: {
-  id: string;
-  name?: string;
-  parentId?: string | null;
-}) {
-  return requestJson<Tables<"folders">>(`/api/library/folders/${input.id}`, {
-    method: "PATCH",
-    body: JSON.stringify(input),
-  });
-}
-
-export function deleteFolder(id: string) {
-  return requestJson<Tables<"folders">>(`/api/library/folders/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export function createDocument(input: {
-  title: string;
-  folderId: string | null;
-}) {
-  return requestJson<Tables<"documents">>("/api/library/documents", {
+export function createPage(input: { title: string; parentId: string }) {
+  return requestJson<LibraryNode>("/api/library/nodes", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify({ kind: "page", ...input }),
   });
 }
 
-export function updateDocument(input: {
+export function updateNode(input: {
   id: string;
   title?: string;
-  folderId?: string | null;
+  parentId?: string | null;
   contentJson?: Json | null;
+  isPinned?: boolean;
 }) {
-  return requestJson<Tables<"documents">>(
-    `/api/library/documents/${input.id}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify(input),
-    },
-  );
-}
-
-export function deleteDocument(id: string) {
-  return requestJson<Tables<"documents">>(`/api/library/documents/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export function createFileMetadata(input: {
-  name: string;
-  mimeType: string;
-  sizeBytes: number;
-  kind: FileKind;
-  folderId: string | null;
-}) {
-  return requestJson<Tables<"files">>("/api/library/files", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-export function uploadFile(input: { file: File; folderId: string | null }) {
-  const body = new FormData();
-  body.set("file", input.file);
-  body.set("name", input.file.name);
-  body.set("folderId", input.folderId ?? "");
-
-  return requestForm<{
-    file: Tables<"files">;
-    recording: Tables<"recordings"> | null;
-  }>("/api/library/uploads", body);
-}
-
-export function updateFileMetadata(input: {
-  id: string;
-  name?: string;
-  mimeType?: string;
-  sizeBytes?: number;
-  kind?: FileKind;
-  folderId?: string | null;
-}) {
-  return requestJson<Tables<"files">>(`/api/library/files/${input.id}`, {
+  return requestJson<LibraryNode>(`/api/library/nodes/${input.id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
 }
 
-export function deleteFileMetadata(id: string) {
-  return requestJson<Tables<"files">>(`/api/library/files/${id}`, {
-    method: "DELETE",
+export function bulkMoveNodes(input: {
+  ids: string[];
+  parentId: string | null;
+}) {
+  return requestJson<LibraryNode[]>("/api/library/nodes/bulk-move", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function bulkDeleteNodes(input: { ids: string[] }) {
+  return requestJson<LibraryNode[]>("/api/library/nodes/bulk-delete", {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
@@ -159,7 +103,7 @@ export function retryRecording(id: string) {
 
 export function fetchTranscriptDetail(recordingId: string) {
   return requestJson<{
-    file: Tables<"files">;
+    node: LibraryNode;
     recording: Tables<"recordings">;
     transcript: Tables<"transcripts"> | null;
     segments: Tables<"transcript_segments">[];
@@ -168,10 +112,11 @@ export function fetchTranscriptDetail(recordingId: string) {
 
 export function startLiveSession(input: {
   name: string;
-  folderId: string | null;
+  parentId: string | null;
+  workspaceId: string;
 }) {
   return requestJson<{
-    file: Tables<"files">;
+    node: LibraryNode;
     recording: Tables<"recordings">;
     transcript: Tables<"transcripts">;
   }>("/api/library/live-sessions", {
@@ -244,11 +189,7 @@ export function deleteTag(id: string) {
   });
 }
 
-export function linkTag(input: {
-  tagId: string;
-  targetType: TargetType;
-  targetId: string;
-}) {
+export function linkTag(input: { tagId: string; nodeId: string }) {
   return requestJson<Tables<"tag_links">>("/api/library/tag-links", {
     method: "POST",
     body: JSON.stringify(input),

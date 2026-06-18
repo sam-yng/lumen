@@ -79,7 +79,10 @@ async function appendPendingSegmentBatches(
   return appendPendingSegmentBatches(recordingId, pendingRef);
 }
 
-function useLiveSessionCaptureController(folderId: string | null) {
+function useLiveSessionCaptureController(
+  parentId: string | null,
+  workspaceId: string,
+) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(
@@ -167,7 +170,8 @@ function useLiveSessionCaptureController(folderId: string | null) {
     try {
       const session = await startLiveSession({
         name: state.name.trim() || defaultSessionName(),
-        folderId,
+        parentId,
+        workspaceId,
       });
       recordingIdRef.current = session.recording.id;
 
@@ -289,11 +293,11 @@ function useLiveSessionCaptureController(folderId: string | null) {
       await cancelLiveSession(recordingId).catch(() => {});
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     }
-    router.push("/library");
+    router.push("/");
   }
 
   return {
-    cancel: () => router.push("/library"),
+    cancel: () => router.push("/"),
     discard,
     setName: (name: string) => dispatch({ name, type: "name" }),
     start,
@@ -513,8 +517,14 @@ function LiveSessionRecordingView({
   );
 }
 
-export function LiveSessionCapture({ folderId }: { folderId: string | null }) {
-  const controller = useLiveSessionCaptureController(folderId);
+export function LiveSessionCapture({
+  parentId,
+  workspaceId,
+}: {
+  parentId: string | null;
+  workspaceId: string;
+}) {
+  const controller = useLiveSessionCaptureController(parentId, workspaceId);
   const { state } = controller;
 
   if (state.phase === "idle" || state.phase === "error") {

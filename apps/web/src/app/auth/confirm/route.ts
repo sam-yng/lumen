@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/library";
+  const next = searchParams.get("next") ?? "/";
 
   if (tokenHash && type) {
     const supabase = await createServerSupabase();

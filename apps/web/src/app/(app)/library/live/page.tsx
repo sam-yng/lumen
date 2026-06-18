@@ -1,10 +1,7 @@
-import { LiveSessionRoute } from "@/components/library/live-session-route";
+import { redirect } from "next/navigation";
 
-export default async function LiveSessionPage({
-  searchParams,
-}: {
+export default function LegacyLivePage(_props: {
   searchParams: Promise<{ folderId?: string }>;
 }) {
-  const { folderId } = await searchParams;
-  return <LiveSessionRoute folderId={folderId ?? null} />;
+  redirect("/");
 }

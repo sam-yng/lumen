@@ -69,33 +69,50 @@ export async function buildCorpus(input: {
   const documentRows = input.documents.map((doc) => ({
     id: doc.id,
     user_id: userId,
-    folder_id: null,
+    workspace_id: "workspace-1",
+    parent_id: "workspace-1",
+    kind: "page",
     title: doc.title,
+    slug: `${doc.id}-page`,
     content_json: null,
     content_text: doc.text,
     content_tsv: null,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
     created_at: TIMESTAMP,
     updated_at: TIMESTAMP,
   }));
 
   const recordingRows: Record<string, unknown>[] = [];
-  const fileRows: Record<string, unknown>[] = [];
+  const audioRows: Record<string, unknown>[] = [];
   const transcriptRows: Record<string, unknown>[] = [];
   const segmentRows: Record<string, unknown>[] = [];
 
   for (const transcript of input.transcripts) {
-    const fileId = `file-${transcript.recordingId}`;
-    fileRows.push({
-      id: fileId,
+    const nodeId = `audio-${transcript.recordingId}`;
+    audioRows.push({
+      id: nodeId,
       user_id: userId,
-      folder_id: null,
-      name: transcript.fileName,
+      workspace_id: "workspace-1",
+      parent_id: "workspace-1",
+      kind: "audio",
+      title: transcript.fileName,
+      slug: `${nodeId}-audio`,
+      content_json: null,
+      content_text: null,
+      mime_type: "audio/mp4",
+      size_bytes: 1,
+      storage_key: `${userId}/${nodeId}`,
+      is_pinned: false,
       created_at: TIMESTAMP,
+      updated_at: TIMESTAMP,
     });
     recordingRows.push({
       id: transcript.recordingId,
       user_id: userId,
-      file_id: fileId,
+      node_id: nodeId,
       created_at: TIMESTAMP,
     });
     transcriptRows.push({
@@ -120,9 +137,8 @@ export async function buildCorpus(input: {
 
   return {
     tables: {
-      documents: documentRows,
+      library_nodes: [...documentRows, ...audioRows],
       recordings: recordingRows,
-      files: fileRows,
       transcripts: transcriptRows,
       transcript_segments: segmentRows,
     },
@@ -143,8 +159,8 @@ async function buildChunkRows(
         pending.push({
           id: `${doc.id}-chunk-${index}`,
           userId,
-          sourceType: "document",
-          documentId: doc.id,
+          sourceType: "page",
+          nodeId: doc.id,
           transcriptId: null,
           recordingId: null,
           startMs: null,
@@ -174,7 +190,7 @@ async function buildChunkRows(
         id: `${transcript.id}-chunk-${index}`,
         userId,
         sourceType: "transcript",
-        documentId: null,
+        nodeId: null,
         transcriptId: transcript.id,
         recordingId: transcript.recordingId,
         startMs: chunk.startMs,

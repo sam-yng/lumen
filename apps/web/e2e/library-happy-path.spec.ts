@@ -5,46 +5,66 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Email").fill("demo@lumen.test");
   await page.getByLabel("Password").fill("demo12345");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/library$/);
+  // The node-tree app roots at "/"; wait for the library surface to load.
+  await expect(page.getByLabel("Search notes and transcripts")).toBeVisible();
 }
 
 test("demo user manages the library through routes", async ({ page }) => {
+  // Unique per run so reruns against the same seed can't collide.
+  const stamp = Date.now();
+  const workspaceName = `Testing ${stamp}`;
+  const pageName = `Route note ${stamp}`;
+
   const consoleWarnings: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "warning") consoleWarnings.push(message.text());
   });
 
   await login(page);
-  await expect(page.getByRole("heading", { name: "Lumen" })).toBeVisible();
 
-  // Create a folder through the dialog (multiple "New folder" triggers exist).
-  await page.getByRole("button", { name: "New folder" }).first().click();
-  await page.getByLabel("Folder name").fill("Testing");
-  await page.getByRole("button", { name: "Create folder" }).click();
-  await expect(
-    page.getByRole("button", { name: "Testing" }).first(),
-  ).toBeVisible();
+  const nodes = page.getByRole("list", { name: "Library nodes" });
 
-  // Create a note and open it on its own route.
-  await page.getByRole("button", { name: "New note" }).first().click();
-  await page.getByLabel("Note title").fill("Route note");
-  await page.getByRole("button", { name: "Create note" }).click();
-  await page.getByRole("button", { name: "Route note" }).first().click();
-  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
-  await page.getByRole("link", { name: "Back to library" }).click();
-  await expect(page).toHaveURL(/\/library$/);
+  // Create a workspace through the dialog (multiple "New workspace" triggers
+  // exist); creating it auto-navigates to its own route.
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByLabel("Workspace name").fill(workspaceName);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page).toHaveURL(/\/testing-[a-z0-9-]+$/i);
 
-  // Search opens the seeded note on its route.
+  // Create a page inside it; creating it auto-navigates to its editor route.
+  await page.getByRole("button", { name: "New page" }).first().click();
+  await page.getByLabel("Page title").fill(pageName);
+  await page.getByRole("button", { name: "Create page" }).click();
+  await expect(page).toHaveURL(/\/testing-[a-z0-9-]+\/route-note-[a-z0-9-]+$/i);
+
+  // The breadcrumb (a button, distinct from the sidebar "Library" link) returns
+  // to the root library.
+  await page.getByRole("button", { name: "Library" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  // Search opens the seeded note on its node route.
   await page.getByLabel("Search notes and transcripts").fill("mitochondria");
   const result = page.getByRole("button", { name: /Welcome to Lumen/i });
   await expect(result).toBeVisible();
   await result.click();
-  await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
+  await expect(page).toHaveURL(
+    /\/course-notes-[a-z0-9-]+\/welcome-to-lumen-[a-z0-9-]+$/i,
+  );
   await expect(
-    page.getByRole("heading", { name: "Welcome to Lumen" }),
+    page
+      .getByTestId("document-editor-shell")
+      .getByRole("heading", { name: "Welcome to Lumen" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Back to library" }).click();
-  await expect(page).toHaveURL(/\/library$/);
+
+  // Cleanup: delete the created workspace (cascades the page).
+  await page.getByRole("button", { name: "Library" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await nodes.getByRole("button", { name: workspaceName }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete selected" }).click();
+  await expect(nodes.getByRole("button", { name: workspaceName })).toHaveCount(
+    0,
+  );
 
   expect(
     consoleWarnings.filter((warning) =>
@@ -53,35 +73,27 @@ test("demo user manages the library through routes", async ({ page }) => {
   ).toEqual([]);
 });
 
-test("upload picker shows and clears a selected file", async ({ page }) => {
-  await login(page);
-
-  await page.getByRole("button", { name: "Upload" }).first().click();
-  await page.getByLabel("Choose file").setInputFiles({
-    name: "notes.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("hello"),
-  });
-  await expect(page.getByText("notes.txt")).toBeVisible();
-
-  await page.getByRole("button", { name: "Remove selected file" }).click();
-  await expect(page.getByText("notes.txt")).not.toBeVisible();
-});
-
 test("tags are created with a preset color", async ({ page }) => {
+  const tagName = `Exam ${Date.now()}`;
+
   await login(page);
 
-  await page.getByLabel("Tag name").fill("Exam");
+  await page.getByLabel("Tag name").fill(tagName);
   await page.getByLabel("Tag color").click();
   await page.getByRole("button", { name: "Use Blue tag color" }).click();
   await page.getByRole("button", { name: "Create tag" }).click();
 
-  // The new tag shows in the sidebar tag panel; exact match avoids the
-  // "Rename Exam" / "Delete Exam" control buttons, and scoping to the
-  // sidebar avoids the content-area filter chip duplicate.
-  await expect(
-    page
-      .getByRole("complementary")
-      .getByRole("button", { name: "Exam", exact: true }),
-  ).toBeVisible();
+  // The new tag shows in the sidebar tag panel as a "Filter by <name>" toggle;
+  // scoping to the sidebar avoids the content-area filter chip duplicate.
+  const sidebar = page.getByRole("complementary");
+  const tagButton = sidebar.getByRole("button", {
+    name: `Filter by ${tagName}`,
+  });
+  await expect(tagButton).toBeVisible();
+
+  // Cleanup so reruns against the same seed stay unambiguous.
+  await tagButton.hover();
+  await sidebar.getByRole("button", { name: `Delete ${tagName}` }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(tagButton).toHaveCount(0);
 });

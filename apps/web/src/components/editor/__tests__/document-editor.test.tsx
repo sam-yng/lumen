@@ -6,15 +6,18 @@ import type { Tables } from "@/server/db/database.types";
 
 vi.mock("@/components/library/library-api", () => ({
   libraryQueryKey: ["library"],
-  updateDocument: vi.fn(),
+  updateNode: vi.fn(),
 }));
 
-function documentRow(overrides: Partial<Tables<"documents">> = {}) {
+function pageRow(overrides: Partial<Tables<"library_nodes">> = {}) {
   return {
     id: "doc-1",
     user_id: "user-1",
-    folder_id: null,
+    workspace_id: "workspace-1",
+    parent_id: "workspace-1",
+    kind: "page",
     title: "Biology notes",
+    slug: "biology-notes-doc1",
     content_json: {
       type: "doc",
       content: [
@@ -34,10 +37,14 @@ function documentRow(overrides: Partial<Tables<"documents">> = {}) {
     },
     content_text: "First paragraph Second paragraph Third paragraph",
     content_tsv: null as unknown,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
-  } satisfies Tables<"documents">;
+  } satisfies Tables<"library_nodes">;
 }
 
 function renderEditor(citationBlockIndex: number | null) {
@@ -48,7 +55,7 @@ function renderEditor(citationBlockIndex: number | null) {
   return render(
     <QueryClientProvider client={client}>
       <DocumentEditor
-        document={documentRow()}
+        page={pageRow()}
         citationBlockIndex={citationBlockIndex}
       />
     </QueryClientProvider>,

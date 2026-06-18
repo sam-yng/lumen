@@ -7,6 +7,10 @@ import {
   assertNoDatabaseError,
   ServiceError,
 } from "@/server/services/errors";
+import {
+  createAudioNode,
+  type LibraryNode,
+} from "@/server/services/library-nodes";
 import { enforceRateLimit, LIMITS } from "@/server/services/rate-limit";
 import {
   type StorageProvider,
@@ -17,8 +21,6 @@ import {
   writeRecordingTranscript,
 } from "@/server/services/transcripts";
 
-type FileRow = Tables<"files">;
-type FolderRow = Tables<"folders">;
 type RecordingRow = Tables<"recordings">;
 type TranscriptRow = Tables<"transcripts">;
 type SegmentRow = Tables<"transcript_segments">;
@@ -28,20 +30,6 @@ export type LiveSegmentInput = {
   endMs: number;
   text: string;
 };
-
-async function assertFolderOwned(ctx: ServiceContext, folderId: string | null) {
-  if (folderId === null) return;
-
-  const { data, error } = await ctx.supabase
-    .from<FolderRow>("folders")
-    .select("*")
-    .eq("id", folderId)
-    .eq("user_id", ctx.userId)
-    .maybeSingle();
-
-  assertNoDatabaseError(error, "Could not load folder");
-  assertFound(data, "Folder not found.");
-}
 
 async function getOwnedLiveRecording(ctx: ServiceContext, recordingId: string) {
   const { data, error } = await ctx.supabase
@@ -61,16 +49,16 @@ async function getOwnedLiveRecording(ctx: ServiceContext, recordingId: string) {
   return data;
 }
 
-async function getOwnedFile(ctx: ServiceContext, fileId: string) {
+async function getOwnedAudioNode(ctx: ServiceContext, nodeId: string) {
   const { data, error } = await ctx.supabase
-    .from<FileRow>("files")
+    .from<LibraryNode>("library_nodes")
     .select("*")
-    .eq("id", fileId)
+    .eq("id", nodeId)
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  assertNoDatabaseError(error, "Could not load file");
-  assertFound(data, "File not found.");
+  assertNoDatabaseError(error, "Could not load audio node");
+  assertFound(data, "Audio node not found.");
   return data;
 }
 
@@ -92,7 +80,7 @@ async function getRecordingTranscript(
 
 export async function startLiveSession(
   ctx: ServiceContext,
-  input: { name: string; folderId: string | null },
+  input: { name: string; parentId: string | null; workspaceId: string },
 ) {
   const name = input.name.trim();
   if (name.length === 0) {
@@ -103,35 +91,22 @@ export async function startLiveSession(
   // so cap session starts to keep an abuser from minting unlimited recordings.
   await enforceRateLimit(ctx, LIMITS.liveSessionStart);
 
-  await assertFolderOwned(ctx, input.folderId);
-
-  const fileId = randomUUID();
-  const storageKey = storageKeyForUpload(ctx.userId, name, fileId);
-
-  const { data: file, error: fileError } = await ctx.supabase
-    .from<FileRow>("files")
-    .insert({
-      id: fileId,
-      user_id: ctx.userId,
-      folder_id: input.folderId,
-      name,
-      mime_type: "audio/webm",
-      size_bytes: 0,
-      kind: "audio",
-      storage_key: storageKey,
-    })
-    .select("*")
-    .single();
-
-  assertNoDatabaseError(fileError, "Could not create file");
-  assertFound(file, "File not found.");
+  const storageKey = storageKeyForUpload(ctx.userId, name, randomUUID());
+  const node = await createAudioNode(ctx, {
+    title: name,
+    parentId: input.parentId,
+    workspaceId: input.workspaceId,
+    mimeType: "audio/webm",
+    sizeBytes: 0,
+    storageKey,
+  });
 
   const { data: recording, error: recordingError } = await ctx.supabase
     .from<RecordingRow>("recordings")
     .insert({
       id: randomUUID(),
       user_id: ctx.userId,
-      file_id: file.id,
+      node_id: node.id,
       status: "live",
       duration_sec: null,
       error: null,
@@ -157,7 +132,7 @@ export async function startLiveSession(
   assertNoDatabaseError(transcriptError, "Could not create transcript");
   assertFound(transcript, "Transcript not found.");
 
-  return { file, recording, transcript };
+  return { node, recording, transcript };
 }
 
 export async function appendLiveSegments(
@@ -209,7 +184,7 @@ export async function finalizeLiveSession(
   },
 ) {
   const recording = await getOwnedLiveRecording(ctx, input.recordingId);
-  const file = await getOwnedFile(ctx, recording.file_id);
+  const node = await getOwnedAudioNode(ctx, recording.node_id);
 
   try {
     if (input.audio.bytes.byteLength === 0) {
@@ -218,23 +193,23 @@ export async function finalizeLiveSession(
 
     await input.storage.upload({
       bucket: input.bucket,
-      key: file.storage_key,
+      key: node.storage_key ?? "",
       bytes: input.audio.bytes,
       contentType: input.audio.contentType,
     });
 
-    const { error: fileError } = await ctx.supabase
-      .from<FileRow>("files")
+    const { error: nodeError } = await ctx.supabase
+      .from<LibraryNode>("library_nodes")
       .update({
         size_bytes: input.audio.bytes.byteLength,
         mime_type: input.audio.contentType,
       })
-      .eq("id", file.id)
+      .eq("id", node.id)
       .eq("user_id", ctx.userId)
       .select("*")
       .single();
 
-    assertNoDatabaseError(fileError, "Could not update file");
+    assertNoDatabaseError(nodeError, "Could not update audio node");
 
     const transcript = await getRecordingTranscript(ctx, recording.id);
     const { data: segments, error: segmentsError } = await ctx.supabase
@@ -260,9 +235,9 @@ export async function finalizeLiveSession(
       embeddingProvider: input.embeddingProvider,
     });
 
-    // The file row lets callers enqueue follow-up jobs (e.g. v4 speaker
+    // The audio node lets callers enqueue follow-up jobs (e.g. v4 speaker
     // labeling) without re-querying for the uploaded audio's storage key.
-    return { ...written, file };
+    return { ...written, node };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown live session error.";
@@ -284,17 +259,17 @@ export async function cancelLiveSession(
   input: { recordingId: string },
 ) {
   const recording = await getOwnedLiveRecording(ctx, input.recordingId);
-  const file = await getOwnedFile(ctx, recording.file_id);
+  const node = await getOwnedAudioNode(ctx, recording.node_id);
 
-  // Deleting the file row cascades the recording, transcript, and segments.
+  // Deleting the audio node cascades the recording, transcript, and segments.
   // No storage object exists yet: audio is only uploaded at finalization.
   const { error } = await ctx.supabase
-    .from<FileRow>("files")
+    .from<LibraryNode>("library_nodes")
     .delete()
-    .eq("id", file.id)
+    .eq("id", node.id)
     .eq("user_id", ctx.userId)
     .single();
 
-  assertNoDatabaseError(error, "Could not delete live session file");
+  assertNoDatabaseError(error, "Could not delete live session node");
   return { deleted: true };
 }

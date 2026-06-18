@@ -37,10 +37,11 @@ type WorkerJobPayload = TranscriptionJobPayload & {
   bucket?: string;
 };
 
-type WorkerFileRow = {
+type WorkerAudioNode = {
   id: string;
   user_id: string;
-  name: string;
+  title: string;
+  kind: string;
   storage_key: string;
 };
 
@@ -111,21 +112,21 @@ async function markRecordingFailed(
     throw new Error(`Could not mark recording failed: ${error.message}`);
 }
 
-async function getJobFile(
+async function getJobAudioNode(
   supabase: ServiceSupabaseClient,
   payload: TranscriptionJobPayload,
 ) {
   const { data, error } = await supabase
-    .from<WorkerFileRow>("files")
+    .from<WorkerAudioNode>("library_nodes")
     .select("*")
-    .eq("id", payload.fileId)
+    .eq("id", payload.nodeId)
     .eq("user_id", payload.userId)
     .maybeSingle();
 
-  if (error) throw new Error(`Could not load file: ${error.message}`);
-  if (!data) throw new Error("File not found.");
+  if (error) throw new Error(`Could not load audio node: ${error.message}`);
+  if (!data || data.kind !== "audio") throw new Error("Audio node not found.");
   if (data.storage_key !== payload.storageKey) {
-    throw new Error("Job storage key does not match file.");
+    throw new Error("Job storage key does not match audio node.");
   }
 
   return data;
@@ -134,9 +135,9 @@ async function getJobFile(
 function localAudioPath(
   tempDir: string,
   recordingId: string,
-  fileName: string,
+  nodeTitle: string,
 ) {
-  const extension = extname(fileName);
+  const extension = extname(nodeTitle);
   return join(tempDir, `${recordingId}${extension}`);
 }
 
@@ -146,11 +147,11 @@ export async function processTranscriptionJob(
 ) {
   const payload = transcriptionJobPayloadSchema.parse(job.data);
   const bucket = job.data.bucket ?? deps.bucket;
-  const file = await getJobFile(deps.supabase, payload);
+  const node = await getJobAudioNode(deps.supabase, payload);
   const audioPath = localAudioPath(
     deps.tempDir,
     payload.recordingId,
-    file.name,
+    node.title,
   );
 
   await mkdir(deps.tempDir, { recursive: true });
@@ -167,7 +168,7 @@ export async function processTranscriptionJob(
       key: payload.storageKey,
     });
 
-    if (!downloaded) throw new Error("Storage provider cannot download files.");
+    if (!downloaded) throw new Error("Storage provider cannot download audio.");
 
     await writeFile(audioPath, downloaded.bytes);
     // Diarize first: the Whisper provider deletes its WAV input when it

@@ -1,5 +1,12 @@
 # Recents and Delete Safety Implementation Plan
 
+> **Status: ARCHIVED (superseded 2026-06-18).** Implemented and shipped on the
+> folder/document model (commit `665b432`), then superseded by the
+> navigation-node-tree migration: the `/library/recents` view and
+> `server/services/folders.ts` were removed (recents now redirects to `/`), and
+> delete-safety is handled by `library_nodes` `ON DELETE CASCADE` plus the node
+> bulk-delete confirmation. Kept as a historical record; do not implement from it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a recents view for recently updated notes and make folder deletion intentionally delete its full subtree instead of spilling contents into the library root.

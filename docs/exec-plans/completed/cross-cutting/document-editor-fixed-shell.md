@@ -1,5 +1,10 @@
 # Document Editor Fixed Shell Implementation Plan
 
+> **Status: COMPLETED.** Shipped (editor split `f5abb55`); the viewport-bounded
+> flex shell with non-scrolling header/toolbar is live in
+> `components/editor/document-editor.tsx` and remains valid under the
+> navigation-node-tree page editor.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Keep the document header and editor toolbar visible while long note content scrolls inside the editor.

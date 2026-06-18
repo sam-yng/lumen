@@ -52,7 +52,7 @@ export function AssistantConversation() {
     <div className="flex h-dvh flex-col bg-background">
       <header className="flex items-center gap-3 border-b border-[var(--border-soft)] px-4 py-3">
         <Button asChild variant="ghost" size="icon-sm" title="Back to library">
-          <Link href="/library">
+          <Link href="/">
             <span className="sr-only">Back to library</span>
             <ArrowLeft className="size-4" />
           </Link>

@@ -252,13 +252,13 @@ export function TranscriptViewer({
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-[19px] font-semibold">
-              {data.file.name}
+              {data.node.title}
             </h3>
             <p className="font-mono text-[11.5px] text-[var(--text-3)]">
               {data.recording.duration_sec
                 ? `${formatTime(data.recording.duration_sec * 1000)} · `
                 : ""}
-              {data.file.size_bytes} bytes ·{" "}
+              {data.node.size_bytes} bytes ·{" "}
               {data.transcript?.language ?? "language pending"} · base.en
             </p>
           </div>
@@ -283,7 +283,7 @@ export function TranscriptViewer({
         </div>
       ) : (
         <>
-          {data.file.size_bytes === 0 ? (
+          {data.node.size_bytes === 0 ? (
             // A live session swept after interruption: the transcript was
             // finalized from stored segments but no audio object was ever
             // uploaded, so there is nothing to play. The segment list below
@@ -364,7 +364,7 @@ export function TranscriptViewer({
                 {/* biome-ignore lint/a11y/useMediaCaption: Transcript segments are rendered directly below as the synchronized caption text. */}
                 <audio
                   ref={audioRef}
-                  src={`/api/library/files/${data.file.id}`}
+                  src={`/api/library/nodes/${data.node.id}/content`}
                   onLoadedMetadata={(event) => {
                     setDuration(event.currentTarget.duration);
                     if (pendingSeekSec.current !== null) {

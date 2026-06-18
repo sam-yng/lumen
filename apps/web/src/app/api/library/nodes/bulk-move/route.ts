@@ -6,23 +6,23 @@ import {
   serviceErrorResponse,
   unauthorizedResponse,
 } from "@/app/api/library/http";
-import { createDocument } from "@/server/services/documents";
+import { bulkMoveLibraryNodes } from "@/server/services/library-nodes";
 
-const createDocumentSchema = z.object({
-  title: z.string().min(1),
-  folderId: nullableUuidSchema.optional().default(null),
+const uuidSchema = z.string().uuid();
+const bulkMoveSchema = z.object({
+  ids: z.array(uuidSchema).min(1),
+  parentId: nullableUuidSchema,
 });
 
 export async function POST(request: Request) {
   const ctx = await getRouteServiceContext();
   if (!ctx) return unauthorizedResponse();
 
-  const parsed = await parseJsonBody(request, createDocumentSchema);
+  const parsed = await parseJsonBody(request, bulkMoveSchema);
   if (!parsed.ok) return parsed.response;
 
   try {
-    const document = await createDocument(ctx, parsed.data);
-    return Response.json(document, { status: 201 });
+    return Response.json(await bulkMoveLibraryNodes(ctx, parsed.data));
   } catch (error) {
     return serviceErrorResponse(error);
   }

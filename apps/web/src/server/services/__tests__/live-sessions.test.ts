@@ -84,8 +84,17 @@ function tablesFor(ctx: ReturnType<typeof createContext>) {
 
 function liveTables(extra: Partial<Record<string, Row[]>> = {}) {
   return {
-    folders: [],
-    files: [],
+    library_nodes: [
+      {
+        id: "workspace-1",
+        user_id: userId,
+        workspace_id: "workspace-1",
+        parent_id: null,
+        kind: "workspace",
+        title: "Workspace",
+        slug: "workspace-1",
+      },
+    ],
     recordings: [],
     transcripts: [],
     transcript_segments: [],
@@ -98,7 +107,8 @@ async function startedSession(extra: Partial<Record<string, Row[]>> = {}) {
   const ctx = createContext(liveTables(extra));
   const session = await startLiveSession(ctx, {
     name: "Algebra lecture",
-    folderId: null,
+    parentId: "workspace-1",
+    workspaceId: "workspace-1",
   });
   return { ctx, session };
 }
@@ -108,24 +118,64 @@ describe("startLiveSession", () => {
     const { ctx, session } = await startedSession();
 
     expect(session.recording.status).toBe("live");
-    expect(session.recording.file_id).toBe(session.file.id);
-    expect(session.file.size_bytes).toBe(0);
-    expect(session.file.kind).toBe("audio");
-    expect(session.file.storage_key.startsWith(`${userId}/`)).toBe(true);
+    expect(session.recording.node_id).toBe(session.node.id);
+    expect(session.node.size_bytes).toBe(0);
+    expect(session.node.kind).toBe("audio");
+    expect(session.node.storage_key?.startsWith(`${userId}/`)).toBe(true);
     expect(session.transcript.recording_id).toBe(session.recording.id);
     expect(session.transcript.full_text).toBe("");
     expect(tablesFor(ctx).transcript_segments).toHaveLength(0);
   });
 
-  it("rejects a folder owned by another user", async () => {
+  it("rejects a parent node owned by another user", async () => {
     const ctx = createContext(
       liveTables({
-        folders: [{ id: "folder-2", user_id: otherUserId, name: "Theirs" }],
+        library_nodes: [
+          {
+            id: "workspace-2",
+            user_id: otherUserId,
+            workspace_id: "workspace-2",
+            parent_id: null,
+            kind: "workspace",
+            title: "Theirs",
+            slug: "theirs-2",
+          },
+        ],
       }),
     );
 
     await expect(
-      startLiveSession(ctx, { name: "Algebra", folderId: "folder-2" }),
+      startLiveSession(ctx, {
+        name: "Algebra",
+        parentId: "workspace-2",
+        workspaceId: "workspace-2",
+      }),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("rejects a root session in another user's workspace", async () => {
+    const ctx = createContext(
+      liveTables({
+        library_nodes: [
+          {
+            id: "workspace-2",
+            user_id: otherUserId,
+            workspace_id: "workspace-2",
+            parent_id: null,
+            kind: "workspace",
+            title: "Theirs",
+            slug: "theirs-2",
+          },
+        ],
+      }),
+    );
+
+    await expect(
+      startLiveSession(ctx, {
+        name: "Algebra",
+        parentId: null,
+        workspaceId: "workspace-2",
+      }),
     ).rejects.toMatchObject({ code: "not_found" });
   });
 
@@ -133,7 +183,11 @@ describe("startLiveSession", () => {
     const ctx = createContext(liveTables());
 
     await expect(
-      startLiveSession(ctx, { name: "   ", folderId: null }),
+      startLiveSession(ctx, {
+        name: "   ",
+        parentId: "workspace-1",
+        workspaceId: "workspace-1",
+      }),
     ).rejects.toMatchObject({ code: "invalid_input" });
   });
 });
@@ -199,12 +253,12 @@ describe("live session driven by a streaming provider", () => {
     expect(finalSegments.every((row) => row.speaker === null)).toBe(true);
 
     expect(storage.uploaded).toHaveLength(1);
-    expect(storage.uploaded[0]?.key).toBe(session.file.storage_key);
-    const fileRow = tablesFor(ctx).files.find(
-      (row) => row.id === session.file.id,
+    expect(storage.uploaded[0]?.key).toBe(session.node.storage_key);
+    const nodeRow = tablesFor(ctx).library_nodes.find(
+      (row) => row.id === session.node.id,
     );
-    expect(fileRow?.size_bytes).toBe(3);
-    expect(fileRow?.mime_type).toBe("audio/webm");
+    expect(nodeRow?.size_bytes).toBe(3);
+    expect(nodeRow?.mime_type).toBe("audio/webm");
   });
 });
 
@@ -321,7 +375,7 @@ describe("finalizeLiveSession", () => {
 });
 
 describe("cancelLiveSession", () => {
-  it("deletes the session file (cascading the recording and transcript)", async () => {
+  it("deletes the session node (cascading the recording and transcript)", async () => {
     const { ctx, session } = await startedSession();
 
     const result = await cancelLiveSession(ctx, {
@@ -330,7 +384,7 @@ describe("cancelLiveSession", () => {
 
     expect(result.deleted).toBe(true);
     expect(
-      tablesFor(ctx).files.find((row) => row.id === session.file.id),
+      tablesFor(ctx).library_nodes.find((row) => row.id === session.node.id),
     ).toBeUndefined();
   });
 

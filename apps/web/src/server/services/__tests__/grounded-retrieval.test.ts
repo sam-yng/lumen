@@ -23,18 +23,37 @@ const embeddingProvider: EmbeddingProvider = {
   },
 };
 
-function docRow(over: Record<string, unknown> = {}) {
+function pageRow(over: Record<string, unknown> = {}) {
   return {
     id: "d1",
     user_id: userId,
-    folder_id: null,
+    workspace_id: "workspace-1",
+    parent_id: "workspace-1",
+    kind: "page",
     title: "Biology notes",
+    slug: "biology-notes-d1",
     content_json: null,
     content_text: "The mitochondria is the powerhouse of the cell.",
     content_tsv: null as unknown,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...over,
+  };
+}
+
+function audioRow(id: string, title: string) {
+  return {
+    ...pageRow({ id, title, slug: `${id}-audio` }),
+    kind: "audio",
+    content_json: null,
+    content_text: null,
+    mime_type: "audio/mp4",
+    size_bytes: 1,
+    storage_key: `${userId}/${id}`,
   };
 }
 
@@ -123,9 +142,9 @@ describe("parseGroundedSemanticRows", () => {
       {
         id: "c1",
         user_id: "user-1",
-        source_type: "document",
+        source_type: "page",
         source: {
-          documentId: "d1",
+          nodeId: "d1",
           anchor: { blockStart: 2, blockEnd: 4 },
         },
         chunk_index: 0,
@@ -151,8 +170,8 @@ describe("parseGroundedSemanticRows", () => {
       {
         id: "bad-doc",
         user_id: "user-1",
-        source_type: "document",
-        source: { documentId: 123 },
+        source_type: "page",
+        source: { nodeId: 123 },
         chunk_index: 0,
         content: "bad",
         similarity: 0.7,
@@ -193,7 +212,7 @@ describe("parseGroundedSemanticRows", () => {
 
 describe("retrieveGroundedSources (semantic)", () => {
   it("returns [] for an empty or whitespace query without calling the RPC", async () => {
-    const ctx = createContext({ documents: [docRow()] });
+    const ctx = createContext({ library_nodes: [pageRow()] });
     expect(
       await retrieveGroundedSources(ctx, "   ", { embeddingProvider }),
     ).toEqual([]);
@@ -203,10 +222,9 @@ describe("retrieveGroundedSources (semantic)", () => {
   it("labels a transcript chunk and resolves the best overlapping segment", async () => {
     const ctx = createContext(
       {
-        documents: [],
+        library_nodes: [audioRow("f1", "seminar-week-4.m4a")],
         transcripts: [],
-        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-        files: [{ id: "f1", user_id: userId, name: "seminar-week-4.m4a" }],
+        recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
         transcript_segments: [
           {
             id: "seg-1",
@@ -272,10 +290,9 @@ describe("retrieveGroundedSources (semantic)", () => {
   it("keeps the timestamp span and null segmentId when no segment overlaps", async () => {
     const ctx = createContext(
       {
-        documents: [],
+        library_nodes: [audioRow("f1", "rec.m4a")],
         transcripts: [],
-        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-        files: [{ id: "f1", user_id: userId, name: "rec.m4a" }],
+        recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
         transcript_segments: [
           {
             id: "seg-far",
@@ -324,10 +341,12 @@ describe("retrieveGroundedSources (semantic)", () => {
   it("ranks document and transcript hits by score and labels them S1, S2", async () => {
     const ctx = createContext(
       {
-        documents: [docRow({ id: "d1", title: "Cell biology" })],
+        library_nodes: [
+          pageRow({ id: "d1", title: "Cell biology" }),
+          audioRow("f1", "lecture.m4a"),
+        ],
         transcripts: [],
-        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-        files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+        recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
         transcript_segments: [],
       },
       {
@@ -350,8 +369,8 @@ describe("retrieveGroundedSources (semantic)", () => {
           {
             id: "c-doc",
             user_id: userId,
-            source_type: "document",
-            source: { documentId: "d1" },
+            source_type: "page",
+            source: { nodeId: "d1" },
             chunk_index: 0,
             content: "document passage",
             similarity: 0.6,
@@ -374,10 +393,9 @@ describe("retrieveGroundedSources (semantic)", () => {
   it("threads semantic document anchors into grounded document sources", async () => {
     const ctx = createContext(
       {
-        documents: [docRow({ id: "d1", title: "Cell biology" })],
+        library_nodes: [pageRow({ id: "d1", title: "Cell biology" })],
         transcripts: [],
         recordings: [],
-        files: [],
         transcript_segments: [],
       },
       {
@@ -385,9 +403,9 @@ describe("retrieveGroundedSources (semantic)", () => {
           {
             id: "c-doc",
             user_id: userId,
-            source_type: "document",
+            source_type: "page",
             source: {
-              documentId: "d1",
+              nodeId: "d1",
               anchor: { blockStart: 3, blockEnd: 3 },
             },
             chunk_index: 0,
@@ -415,10 +433,9 @@ describe("retrieveGroundedSources (semantic)", () => {
   it("does not return cross-user semantic rows or cross-user segments", async () => {
     const ctx = createContext(
       {
-        documents: [],
+        library_nodes: [audioRow("f1", "mine.m4a")],
         transcripts: [],
-        recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-        files: [{ id: "f1", user_id: userId, name: "mine.m4a" }],
+        recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
         transcript_segments: [
           {
             id: "seg-theirs",
@@ -483,12 +500,13 @@ describe("retrieveGroundedSources (semantic)", () => {
 describe("retrieveGroundedSources (lexical fallback)", () => {
   it("returns lexical document and transcript citations without an RPC call", async () => {
     const ctx = createContext({
-      documents: [
-        docRow({
+      library_nodes: [
+        pageRow({
           id: "d1",
           title: "Cell notes",
           content_text: "The mitochondria is the powerhouse of the cell.",
         }),
+        audioRow("f1", "lecture.m4a"),
       ],
       transcripts: [
         {
@@ -501,8 +519,7 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
           created_at: "2026-01-02T00:00:00Z",
         },
       ],
-      recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-      files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+      recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
       transcript_segments: [
         {
           id: "seg-1",
@@ -553,7 +570,7 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
 
   it("cites a transcript with null timing when no segment matches the query term", async () => {
     const ctx = createContext({
-      documents: [],
+      library_nodes: [audioRow("f1", "lecture.m4a")],
       transcripts: [
         {
           id: "t1",
@@ -565,8 +582,7 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
           created_at: "2026-01-02T00:00:00Z",
         },
       ],
-      recordings: [{ id: "r1", user_id: userId, file_id: "f1" }],
-      files: [{ id: "f1", user_id: userId, name: "lecture.m4a" }],
+      recordings: [{ id: "r1", user_id: userId, node_id: "f1" }],
       transcript_segments: [
         {
           id: "seg-1",
@@ -592,13 +608,12 @@ describe("retrieveGroundedSources (lexical fallback)", () => {
 
   it("scopes lexical hits to the current user", async () => {
     const ctx = createContext({
-      documents: [
-        docRow({ id: "mine", user_id: userId, title: "Mine" }),
-        docRow({ id: "theirs", user_id: otherUserId, title: "Theirs" }),
+      library_nodes: [
+        pageRow({ id: "mine", user_id: userId, title: "Mine" }),
+        pageRow({ id: "theirs", user_id: otherUserId, title: "Theirs" }),
       ],
       transcripts: [],
       recordings: [],
-      files: [],
       transcript_segments: [],
     });
 

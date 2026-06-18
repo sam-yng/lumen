@@ -2,20 +2,20 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ServiceContext } from "@/server/services/context";
-import { getDocumentDetail } from "@/server/services/documents";
+import { getPageNodeDetail } from "@/server/services/library-nodes";
 import { getTranscriptDetail } from "@/server/services/transcripts";
 
 export async function readDocumentResource(
   ctx: ServiceContext,
   id: string,
 ): Promise<ReadResourceResult> {
-  const doc = await getDocumentDetail(ctx, { id });
+  const page = await getPageNodeDetail(ctx, { id });
   return {
     contents: [
       {
         uri: `lumen://document/${id}`,
         mimeType: "application/json",
-        text: JSON.stringify(doc, null, 2),
+        text: JSON.stringify(page, null, 2),
       },
     ],
   };
@@ -41,7 +41,7 @@ export function registerMcpResources(server: McpServer, ctx: ServiceContext) {
   server.registerResource(
     "document",
     new ResourceTemplate("lumen://document/{id}", { list: undefined }),
-    { title: "Document", description: "A Lumen document by id." },
+    { title: "Page", description: "A Lumen page/note node by id." },
     (_uri, variables) => readDocumentResource(ctx, String(variables.id)),
   );
 

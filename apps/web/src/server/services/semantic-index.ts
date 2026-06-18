@@ -35,8 +35,8 @@ async function insertFreshChunks(
 
   const rows: SearchChunkInsert[] = chunks.map((chunk, index) => ({
     user_id: ctx.userId,
-    source_type: chunk.sourceType,
-    document_id: chunk.documentId,
+    source_type: chunk.sourceType === "document" ? "page" : "transcript",
+    node_id: chunk.documentId,
     transcript_id: chunk.transcriptId,
     recording_id: chunk.recordingId,
     start_ms: chunk.startMs,
@@ -57,21 +57,24 @@ async function insertFreshChunks(
 
 export async function indexDocumentSearchChunks(
   ctx: ServiceContext,
-  input: { document: Tables<"documents">; provider: EmbeddingProvider },
+  input: { page: Tables<"library_nodes">; provider: EmbeddingProvider },
 ): Promise<void> {
-  if (input.document.user_id !== ctx.userId) {
+  if (input.page.user_id !== ctx.userId) {
     throw new ServiceError(
       "invalid_input",
-      "Document does not belong to the current user.",
+      "Page does not belong to the current user.",
     );
+  }
+  if (input.page.kind !== "page") {
+    throw new ServiceError("invalid_input", "Only page nodes can be indexed.");
   }
 
   const chunks = chunkDocument({
-    documentId: input.document.id,
-    text: input.document.content_text,
+    documentId: input.page.id,
+    text: input.page.content_text,
     blocks:
-      input.document.content_json !== null
-        ? extractTipTapTextBlocks(input.document.content_json)
+      input.page.content_json !== null
+        ? extractTipTapTextBlocks(input.page.content_json)
         : undefined,
   });
 
@@ -79,38 +82,39 @@ export async function indexDocumentSearchChunks(
     .from<Tables<"semantic_search_chunks">>("semantic_search_chunks")
     .delete()
     .eq("user_id", ctx.userId)
-    .eq("source_type", "document")
-    .eq("document_id", input.document.id);
+    .eq("source_type", "page")
+    .eq("node_id", input.page.id);
 
-  assertNoDatabaseError(error, "Could not delete semantic document chunks");
+  assertNoDatabaseError(error, "Could not delete semantic page chunks");
 
   await insertFreshChunks(ctx, chunks, input.provider);
 }
 
-export async function reindexAllDocumentSearchChunks(
+export async function reindexAllPageSearchChunks(
   ctx: ServiceContext,
   input: { provider: EmbeddingProvider },
 ): Promise<{ indexed: number; failed: number }> {
   const { data, error } = await ctx.supabase
-    .from<Tables<"documents">>("documents")
+    .from<Tables<"library_nodes">>("library_nodes")
     .select("*")
-    .eq("user_id", ctx.userId);
+    .eq("user_id", ctx.userId)
+    .eq("kind", "page");
 
-  assertNoDatabaseError(error, "Could not load documents for semantic reindex");
+  assertNoDatabaseError(error, "Could not load pages for semantic reindex");
 
   let indexed = 0;
   let failed = 0;
-  for (const document of data) {
+  for (const page of data) {
     try {
       await indexDocumentSearchChunks(ctx, {
-        document,
+        page,
         provider: input.provider,
       });
       indexed += 1;
     } catch (error) {
       failed += 1;
-      console.error("Document semantic reindex failed", {
-        documentId: document.id,
+      console.error("Page semantic reindex failed", {
+        nodeId: page.id,
         error,
       });
     }

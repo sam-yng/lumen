@@ -43,8 +43,8 @@ function groundedSourceId(source: GroundedSource): string {
 function poolRowSourceId(row: GroundedSemanticRow): string | null {
   if (!row.source || typeof row.source !== "object") return null;
   const source = row.source as Record<string, unknown>;
-  if (row.source_type === "document" && typeof source.documentId === "string") {
-    return documentSourceId(source.documentId);
+  if (row.source_type === "page" && typeof source.nodeId === "string") {
+    return documentSourceId(source.nodeId);
   }
   if (
     row.source_type === "transcript" &&

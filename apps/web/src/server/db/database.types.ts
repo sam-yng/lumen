@@ -34,125 +34,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      documents: {
+      library_nodes: {
         Row: {
           content_json: Json | null
           content_text: string | null
           content_tsv: unknown
           created_at: string
-          folder_id: string | null
           id: string
+          is_pinned: boolean
+          kind: Database["public"]["Enums"]["library_node_kind"]
+          mime_type: string | null
+          parent_id: string | null
+          size_bytes: number | null
+          slug: string
+          storage_key: string | null
           title: string
           updated_at: string
           user_id: string
+          workspace_id: string
         }
         Insert: {
           content_json?: Json | null
           content_text?: string | null
           content_tsv?: unknown
           created_at?: string
-          folder_id?: string | null
           id?: string
-          title?: string
+          is_pinned?: boolean
+          kind: Database["public"]["Enums"]["library_node_kind"]
+          mime_type?: string | null
+          parent_id?: string | null
+          size_bytes?: number | null
+          slug: string
+          storage_key?: string | null
+          title: string
           updated_at?: string
           user_id: string
+          workspace_id: string
         }
         Update: {
           content_json?: Json | null
           content_text?: string | null
           content_tsv?: unknown
           created_at?: string
-          folder_id?: string | null
           id?: string
+          is_pinned?: boolean
+          kind?: Database["public"]["Enums"]["library_node_kind"]
+          mime_type?: string | null
+          parent_id?: string | null
+          size_bytes?: number | null
+          slug?: string
+          storage_key?: string | null
           title?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "documents_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      files: {
-        Row: {
-          created_at: string
-          folder_id: string | null
-          id: string
-          kind: Database["public"]["Enums"]["file_kind"]
-          mime_type: string
-          name: string
-          size_bytes: number
-          storage_key: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          folder_id?: string | null
-          id?: string
-          kind?: Database["public"]["Enums"]["file_kind"]
-          mime_type: string
-          name: string
-          size_bytes: number
-          storage_key: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          folder_id?: string | null
-          id?: string
-          kind?: Database["public"]["Enums"]["file_kind"]
-          mime_type?: string
-          name?: string
-          size_bytes?: number
-          storage_key?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "files_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      folders: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          parent_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          parent_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          parent_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "folders_parent_id_fkey"
+            foreignKeyName: "library_nodes_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
-            referencedRelation: "folders"
+            referencedRelation: "library_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_nodes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "library_nodes"
             referencedColumns: ["id"]
           },
         ]
@@ -204,8 +153,8 @@ export type Database = {
           created_at: string
           duration_sec: number | null
           error: string | null
-          file_id: string
           id: string
+          node_id: string
           status: Database["public"]["Enums"]["recording_status"]
           user_id: string
         }
@@ -213,8 +162,8 @@ export type Database = {
           created_at?: string
           duration_sec?: number | null
           error?: string | null
-          file_id: string
           id?: string
+          node_id: string
           status?: Database["public"]["Enums"]["recording_status"]
           user_id: string
         }
@@ -222,17 +171,17 @@ export type Database = {
           created_at?: string
           duration_sec?: number | null
           error?: string | null
-          file_id?: string
           id?: string
+          node_id?: string
           status?: Database["public"]["Enums"]["recording_status"]
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "recordings_file_id_fkey"
-            columns: ["file_id"]
+            foreignKeyName: "recordings_node_id_fkey"
+            columns: ["node_id"]
             isOneToOne: false
-            referencedRelation: "files"
+            referencedRelation: "library_nodes"
             referencedColumns: ["id"]
           },
         ]
@@ -245,10 +194,10 @@ export type Database = {
           created_at: string
           document_anchor_block_end: number | null
           document_anchor_block_start: number | null
-          document_id: string | null
           embedding: string
           end_ms: number | null
           id: string
+          node_id: string | null
           recording_id: string | null
           source_type: Database["public"]["Enums"]["semantic_search_source_type"]
           start_ms: number | null
@@ -263,10 +212,10 @@ export type Database = {
           created_at?: string
           document_anchor_block_end?: number | null
           document_anchor_block_start?: number | null
-          document_id?: string | null
           embedding: string
           end_ms?: number | null
           id?: string
+          node_id?: string | null
           recording_id?: string | null
           source_type: Database["public"]["Enums"]["semantic_search_source_type"]
           start_ms?: number | null
@@ -281,10 +230,10 @@ export type Database = {
           created_at?: string
           document_anchor_block_end?: number | null
           document_anchor_block_start?: number | null
-          document_id?: string | null
           embedding?: string
           end_ms?: number | null
           id?: string
+          node_id?: string | null
           recording_id?: string | null
           source_type?: Database["public"]["Enums"]["semantic_search_source_type"]
           start_ms?: number | null
@@ -294,10 +243,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "semantic_search_chunks_document_id_user_id_fkey"
-            columns: ["document_id", "user_id"]
+            foreignKeyName: "semantic_search_chunks_node_id_user_id_fkey"
+            columns: ["node_id", "user_id"]
             isOneToOne: false
-            referencedRelation: "documents"
+            referencedRelation: "library_nodes"
             referencedColumns: ["id", "user_id"]
           },
           {
@@ -326,23 +275,27 @@ export type Database = {
       tag_links: {
         Row: {
           id: string
+          node_id: string
           tag_id: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["tag_target_type"]
         }
         Insert: {
           id?: string
+          node_id: string
           tag_id: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["tag_target_type"]
         }
         Update: {
           id?: string
+          node_id?: string
           tag_id?: string
-          target_id?: string
-          target_type?: Database["public"]["Enums"]["tag_target_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "tag_links_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "library_nodes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tag_links_tag_id_fkey"
             columns: ["tag_id"]
@@ -510,9 +463,9 @@ export type Database = {
     }
     Enums: {
       file_kind: "audio" | "other"
+      library_node_kind: "workspace" | "page" | "file" | "audio"
       recording_status: "pending" | "processing" | "done" | "failed" | "live"
-      semantic_search_source_type: "document" | "transcript"
-      tag_target_type: "document" | "file" | "recording"
+      semantic_search_source_type: "page" | "transcript"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -644,9 +597,9 @@ export const Constants = {
   public: {
     Enums: {
       file_kind: ["audio", "other"],
+      library_node_kind: ["workspace", "page", "file", "audio"],
       recording_status: ["pending", "processing", "done", "failed", "live"],
-      semantic_search_source_type: ["document", "transcript"],
-      tag_target_type: ["document", "file", "recording"],
+      semantic_search_source_type: ["page", "transcript"],
     },
   },
 } as const

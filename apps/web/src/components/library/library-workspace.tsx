@@ -1,75 +1,77 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
-import { RecordAudioForm } from "@/components/transcripts/record-audio-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileUploadPicker } from "./file-upload-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { LibraryNode } from "@/server/services/library-nodes";
 import { LibraryActions } from "./library-actions";
 import {
-  createDocument,
-  createFolder,
+  createPage,
+  createWorkspace,
   fetchLibrarySnapshot,
   libraryQueryKey,
-  uploadFile,
 } from "./library-api";
 import { LibraryContent } from "./library-content";
 import { TextInputDialog } from "./library-dialogs";
 import { LibraryFilterChips } from "./library-filter-chips";
-import { useLibraryMutation } from "./library-hooks";
-import { folderName, folderPath } from "./library-paths";
-import { LibraryRecentsContent } from "./library-recents-content";
+import { canonicalNodePath, nodePath } from "./library-paths";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
+import { filterNodesBySelectedTags } from "./library-tags";
+import { NoteRoute } from "./note-route";
+import { TranscriptRoute } from "./transcript-route";
 
 type SignOutAction = () => Promise<void>;
 
 export function LibraryWorkspace({
   signOutAction,
   userEmail,
-  view = "library",
+  workspaceSlug,
+  nodeSlug,
 }: {
   signOutAction: SignOutAction;
   userEmail: string;
-  view?: "library" | "tags" | "recents";
+  workspaceSlug?: string;
+  nodeSlug?: string;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
-  const [newNoteOpen, setNewNoteOpen] = useState(false);
-  const [newFolderOpen, setNewFolderOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-
-  const createNoteMutation = useLibraryMutation(createDocument);
-  const createFolderMutation = useLibraryMutation(createFolder);
-  const uploadMutation = useLibraryMutation(uploadFile);
-
+  const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
+  const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
   });
 
-  const openDocument = (documentId: string) =>
-    router.push(`/library/notes/${documentId}`);
-  const openRecording = (recordingId: string) =>
-    router.push(`/library/transcripts/${recordingId}`);
-  const focusSearch = () => searchInputRef.current?.focus();
-  const selectFolder = (folderId: string | null) => {
-    setSelectedFolderId(folderId);
-    setSelectedTagId(null);
-    if (view === "recents") router.push("/library");
-  };
+  const createWorkspaceMutation = useMutation({
+    mutationFn: createWorkspace,
+    onSuccess: async (node) => {
+      await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
+      router.push(`/${node.slug}`);
+    },
+  });
+  const createPageMutation = useMutation({
+    mutationFn: createPage,
+    onSuccess: async (node) => {
+      await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
+      if (data) router.push(canonicalNodePath(data.nodes, node));
+    },
+  });
 
   if (isLoading) {
     return (
@@ -78,7 +80,6 @@ export function LibraryWorkspace({
       </div>
     );
   }
-
   if (error || !data) {
     return (
       <div className="grid min-h-96 flex-1 place-items-center text-sm text-destructive">
@@ -87,217 +88,217 @@ export function LibraryWorkspace({
     );
   }
 
-  const snapshot = data;
-  const selectedTagName = selectedTagId
-    ? snapshot.tags.find((tag) => tag.id === selectedTagId)?.name
+  const { nodes, tags = [], tagLinks = [] } = data;
+  const filteredNodes = filterNodesBySelectedTags(
+    nodes,
+    tagLinks,
+    selectedTagIds,
+  );
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds((current) => {
+      const next = new Set(current);
+      if (next.has(tagId)) next.delete(tagId);
+      else next.add(tagId);
+      return next;
+    });
+  };
+  const workspace = workspaceSlug
+    ? nodes.find(
+        (node) => node.kind === "workspace" && node.slug === workspaceSlug,
+      )
     : null;
-  const isRecentsView = view === "recents";
-
-  const crumbs = folderPath(snapshot, selectedFolderId);
+  const selectedNode = nodeSlug
+    ? (nodes.find(
+        (node) => node.slug === nodeSlug && node.workspace_id === workspace?.id,
+      ) ?? null)
+    : workspace;
+  const selectedContainer =
+    selectedNode?.kind === "workspace" || selectedNode?.kind === "page"
+      ? selectedNode
+      : null;
+  const parentContainer = selectedNode?.parent_id
+    ? (nodes.find((node) => node.id === selectedNode.parent_id) ?? null)
+    : null;
+  const pageParent = selectedContainer ?? parentContainer ?? workspace;
+  const atRoot = workspaceSlug === undefined;
+  const hasWorkspace = nodes.some((node) => node.kind === "workspace");
+  const firstRun = workspaceSlug === undefined && !hasWorkspace;
+  const crumbs = nodePath(nodes, selectedNode?.id ?? null);
+  const openNode = (node: LibraryNode) =>
+    router.push(canonicalNodePath(nodes, node));
+  const openNodeById = (id: string) => {
+    const node = nodes.find((candidate) => candidate.id === id);
+    if (node) openNode(node);
+  };
 
   const topBar = (
     <div className="flex min-h-[var(--topbar-h)] w-full min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-[13px] text-[var(--text-3)]">
-        {isRecentsView ? (
-          <span className="truncate text-foreground">Recents</span>
-        ) : (
-          <>
+        <button
+          type="button"
+          className="shrink-0 hover:text-foreground"
+          onClick={() => router.push("/")}
+        >
+          Library
+        </button>
+        {crumbs.map((crumb) => (
+          <span key={crumb.id} className="flex min-w-0 items-center gap-2">
+            <ChevronRight className="size-4 shrink-0" />
             <button
               type="button"
-              className="relative shrink-0 truncate hover:text-foreground pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-['']"
-              onClick={() => selectFolder(null)}
+              onClick={() => openNode(crumb)}
+              className="truncate hover:text-foreground"
+              aria-current={crumb.id === selectedNode?.id ? "page" : undefined}
             >
-              Library
+              {crumb.title}
             </button>
-            {crumbs.length > 2 ? (
-              <span
-                className="flex shrink-0 items-center gap-2 sm:hidden"
-                aria-hidden="true"
-              >
-                <ChevronRight className="size-4 shrink-0" />…
-              </span>
-            ) : null}
-            {crumbs.map((crumb, index) => {
-              const isLast = index === crumbs.length - 1;
-              const isParent = index === crumbs.length - 2;
-              return (
-                <span
-                  key={crumb.id}
-                  className={`${
-                    isLast || isParent ? "flex" : "hidden sm:flex"
-                  } min-w-0 items-center gap-2`}
-                >
-                  <ChevronRight className="size-4 shrink-0" />
-                  <button
-                    type="button"
-                    onClick={() => selectFolder(crumb.id)}
-                    className={`relative truncate pointer-coarse:before:absolute pointer-coarse:before:-inset-2.5 pointer-coarse:before:content-[''] ${
-                      isLast ? "text-foreground" : "hover:text-foreground"
-                    }`}
-                    aria-current={isLast ? "page" : undefined}
-                  >
-                    {crumb.name}
-                  </button>
-                </span>
-              );
-            })}
-          </>
-        )}
+          </span>
+        ))}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <RecordAudioForm
-          onSave={(file) =>
-            uploadMutation.mutate({ file, folderId: selectedFolderId })
-          }
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          title="Search"
-          onClick={focusSearch}
-        >
-          <span className="sr-only">Search</span>
-          <Search className="size-4" />
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        title="Search"
+        onClick={() => searchInputRef.current?.focus()}
+      >
+        <span className="sr-only">Search</span>
+        <Search className="size-4" />
+      </Button>
     </div>
   );
-
-  const pageTitle = isRecentsView
-    ? "Recents"
-    : folderName(snapshot, selectedFolderId);
-  const pageMeta = isRecentsView
-    ? `${snapshot.documents.length} notes`
-    : selectedTagName
-      ? `Filtered by ${selectedTagName}`
-      : `${snapshot.folders.length + snapshot.documents.length + snapshot.files.length} items`;
 
   return (
     <LibraryShell
       sidebar={
         <LibrarySidebar
-          view={view}
-          folders={snapshot.folders}
-          selectedFolderId={selectedFolderId}
-          tags={snapshot.tags}
-          selectedTagId={selectedTagId}
+          nodes={nodes}
+          tags={tags}
+          tagLinks={tagLinks}
+          selectedTagIds={selectedTagIds}
+          selectedNodeId={selectedNode?.id ?? null}
           userEmail={userEmail}
           signOutAction={signOutAction}
-          onSelectFolder={selectFolder}
-          onSelectTag={setSelectedTagId}
-          onCreateNote={() => setNewNoteOpen(true)}
-          onCreateFolder={() => setNewFolderOpen(true)}
-          onFocusSearch={focusSearch}
+          onCreatePage={() =>
+            pageParent ? setPageDialogOpen(true) : setWorkspaceDialogOpen(true)
+          }
+          onFocusSearch={() => searchInputRef.current?.focus()}
+          onToggleTag={toggleTag}
         />
       }
       topBar={topBar}
     >
       <div className="mb-5">
-        <h2 className="text-2xl font-semibold">{pageTitle}</h2>
+        <h2 className="text-2xl font-semibold">
+          {selectedNode?.title ?? "Library"}
+        </h2>
         <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-          {pageMeta}
+          {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
         </p>
-        {!isRecentsView ? (
-          <div className="mt-3">
-            <LibraryFilterChips
-              tags={snapshot.tags}
-              selectedTagId={selectedTagId}
-              onSelectTag={setSelectedTagId}
-            />
-          </div>
-        ) : null}
       </div>
+
       <SearchPanel
         inputRef={searchInputRef}
-        onOpenDocument={openDocument}
-        onOpenTranscript={openRecording}
-        onSelectFile={(_fileId, folderId) => {
-          selectFolder(folderId);
-        }}
+        onOpenDocument={openNodeById}
+        onOpenTranscript={() => undefined}
+        onSelectFile={openNodeById}
       />
-      {isRecentsView ? (
-        <LibraryRecentsContent
-          snapshot={snapshot}
-          onOpenDocument={openDocument}
+
+      <div className="space-y-5">
+        <LibraryFilterChips
+          tags={tags}
+          selectedTagIds={selectedTagIds}
+          onToggleTag={toggleTag}
+          onClearTags={() => setSelectedTagIds(new Set())}
         />
-      ) : (
-        <div className="space-y-5">
+        {atRoot || selectedContainer ? (
           <LibraryActions
-            onCreateNote={() => setNewNoteOpen(true)}
-            onCreateFolder={() => setNewFolderOpen(true)}
-            onUpload={() => setUploadOpen(true)}
-            onStartLiveSession={() =>
-              router.push(
-                selectedFolderId
-                  ? `/library/live?folderId=${selectedFolderId}`
-                  : "/library/live",
-              )
-            }
+            atRoot={atRoot}
+            onCreateWorkspace={() => setWorkspaceDialogOpen(true)}
+            onCreatePage={() => setPageDialogOpen(true)}
           />
+        ) : null}
+        {selectedNode?.kind === "page" ? (
+          <>
+            <NoteRoute nodeId={selectedNode.id} />
+            <LibraryContent
+              nodes={filteredNodes}
+              parentId={selectedNode.id}
+              atRoot={false}
+              onOpen={openNodeById}
+            />
+          </>
+        ) : selectedNode?.kind === "audio" ? (
+          <TranscriptRoute nodeId={selectedNode.id} />
+        ) : (
           <LibraryContent
-            snapshot={snapshot}
-            selectedFolderId={selectedFolderId}
-            selectedTagId={selectedTagId}
-            onSelectFolder={selectFolder}
-            onOpenDocument={openDocument}
-            onOpenRecording={openRecording}
+            nodes={filteredNodes}
+            parentId={selectedNode?.id ?? null}
+            atRoot={atRoot}
+            onOpen={openNodeById}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       <TextInputDialog
-        open={newNoteOpen}
-        onOpenChange={setNewNoteOpen}
-        title="New note"
-        label="Note title"
-        placeholder="Untitled note"
-        submitLabel="Create note"
-        onSubmit={(title) =>
-          createNoteMutation.mutate({ title, folderId: selectedFolderId })
-        }
+        open={workspaceDialogOpen}
+        onOpenChange={setWorkspaceDialogOpen}
+        title="Create a workspace"
+        label="Workspace name"
+        placeholder="Workspace name"
+        submitLabel="Create workspace"
+        onSubmit={(title) => createWorkspaceMutation.mutate({ title })}
       />
       <TextInputDialog
-        open={newFolderOpen}
-        onOpenChange={setNewFolderOpen}
-        title="New folder"
-        label="Folder name"
-        placeholder="Folder name"
-        submitLabel="Create folder"
-        onSubmit={(name) =>
-          createFolderMutation.mutate({ name, parentId: selectedFolderId })
-        }
+        open={pageDialogOpen}
+        onOpenChange={setPageDialogOpen}
+        title="Create a page"
+        label="Page title"
+        placeholder="Untitled page"
+        submitLabel="Create page"
+        onSubmit={(title) => {
+          if (pageParent) {
+            createPageMutation.mutate({
+              title,
+              parentId: pageParent.id,
+            });
+          }
+        }}
       />
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent>
+
+      <Dialog open={firstRun}>
+        <DialogContent
+          aria-describedby={undefined}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+        >
           <DialogTitle className="text-sm font-semibold">
-            Upload a file
+            Create a workspace
           </DialogTitle>
           <form
             className="mt-3 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const formData = new FormData(event.currentTarget);
-              const upload = formData.get("file");
-              if (!(upload instanceof globalThis.File) || upload.size === 0) {
-                return;
-              }
-              uploadMutation.mutate({
-                file: upload,
-                folderId: selectedFolderId,
-              });
-              setUploadOpen(false);
+            action={(formData) => {
+              const title = String(formData.get("title") ?? "").trim();
+              if (title) createWorkspaceMutation.mutate({ title });
             }}
           >
-            <FileUploadPicker name="file" />
+            <div className="space-y-1.5">
+              <Label htmlFor="first-workspace-name">Workspace name</Label>
+              <Input
+                id="first-workspace-name"
+                name="title"
+                placeholder="My workspace"
+                autoFocus
+                required
+              />
+            </div>
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" size="sm">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" size="sm">
-                Upload
+              <Button
+                type="submit"
+                size="sm"
+                disabled={createWorkspaceMutation.isPending}
+              >
+                Create workspace
               </Button>
             </DialogFooter>
           </form>

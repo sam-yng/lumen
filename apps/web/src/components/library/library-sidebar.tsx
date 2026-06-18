@@ -3,8 +3,8 @@
 import {
   ChevronRight,
   Clock,
+  FileText,
   Folder,
-  FolderPlus,
   Library as LibraryIcon,
   LogOut,
   Plus,
@@ -17,112 +17,125 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ASSISTANT_ENABLED } from "@/lib/assistant-flags";
 import type { Tables } from "@/server/db/database.types";
+import type { LibraryNode } from "@/server/services/library-nodes";
+import { canonicalNodePath } from "./library-paths";
 import { TagPanel } from "./tag-panel";
 
-type FolderRow = Tables<"folders">;
-type TagRow = Tables<"tags">;
 type SignOutAction = () => Promise<void>;
+type ChildrenByParent = Map<string | null, LibraryNode[]>;
 
-function FolderTree({
-  folders,
-  selectedFolderId,
-  onSelect,
+function NodeTreeBranch({
+  nodes,
+  childrenByParent,
+  selectedNodeId,
+  parentId,
+  depth = 0,
+  ancestors = new Set<string>(),
 }: {
-  folders: FolderRow[];
-  selectedFolderId: string | null;
-  onSelect: (id: string | null) => void;
+  nodes: LibraryNode[];
+  childrenByParent: ChildrenByParent;
+  selectedNodeId: string | null;
+  parentId: string | null;
+  depth?: number;
+  ancestors?: Set<string>;
 }) {
-  const childrenByParent = useMemo(() => {
-    const map = new Map<string | null, FolderRow[]>();
-    for (const folder of folders) {
-      const key = folder.parent_id;
-      map.set(key, [...(map.get(key) ?? []), folder]);
-    }
-    for (const children of map.values()) {
-      children.sort((a, b) => a.name.localeCompare(b.name));
-    }
-    return map;
-  }, [folders]);
-
-  function renderFolders(parentId: string | null, depth = 0) {
-    return (childrenByParent.get(parentId) ?? []).map((folder) => (
-      <div key={folder.id}>
-        <button
-          type="button"
-          onClick={() => onSelect(folder.id)}
-          className={`group relative flex h-[var(--row-h)] w-full items-center gap-2 rounded-md pr-2 text-left text-[13px] text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
-            selectedFolderId === folder.id
+  return (childrenByParent.get(parentId) ?? []).map((node) => {
+    if (ancestors.has(node.id)) return null;
+    const nextAncestors = new Set(ancestors).add(node.id);
+    return (
+      <div key={node.id}>
+        <Link
+          href={canonicalNodePath(nodes, node)}
+          aria-current={selectedNodeId === node.id ? "page" : undefined}
+          className={`group relative flex h-[var(--row-h)] items-center gap-2 rounded-md pr-2 text-[13px] text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
+            selectedNodeId === node.id
               ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
               : ""
           }`}
           style={{ paddingLeft: 8 + depth * 16 }}
         >
-          {selectedFolderId === folder.id ? (
+          {selectedNodeId === node.id ? (
             <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
           ) : null}
           <ChevronRight className="size-3.5 shrink-0 text-[var(--text-4)]" />
-          <Folder className="size-4 shrink-0" />
-          <span className="truncate">{folder.name}</span>
-        </button>
-        {renderFolders(folder.id, depth + 1)}
+          {node.kind === "workspace" ? (
+            <Folder className="size-4 shrink-0" />
+          ) : (
+            <FileText className="size-4 shrink-0" />
+          )}
+          <span className="truncate">{node.title}</span>
+        </Link>
+        <NodeTreeBranch
+          nodes={nodes}
+          childrenByParent={childrenByParent}
+          selectedNodeId={selectedNodeId}
+          parentId={node.id}
+          depth={depth + 1}
+          ancestors={nextAncestors}
+        />
       </div>
-    ));
-  }
+    );
+  });
+}
+
+function NodeTree({
+  nodes,
+  selectedNodeId,
+}: {
+  nodes: LibraryNode[];
+  selectedNodeId: string | null;
+}) {
+  const childrenByParent = useMemo(() => {
+    const map: ChildrenByParent = new Map();
+    for (const node of nodes) {
+      if (node.kind === "file" || node.kind === "audio") continue;
+      const key = node.parent_id;
+      map.set(key, [...(map.get(key) ?? []), node]);
+    }
+    for (const children of map.values()) {
+      children.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return map;
+  }, [nodes]);
 
   return (
-    <nav className="space-y-1">
-      <button
-        type="button"
-        onClick={() => onSelect(null)}
-        className={`group relative flex h-[var(--row-h)] w-full items-center gap-2 rounded-md px-2 text-left text-[13px] text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
-          selectedFolderId === null
-            ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
-            : ""
-        }`}
-      >
-        {selectedFolderId === null ? (
-          <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
-        ) : null}
-        <LibraryIcon className="size-4 shrink-0" />
-        <span className="truncate">Library</span>
-      </button>
-      {renderFolders(null)}
-    </nav>
+    <NodeTreeBranch
+      nodes={nodes}
+      childrenByParent={childrenByParent}
+      selectedNodeId={selectedNodeId}
+      parentId={null}
+    />
   );
 }
 
 export function LibrarySidebar({
-  view,
-  folders,
-  selectedFolderId,
+  nodes,
   tags,
-  selectedTagId,
+  tagLinks,
+  selectedTagIds,
+  selectedNodeId,
   userEmail,
   signOutAction,
-  onSelectFolder,
-  onSelectTag,
-  onCreateNote,
-  onCreateFolder,
+  onCreatePage,
   onFocusSearch,
+  onToggleTag,
 }: {
-  view: "library" | "tags" | "recents";
-  folders: FolderRow[];
-  selectedFolderId: string | null;
-  tags: TagRow[];
-  selectedTagId: string | null;
+  nodes: LibraryNode[];
+  tags: Tables<"tags">[];
+  tagLinks: Tables<"tag_links">[];
+  selectedTagIds: ReadonlySet<string>;
+  selectedNodeId: string | null;
   userEmail: string;
   signOutAction: SignOutAction;
-  onSelectFolder: (folderId: string | null) => void;
-  onSelectTag: (tagId: string | null) => void;
-  onCreateNote: () => void;
-  onCreateFolder: () => void;
+  onCreatePage: () => void;
   onFocusSearch: () => void;
+  onToggleTag: (tagId: string) => void;
 }) {
-  const showFolderTree = view !== "recents";
+  const pinned = nodes
+    .filter((node) => node.is_pinned)
+    .toSorted((a, b) => a.title.localeCompare(b.title));
   const navItem =
     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px]";
-  const navActive =
-    "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]";
   const navIdle = "text-[var(--text-2)] hover:bg-[var(--surface-2)]";
 
   return (
@@ -138,9 +151,9 @@ export function LibrarySidebar({
           </Button>
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-          <Button type="button" onClick={onCreateNote}>
+          <Button type="button" onClick={onCreatePage}>
             <Plus className="size-4" />
-            New note
+            New page
           </Button>
           <Button
             type="button"
@@ -154,80 +167,61 @@ export function LibrarySidebar({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-4">
-        <nav className="mb-4 space-y-1">
-          <Link
-            href="/library"
-            aria-current={view === "library" ? "page" : undefined}
-            className={`${navItem} ${view === "library" ? navActive : navIdle}`}
-          >
+        <nav className="mb-4 space-y-1" aria-label="Primary">
+          <Link href="/" className={`${navItem} ${navIdle}`}>
             <LibraryIcon className="size-4" />
             Library
           </Link>
-          <Link
-            href="/library/recents"
-            aria-current={view === "recents" ? "page" : undefined}
-            className={`${navItem} ${view === "recents" ? navActive : navIdle}`}
-          >
+          <Link href="/" className={`${navItem} ${navIdle}`}>
             <Clock className="size-4" />
             Recents
           </Link>
-          {/* Does nothing - not a valid route for any future features */}
-          {/* <Link
-            href="/library/tags"
-            aria-current={view === "tags" ? "page" : undefined}
-            className={`${navItem} ${view === "tags" ? navActive : navIdle}`}
-          >
-            <Tag className="size-4" />
-            Tags
-          </Link> */}
           {ASSISTANT_ENABLED ? (
             <Link href="/assistant" className={`${navItem} ${navIdle}`}>
               <Sparkles className="size-4 text-[var(--accent-text)]" />
               Ask Lumen
             </Link>
-          ) : (
-            <span
-              aria-disabled="true"
-              title="Ask Lumen — enabling after launch"
-              className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-60`}
-            >
-              <Sparkles className="size-4 text-[var(--accent-text)]" />
-              Ask Lumen
-              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-1.5 py-px font-mono text-[10px] tracking-wide text-[var(--accent-text)] uppercase">
-                <span className="size-[5px] rounded-full bg-[var(--accent)]" />
-                soon
-              </span>
-            </span>
-          )}
+          ) : null}
         </nav>
-        {showFolderTree ? (
-          <>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
-                Library
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                title="New folder"
-                onClick={onCreateFolder}
-              >
-                <span className="sr-only">New folder</span>
-                <FolderPlus className="size-3.5" />
-              </Button>
-            </div>
-            <FolderTree
-              folders={folders}
-              selectedFolderId={selectedFolderId}
-              onSelect={onSelectFolder}
-            />
-          </>
+
+        {pinned.length > 0 ? (
+          <section className="mb-4">
+            <p className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+              Pinned
+            </p>
+            <nav className="space-y-1" aria-label="Pinned">
+              {pinned.map((node) => (
+                <Link
+                  key={node.id}
+                  href={canonicalNodePath(nodes, node)}
+                  className={`${navItem} ${navIdle}`}
+                >
+                  {node.kind === "workspace" ? (
+                    <Folder className="size-4" />
+                  ) : (
+                    <FileText className="size-4" />
+                  )}
+                  <span className="truncate">{node.title}</span>
+                </Link>
+              ))}
+            </nav>
+          </section>
         ) : null}
+
+        <section className="mb-4">
+          <p className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+            Library
+          </p>
+          <nav className="space-y-1" aria-label="Library tree">
+            <NodeTree nodes={nodes} selectedNodeId={selectedNodeId} />
+          </nav>
+        </section>
+
         <TagPanel
           tags={tags}
-          selectedTagId={selectedTagId}
-          onSelectTag={onSelectTag}
+          tagLinks={tagLinks}
+          selectedTagIds={selectedTagIds}
+          onToggleTag={onToggleTag}
         />
       </div>
       <div className="border-t border-[var(--border-soft)] p-4">

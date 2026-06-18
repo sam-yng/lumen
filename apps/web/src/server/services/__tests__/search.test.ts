@@ -20,16 +20,23 @@ const embeddingProvider: EmbeddingProvider = {
   },
 };
 
-function doc(over: Record<string, unknown> = {}) {
+function page(over: Record<string, unknown> = {}) {
   return {
-    id: "d1",
+    id: "page-1",
     user_id: "user-1",
-    folder_id: null,
+    workspace_id: "workspace-1",
+    parent_id: "workspace-1",
+    kind: "page" as const,
     title: "Biology notes",
+    slug: "biology-notes-page1",
     content_json: null,
     content_text: "The mitochondria is the powerhouse of the cell.",
     // TSVector generated column — opaque/Postgres-only, unused by the pure helpers
     content_tsv: null as unknown,
+    mime_type: null,
+    size_bytes: null,
+    storage_key: null,
+    is_pinned: false,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     ...over,
@@ -58,20 +65,27 @@ describe("rankResults", () => {
   it("ranks body hits (tier 0) above name-only hits (tier 2)", () => {
     const results = rankResults({
       query: "cell",
-      documentBodyHits: [doc({ id: "body" })],
+      pageBodyHits: [page({ id: "body" })],
       transcriptHits: [],
-      documentTitleHits: [],
-      fileNameHits: [
+      pageTitleHits: [],
+      fileNodeHits: [
         {
           id: "f1",
           user_id: "user-1",
-          folder_id: null,
-          name: "cell-diagram.png",
+          workspace_id: "workspace-1",
+          parent_id: "workspace-1",
+          title: "cell-diagram.png",
+          slug: "cell-diagram-f1",
           mime_type: "image/png",
           size_bytes: 1,
           storage_key: "k",
-          kind: "other",
+          kind: "file",
+          content_json: null,
+          content_text: null,
+          content_tsv: null,
+          is_pinned: false,
           created_at: "2026-01-01T00:00:00Z",
+          updated_at: "2026-01-01T00:00:00Z",
         },
       ],
     });
@@ -83,10 +97,10 @@ describe("rankResults", () => {
   it("dedupes a document matching both body and title into one tier-0 hit", () => {
     const results = rankResults({
       query: "biology",
-      documentBodyHits: [doc({ id: "same" })],
+      pageBodyHits: [page({ id: "same" })],
       transcriptHits: [],
-      documentTitleHits: [doc({ id: "same" })],
-      fileNameHits: [],
+      pageTitleHits: [page({ id: "same" })],
+      fileNodeHits: [],
     });
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ kind: "document", id: "same", tier: 0 });
@@ -95,18 +109,18 @@ describe("rankResults", () => {
   it("keeps the FTS body snippet when the same document also has a semantic hit", () => {
     const results = rankResults({
       query: "cell",
-      documentBodyHits: [
-        doc({
+      pageBodyHits: [
+        page({
           id: "same",
           content_text: "The cell body text should remain the snippet.",
         }),
       ],
       transcriptHits: [],
-      documentTitleHits: [],
-      fileNameHits: [],
-      semanticDocumentHits: [
+      pageTitleHits: [],
+      fileNodeHits: [],
+      semanticPageHits: [
         {
-          document: doc({ id: "same" }),
+          page: page({ id: "same" }),
           snippet: "semantic snippet should lose",
           similarity: 0.99,
         },
@@ -125,7 +139,7 @@ describe("rankResults", () => {
   it("includes transcript hits at tier 0 with a snippet", () => {
     const results = rankResults({
       query: "lecture",
-      documentBodyHits: [],
+      pageBodyHits: [],
       transcriptHits: [
         {
           id: "t1",
@@ -138,8 +152,8 @@ describe("rankResults", () => {
           created_at: "2026-01-02T00:00:00Z",
         },
       ],
-      documentTitleHits: [],
-      fileNameHits: [],
+      pageTitleHits: [],
+      fileNodeHits: [],
     });
     expect(results[0]).toMatchObject({
       kind: "transcript",
@@ -152,13 +166,13 @@ describe("rankResults", () => {
   it("recency tiebreak: newer document sorts before older at same tier", () => {
     const results = rankResults({
       query: "cell",
-      documentBodyHits: [
-        doc({ id: "older", updated_at: "2026-01-01T00:00:00Z" }),
-        doc({ id: "newer", updated_at: "2026-02-01T00:00:00Z" }),
+      pageBodyHits: [
+        page({ id: "older", updated_at: "2026-01-01T00:00:00Z" }),
+        page({ id: "newer", updated_at: "2026-02-01T00:00:00Z" }),
       ],
       transcriptHits: [],
-      documentTitleHits: [],
-      fileNameHits: [],
+      pageTitleHits: [],
+      fileNodeHits: [],
     });
     expect(results[0].id).toBe("newer");
     expect(results[1].id).toBe("older");
@@ -167,10 +181,10 @@ describe("rankResults", () => {
   it("returns empty array when all hit arrays are empty", () => {
     const results = rankResults({
       query: "x",
-      documentBodyHits: [],
+      pageBodyHits: [],
       transcriptHits: [],
-      documentTitleHits: [],
-      fileNameHits: [],
+      pageTitleHits: [],
+      fileNodeHits: [],
     });
     expect(results).toEqual([]);
   });
@@ -178,15 +192,24 @@ describe("rankResults", () => {
 
 describe("searchLibrary", () => {
   it("returns [] for an empty or whitespace query", async () => {
-    const ctx = createContext({ documents: [doc()] });
+    const ctx = createContext({ library_nodes: [page()] });
     expect(await searchLibrary(ctx, "   ")).toEqual([]);
   });
 
   it("scopes results to the current user and includes each kind", async () => {
     const ctx = createContext({
-      documents: [
-        doc({ id: "mine", user_id: userId }),
-        doc({ id: "theirs", user_id: "user-2" }),
+      library_nodes: [
+        page({ id: "mine", user_id: userId }),
+        page({ id: "theirs", user_id: "user-2" }),
+        {
+          ...page({ id: "f1", title: "cell.png" }),
+          kind: "file",
+          content_json: null,
+          content_text: null,
+          mime_type: "image/png",
+          size_bytes: 1,
+          storage_key: "k",
+        },
       ],
       transcripts: [
         {
@@ -198,19 +221,6 @@ describe("searchLibrary", () => {
           full_text_tsv: null as unknown,
           language: "en",
           created_at: "2026-01-02T00:00:00Z",
-        },
-      ],
-      files: [
-        {
-          id: "f1",
-          user_id: userId,
-          folder_id: null,
-          name: "cell.png",
-          mime_type: "image/png",
-          size_bytes: 1,
-          storage_key: "k",
-          kind: "other",
-          created_at: "2026-01-01T00:00:00Z",
         },
       ],
     });
@@ -226,44 +236,45 @@ describe("searchLibrary", () => {
   it("returns semantic document chunks with semantic snippets above title and file hits", async () => {
     const ctx = createContext(
       {
-        documents: [
-          doc({
+        library_nodes: [
+          page({
             id: "semantic-doc",
             user_id: userId,
             title: "Chemistry notes",
             content_text: "No lexical match here.",
             updated_at: "2026-01-01T00:00:00Z",
           }),
-          doc({
+          page({
             id: "title-doc",
             user_id: userId,
             title: "cell title only",
             content_text: "No body match here.",
             updated_at: "2026-02-01T00:00:00Z",
           }),
-        ],
-        transcripts: [],
-        files: [
           {
-            id: "file-hit",
-            user_id: userId,
-            folder_id: null,
-            name: "cell-guide.pdf",
+            ...page({
+              id: "file-hit",
+              title: "cell-guide.pdf",
+              created_at: "2026-03-01T00:00:00Z",
+              updated_at: "2026-03-01T00:00:00Z",
+            }),
+            kind: "file",
+            content_json: null,
+            content_text: null,
             mime_type: "application/pdf",
             size_bytes: 1,
             storage_key: "k",
-            kind: "other",
-            created_at: "2026-03-01T00:00:00Z",
           },
         ],
+        transcripts: [],
       },
       {
         match_semantic_search_chunks: [
           {
             id: "chunk-1",
             user_id: userId,
-            source_type: "document",
-            source: { documentId: "semantic-doc" },
+            source_type: "page",
+            source: { nodeId: "semantic-doc" },
             chunk_index: 0,
             content: "semantic chunk says membranes and organelles",
             similarity: 0.91,
@@ -272,8 +283,8 @@ describe("searchLibrary", () => {
           {
             id: "chunk-other",
             user_id: otherUserId,
-            source_type: "document",
-            source: { documentId: "other-doc" },
+            source_type: "page",
+            source: { nodeId: "other-doc" },
             chunk_index: 0,
             content: "cross-user chunk must stay hidden",
             similarity: 0.99,
@@ -307,14 +318,14 @@ describe("searchLibrary", () => {
   it("hydrates semantic documents by missing ids instead of all owned documents", async () => {
     const ctx = createContext(
       {
-        documents: [
-          doc({
+        library_nodes: [
+          page({
             id: "semantic-doc",
             user_id: userId,
             title: "Chemistry notes",
             content_text: "No lexical match here.",
           }),
-          doc({
+          page({
             id: "unrelated-owned",
             user_id: userId,
             title: "Unrelated",
@@ -322,15 +333,14 @@ describe("searchLibrary", () => {
           }),
         ],
         transcripts: [],
-        files: [],
       },
       {
         match_semantic_search_chunks: [
           {
             id: "chunk-1",
             user_id: userId,
-            source_type: "document",
-            source: { documentId: "semantic-doc" },
+            source_type: "page",
+            source: { nodeId: "semantic-doc" },
             chunk_index: 0,
             content: "semantic document passage",
             similarity: 0.91,
@@ -347,7 +357,7 @@ describe("searchLibrary", () => {
       (ctx.supabase as FakeSupabase).queryLog.some(
         (entry) =>
           entry.action === "select" &&
-          entry.table === "documents" &&
+          entry.table === "library_nodes" &&
           entry.filters.some(
             (filter) => filter.column === "user_id" && filter.value === userId,
           ) &&
@@ -365,22 +375,21 @@ describe("searchLibrary", () => {
   it("does not return semantic RPC rows without user ownership", async () => {
     const ctx = createContext(
       {
-        documents: [
-          doc({
+        library_nodes: [
+          page({
             id: "semantic-doc",
             user_id: userId,
             content_text: "No lexical match here.",
           }),
         ],
         transcripts: [],
-        files: [],
       },
       {
         match_semantic_search_chunks: [
           {
             id: "chunk-without-user",
-            source_type: "document",
-            source: { documentId: "semantic-doc" },
+            source_type: "page",
+            source: { nodeId: "semantic-doc" },
             chunk_index: 0,
             content: "row without user id should be filtered",
             similarity: 0.99,
@@ -398,25 +407,24 @@ describe("searchLibrary", () => {
   it("skips malformed semantic sources without crashing", async () => {
     const ctx = createContext(
       {
-        documents: [
-          doc({
+        library_nodes: [
+          page({
             id: "semantic-doc",
             user_id: userId,
             content_text: "No lexical match here.",
           }),
         ],
         transcripts: [],
-        files: [],
       },
       {
         match_semantic_search_chunks: [
           {
-            id: "bad-document-source",
+            id: "bad-page-source",
             user_id: userId,
-            source_type: "document",
-            source: { documentId: 123 },
+            source_type: "page",
+            source: { nodeId: 123 },
             chunk_index: 0,
-            content: "bad document source",
+            content: "bad page source",
             similarity: 0.9,
             text_rank: 0,
           },
@@ -441,7 +449,7 @@ describe("searchLibrary", () => {
 
   it("returns semantic transcript chunks with recordingId", async () => {
     const ctx = createContext(
-      { documents: [], transcripts: [], files: [] },
+      { library_nodes: [], transcripts: [] },
       {
         match_semantic_search_chunks: [
           {
@@ -478,9 +486,8 @@ describe("searchLibrary", () => {
 
   it("does not call the semantic RPC when no embedding provider is supplied", async () => {
     const ctx = createContext({
-      documents: [doc()],
+      library_nodes: [page()],
       transcripts: [],
-      files: [],
     });
 
     const results = await searchLibrary(ctx, "cell");
@@ -495,7 +502,7 @@ describe("searchLibrary", () => {
         return [[1, 2, 3]];
       },
     };
-    const ctx = createContext({ documents: [], transcripts: [], files: [] });
+    const ctx = createContext({ library_nodes: [], transcripts: [] });
 
     await expect(
       searchLibrary(ctx, "cell", { embeddingProvider: invalidProvider }),
@@ -509,7 +516,7 @@ describe("searchLibrary", () => {
         return [queryEmbedding, queryEmbedding];
       },
     };
-    const ctx = createContext({ documents: [], transcripts: [], files: [] });
+    const ctx = createContext({ library_nodes: [], transcripts: [] });
 
     await expect(
       searchLibrary(ctx, "cell", { embeddingProvider: wrongCountProvider }),
@@ -521,9 +528,8 @@ describe("searchLibrary", () => {
 describe("searchLibrary regression (unchanged by grounded retrieval)", () => {
   it("still returns the legacy SearchResult[] shape with kind/tier and no citationId", async () => {
     const ctx = createContext({
-      documents: [doc({ id: "d1", user_id: userId })],
+      library_nodes: [page({ id: "d1", user_id: userId })],
       transcripts: [],
-      files: [],
     });
     const results = await searchLibrary(ctx, "cell");
     expect(results).toHaveLength(1);

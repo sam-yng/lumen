@@ -46,16 +46,20 @@ describe("resolveDeepLinkMs", () => {
 const recording = {
   id: "r1",
   user_id: "user-1",
-  file_id: "f1",
+  node_id: "f1",
   status: "done",
   duration_sec: 120,
   error: null,
   created_at: "2026-01-01T00:00:00Z",
-  updated_at: "2026-01-01T00:00:00Z",
 } as Tables<"recordings">;
 
 const detail = {
-  file: { id: "f1", name: "Lecture 3.wav", size_bytes: 1234 },
+  node: {
+    id: "f1",
+    title: "Lecture 3.wav",
+    size_bytes: 1234,
+    mime_type: "audio/wav",
+  },
   recording,
   transcript: { id: "t1", language: "en" },
   segments: segments.map((segment, index) => ({
