@@ -37,7 +37,6 @@ export function LibraryWorkspaceDialogs({
         open={activeDialog === "workspace"}
         onOpenChange={(open) => onDialogOpenChange("workspace", open)}
         title="Create a workspace"
-        label="Workspace name"
         placeholder="Workspace name"
         submitLabel="Create workspace"
         onSubmit={onCreateWorkspace}
@@ -46,7 +45,6 @@ export function LibraryWorkspaceDialogs({
         open={activeDialog === "note"}
         onOpenChange={(open) => onDialogOpenChange("note", open)}
         title="New note"
-        label="Note title"
         placeholder="Untitled note"
         submitLabel="Create note"
         onSubmit={onCreateNote}
@@ -55,7 +53,6 @@ export function LibraryWorkspaceDialogs({
         open={activeDialog === "folder"}
         onOpenChange={(open) => onDialogOpenChange("folder", open)}
         title="New folder"
-        label="Folder name"
         placeholder="Folder name"
         submitLabel="Create folder"
         onSubmit={onCreateFolder}

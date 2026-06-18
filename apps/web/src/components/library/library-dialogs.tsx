@@ -18,7 +18,6 @@ export function TextInputDialog({
   open,
   onOpenChange,
   title,
-  label,
   placeholder,
   defaultValue = "",
   submitLabel,
@@ -27,7 +26,6 @@ export function TextInputDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  label: string;
   placeholder?: string;
   defaultValue?: string;
   submitLabel: string;
@@ -51,7 +49,6 @@ export function TextInputDialog({
           }}
         >
           <div className="space-y-1.5">
-            <Label htmlFor={fieldId}>{label}</Label>
             <Input
               id={fieldId}
               name="value"

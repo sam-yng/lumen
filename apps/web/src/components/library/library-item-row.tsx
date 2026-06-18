@@ -1,20 +1,20 @@
 "use client";
 
-import { Check, File as FileIcon, FileText, Folder, Mic } from "lucide-react";
+import { Check, File as FileIcon, Folder, Mic, Globe } from "lucide-react";
 import type { MouseEvent } from "react";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { nodeMetaLabel } from "./library-node-ui";
 
 const iconByKind = {
-  workspace: Folder,
-  page: FileText,
+  workspace: Globe,
+  page: Folder,
   file: FileIcon,
   audio: Mic,
 } satisfies Record<LibraryNode["kind"], typeof Folder>;
 
 const metaByKind = {
   workspace: "Workspace",
-  page: "Note",
+  page: "Folder",
   file: "File",
   audio: "Audio",
 } satisfies Record<LibraryNode["kind"], string>;
@@ -47,7 +47,7 @@ export function ItemRow({
       data-selection-index={selectionIndex}
       className={`group border-b border-border-soft last:border-b-0 ${
         isSelected
-          ? "rounded-md bg-(--accent-soft) outline outline-1 outline-(--accent-line)"
+          ? "rounded-md bg-(--accent-soft) outline outline-(--accent-line)"
           : "hover:bg-surface-2"
       }`}
     >
