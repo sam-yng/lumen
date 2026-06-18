@@ -94,18 +94,6 @@ export function bulkDeleteNodes(input: { ids: string[] }) {
   });
 }
 
-export function uploadFile(input: { file: File; parentId: string }) {
-  const body = new FormData();
-  body.set("file", input.file);
-  body.set("name", input.file.name);
-  body.set("parentId", input.parentId);
-
-  return requestForm<{
-    node: LibraryNode;
-    recording: Tables<"recordings"> | null;
-  }>("/api/library/uploads", body);
-}
-
 export function retryRecording(id: string) {
   return requestJson<Tables<"recordings">>(`/api/library/recordings/${id}`, {
     method: "PATCH",
