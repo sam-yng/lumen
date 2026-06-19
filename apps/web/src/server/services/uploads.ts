@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { Tables } from "@/server/db/database.types";
 import type { ServiceContext } from "@/server/services/context";
-import { assertFound, assertNoDatabaseError } from "@/server/services/errors";
+import {
+  assertFound,
+  assertNoDatabaseError,
+  ServiceError,
+} from "@/server/services/errors";
 import {
   createAudioNode,
   createFileNode,
@@ -36,6 +40,16 @@ type CreateUploadedFileInput = {
 
 function isAudioMimeType(mimeType: string) {
   return mimeType.toLowerCase().startsWith("audio/");
+}
+
+/**
+ * Uploads are constrained to PDF documents and audio (audio flows into the
+ * transcription pipeline). Everything else is rejected. The client `accept`
+ * hint is UX-only and bypassable, so this server check is the real gate.
+ */
+export function isAllowedUploadMimeType(mimeType: string) {
+  const normalized = mimeType.toLowerCase();
+  return normalized === "application/pdf" || isAudioMimeType(normalized);
 }
 
 async function getOwnedParent(ctx: ServiceContext, parentId: string) {
@@ -76,6 +90,13 @@ export async function createUploadedFile(
   ctx: ServiceContext,
   input: CreateUploadedFileInput,
 ): Promise<{ node: LibraryNode; recording: RecordingRow | null }> {
+  if (!isAllowedUploadMimeType(input.mimeType)) {
+    throw new ServiceError(
+      "invalid_input",
+      "Only PDF and audio files can be uploaded.",
+    );
+  }
+
   const parent = await getOwnedParent(ctx, input.parentId);
   const uploadId = randomUUID();
   const storageKey = storageKeyForUpload(ctx.userId, input.name, uploadId);

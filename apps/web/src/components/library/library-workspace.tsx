@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useReducer, useRef } from "react";
+import { useReducer, useRef, useState } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { LibraryActions } from "./library-actions";
@@ -28,6 +28,7 @@ import {
   libraryWorkspaceReducer,
 } from "./library-workspace-state";
 import { LibraryWorkspaceTopBar } from "./library-workspace-top-bar";
+import { PdfViewerDialog } from "./pdf-viewer-dialog";
 
 type SignOutAction = () => Promise<void>;
 
@@ -52,6 +53,7 @@ export function LibraryWorkspace({
     undefined,
     createLibraryWorkspaceState,
   );
+  const [pdfNode, setPdfNode] = useState<LibraryNode | null>(null);
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -134,6 +136,15 @@ export function LibraryWorkspace({
     if (node.kind === "audio") {
       const recording = recordings.find((item) => item.node_id === node.id);
       if (recording) router.push(`/library/transcripts/${recording.id}`);
+      return;
+    }
+    if (node.kind === "file") {
+      if (node.mime_type === "application/pdf") {
+        setPdfNode(node);
+      } else {
+        // Legacy non-PDF imported files: open the streamed content directly.
+        window.open(`/api/library/nodes/${node.id}/content`, "_blank");
+      }
       return;
     }
     router.push(canonicalNodePath(nodes, node));
@@ -273,6 +284,15 @@ export function LibraryWorkspace({
             uploadMutation.mutate({ file, parentId: pageParent.id });
           }
         }}
+      />
+
+      <PdfViewerDialog
+        open={pdfNode !== null}
+        onOpenChange={(open) => {
+          if (!open) setPdfNode(null);
+        }}
+        src={pdfNode ? `/api/library/nodes/${pdfNode.id}/content` : null}
+        title={pdfNode?.title ?? "PDF"}
       />
     </LibraryShell>
   );
