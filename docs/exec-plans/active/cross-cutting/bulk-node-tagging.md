@@ -164,13 +164,14 @@ git commit -m "feat(library): add bulk tag link service"
 **Files:**
 - Modify: `apps/web/src/components/ui/dropdown-menu.tsx`
 - Modify: `apps/web/src/components/library/library-actions.tsx`
+- Modify: `apps/web/src/components/library/library-tags.ts`
 - Create: `apps/web/src/components/library/__tests__/library-actions.test.tsx`
 
 **Interfaces:**
-- Produces: `tagSelectionState(tagId: string, selectedNodeIds: ReadonlySet<string>, tagLinks: Tables<"tag_links">[]): boolean | "indeterminate"`
+- `library-tags.ts` produces: `tagSelectionState(tagId: string, selectedNodeIds: ReadonlySet<string>, tagLinks: Tables<"tag_links">[]): boolean | "indeterminate"`
 - `LibraryActions` additionally consumes `selectedNodeIds`, `tags`, `tagLinks`, `tagMutationPending`, and `onSetTag(tagId, linked)`.
 
-- [ ] **Step 1: Write failing pure-state and component tests**
+- [x] **Step 1: Write failing pure-state and component tests**
 
 Cover none/some/all link coverage and the stable trigger:
 
@@ -190,22 +191,22 @@ and unchecked call `onSetTag(tagId, true)`, `preventDefault()` keeps the menu
 open, pending disables the trigger, and an empty tag list renders
 `No tags created yet` when selection enables the menu.
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 ```bash
-bun run --filter=web test src/components/library/__tests__/library-actions.test.tsx
+cd apps/web && bun run test src/components/library/__tests__/library-actions.test.tsx
 ```
 
 Expected: FAIL because the new props/helper/menu do not exist.
 
-- [ ] **Step 3: Add the checkbox dropdown primitive**
+- [x] **Step 3: Add the checkbox dropdown primitive**
 
 Extend `components/ui/dropdown-menu.tsx` with an exported
 `DropdownMenuCheckboxItem` wrapping Radix `CheckboxItem`. Render the indicator
 with the existing lucide `Check` icon and support Radix's
 `boolean | "indeterminate"` checked value.
 
-- [ ] **Step 4: Implement the minimal Tags menu**
+- [x] **Step 4: Implement the minimal Tags menu**
 
 In `library-actions.tsx`, export `tagSelectionState`, render the Tags trigger on
 both root and non-root branches, and map tags into checkbox items. Use a small
@@ -220,19 +221,20 @@ Prevent the checkbox item select event from closing the menu. Disable the
 trigger when `selectedNodeIds.size === 0 || tagMutationPending` and show a
 spinner while pending.
 
-- [ ] **Step 5: Verify GREEN and run the repo gate**
+- [x] **Step 5: Verify GREEN and run the repo gate**
 
 ```bash
-bun run --filter=web test src/components/library/__tests__/library-actions.test.tsx
+cd apps/web && bun run test src/components/library/__tests__/library-actions.test.tsx
+cd ../..
 bun run check
 ```
 
 Expected: focused tests and full gate pass.
 
-- [ ] **Step 6: Commit the UI slice**
+- [x] **Step 6: Commit the UI slice**
 
 ```bash
-git add apps/web/src/components/ui/dropdown-menu.tsx apps/web/src/components/library/library-actions.tsx apps/web/src/components/library/__tests__/library-actions.test.tsx
+git add apps/web/src/components/ui/dropdown-menu.tsx apps/web/src/components/library/library-actions.tsx apps/web/src/components/library/library-tags.ts apps/web/src/components/library/__tests__/library-actions.test.tsx
 git commit -m "feat(library): add tri-state tag menu"
 ```
 

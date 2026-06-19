@@ -6,6 +6,24 @@ type TagData = {
   tagLinks: Tables<"tag_links">[];
 };
 
+export function tagSelectionState(
+  tagId: string,
+  selectedNodeIds: ReadonlySet<string>,
+  tagLinks: Tables<"tag_links">[],
+): boolean | "indeterminate" {
+  if (selectedNodeIds.size === 0) return false;
+
+  const linkedNodeIds = new Set<string>();
+  for (const link of tagLinks) {
+    if (link.tag_id === tagId && selectedNodeIds.has(link.node_id)) {
+      linkedNodeIds.add(link.node_id);
+    }
+  }
+  if (linkedNodeIds.size === 0) return false;
+  if (linkedNodeIds.size === selectedNodeIds.size) return true;
+  return "indeterminate";
+}
+
 export function tagsForNode(snapshot: TagData, nodeId: string) {
   const tagIds = new Set(
     snapshot.tagLinks
