@@ -171,9 +171,7 @@ describe("LibraryWorkspace node routes", () => {
         title: "Biology",
       }),
     );
-    await waitFor(() =>
-      expect(routerMocks.push).toHaveBeenCalledWith("/biology-abcd1234"),
-    );
+    expect(routerMocks.push).not.toHaveBeenCalled();
   });
 
   it("resolves route slugs and renders breadcrumbs from parent links", async () => {
@@ -307,7 +305,7 @@ describe("LibraryWorkspace node routes", () => {
     );
   });
 
-  it("routes newly created notes to the standalone note editor", async () => {
+  it("stays on the current route after creating a note", async () => {
     apiMocks.fetchLibrarySnapshot.mockResolvedValue({
       nodes: [
         node("workspace-1", "workspace", {
@@ -345,9 +343,7 @@ describe("LibraryWorkspace node routes", () => {
         role: "note",
       }),
     );
-    await waitFor(() =>
-      expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/note-1"),
-    );
+    expect(routerMocks.push).not.toHaveBeenCalled();
   });
 
   it("persists a tag for selected nodes without clearing selection", async () => {

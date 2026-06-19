@@ -83,20 +83,14 @@ export function LibraryWorkspace({
   const pageParent = selectedContainer ?? parentContainer ?? workspace;
   const createWorkspaceMutation = useMutation({
     mutationFn: createWorkspace,
-    onSuccess: async (node) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
-      router.push(`/${node.slug}`);
     },
   });
   const createPageMutation = useMutation({
     mutationFn: createPage,
-    onSuccess: async (node) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
-      if (node.kind === "page" && !isFolderNode(node, [node])) {
-        router.push(`/library/notes/${node.id}`);
-      } else if (data) {
-        router.push(canonicalNodePath(data.nodes, node));
-      }
     },
   });
   const uploadMutation = useMutation({

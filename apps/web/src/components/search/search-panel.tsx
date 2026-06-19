@@ -48,7 +48,7 @@ export function SearchPanel({
   const results = data?.results ?? [];
 
   return (
-    <div className="mb-5 flex flex-col gap-2">
+    <div className="relative mb-5 flex flex-col gap-2">
       <div className="relative">
         <Search
           className="absolute top-1/2 left-4 size-4 -translate-y-1/2 text-text-3"
@@ -65,7 +65,7 @@ export function SearchPanel({
       </div>
 
       {debouncedQuery.length > 0 && (
-        <div className="overflow-hidden rounded-md border border-border-soft bg-surface">
+        <div className="absolute top-full right-0 left-0 z-30 mt-2 max-h-[60vh] overflow-y-auto rounded-md border border-border-soft bg-surface shadow-lg">
           {isFetching && results.length === 0 ? (
             <p className="flex items-center gap-2 p-3 text-sm text-text-3">
               <Loader2 className="size-4 animate-spin" aria-hidden /> Searching…
