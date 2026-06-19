@@ -34,6 +34,10 @@ same rule when it gains content.
 
 ## Queued
 
+- **cross-cutting** — library tag control placement and node indicators
+  - [library-tag-controls-and-indicators.md](exec-plans/queued/cross-cutting/library-tag-controls-and-indicators.md)
+    — move bulk tagging beside Move/Delete/Clear and show up to three stable
+    tag-name chips plus `+N` on each tagged node without changing row height.
 - **post-prod** — AI assistant standalone page + post-launch enablement
   - [assistant-launch.md](exec-plans/queued/post-prod/assistant-launch.md)
     — Phase 1 (relocate the assistant to its own gated `/assistant` page) is
