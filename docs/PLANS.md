@@ -43,7 +43,7 @@ same rule when it gains content.
     dependency.
 ## Active
 
-- **cross-cutting** — library node recovery
+- **cross-cutting** — active product work
   - [library-node-recovery.md](exec-plans/active/cross-cutting/library-node-recovery.md)
     — recover user-facing features and route behavior regressed during the
     navigation-node-tree implementation while keeping the `library_nodes`
@@ -160,6 +160,9 @@ same rule when it gains content.
 
 ### Cross-cutting shipped
 
+- [marketing-favicon.md](exec-plans/completed/cross-cutting/marketing-favicon.md)
+  (2026-06-19) — marketing now mirrors the web app favicon, scalable icon, and
+  Apple touch icon through Next.js file-based metadata.
 - [library-tag-controls-and-indicators.md](exec-plans/completed/cross-cutting/library-tag-controls-and-indicators.md)
   (2026-06-19) — bulk tagging moved beside Move/Delete/Clear; tagged nodes show
   three stable name chips plus `+N` without changing row height.
