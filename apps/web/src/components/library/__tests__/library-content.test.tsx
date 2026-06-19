@@ -67,7 +67,12 @@ function renderContent(onOpen = vi.fn()) {
           parentId="workspace-1"
           atRoot={false}
           selectedIds={selectedIds}
+          tags={[]}
+          tagLinks={[]}
+          tagMutationPending={false}
+          tagMutationError={null}
           onSelectedIdsChange={setSelectedIds}
+          onSetTag={vi.fn()}
           onOpen={onOpen}
         />
       </>

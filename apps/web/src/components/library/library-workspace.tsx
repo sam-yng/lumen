@@ -234,18 +234,6 @@ export function LibraryWorkspace({
           {atRoot || selectedContainer ? (
             <LibraryActions
               atRoot={atRoot}
-              selectedNodeIds={selectedNodeIds}
-              tags={tags}
-              tagLinks={tagLinks}
-              tagMutationPending={tagMutation.isPending}
-              tagMutationError={tagMutation.error}
-              onSetTag={(tagId, linked) =>
-                tagMutation.mutate({
-                  tagId,
-                  nodeIds: [...selectedNodeIds],
-                  linked,
-                })
-              }
               onCreateWorkspace={() =>
                 dispatch({ type: "openDialog", dialog: "workspace" })
               }
@@ -271,7 +259,18 @@ export function LibraryWorkspace({
             parentId={selectedNode?.id ?? null}
             atRoot={atRoot}
             selectedIds={selectedNodeIds}
+            tags={tags}
+            tagLinks={tagLinks}
+            tagMutationPending={tagMutation.isPending}
+            tagMutationError={tagMutation.error}
             onSelectedIdsChange={setSelectedNodeIds}
+            onSetTag={(tagId, linked) =>
+              tagMutation.mutate({
+                tagId,
+                nodeIds: [...selectedNodeIds],
+                linked,
+              })
+            }
             onOpen={openNodeById}
           />
         </div>

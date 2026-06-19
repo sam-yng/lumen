@@ -39,7 +39,7 @@
 - `LibraryItemActions` consumes `selectedNodeIds: ReadonlySet<string>`, `tags: Tables<"tags">[]`, `tagLinks: Tables<"tag_links">[]`, `tagMutationPending: boolean`, `tagMutationError: Error | null`, and `onSetTag(tagId: string, linked: boolean): void` in addition to its existing move/delete/clear callbacks.
 - `LibraryActions` retains creation/upload/live-session props only.
 
-- [ ] **Step 1: Write failing ownership and behavior tests**
+- [x] **Step 1: Write failing ownership and behavior tests**
 
 Create a `LibraryItemActions` test fixture with two selected node IDs, three tags, and complete/partial/zero link coverage. Assert DOM button order with:
 
@@ -53,7 +53,7 @@ Open Tags and assert `aria-checked="true"`, `"mixed"`, and `"false"`; click each
 
 Update `library-actions.test.tsx` to assert creation actions remain while `queryByRole("button", { name: "Tags" })` returns `null`. Keep the pure `tagSelectionState` assertions there until Task 2 moves no helper API.
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [x] **Step 2: Run focused tests and verify RED**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-actions.test.tsx src/components/library/__tests__/library-item-actions.test.tsx
@@ -61,7 +61,7 @@ cd apps/web && bun run test src/components/library/__tests__/library-actions.tes
 
 Expected: FAIL because `LibraryItemActions` does not accept or render tag controls and `LibraryActions` still owns Tags.
 
-- [ ] **Step 3: Move the existing dropdown implementation**
+- [x] **Step 3: Move the existing dropdown implementation**
 
 Move the `TagsIcon`/`Loader2` imports, dropdown primitives, `tagSelectionState` usage, menu markup, and error paragraph from `LibraryActions` into `LibraryItemActions`. Derive:
 
@@ -73,7 +73,7 @@ const tagsDisabled = selectionDisabled || tagMutationPending;
 
 Render Tags immediately after Move. Remove all tag props and tag UI from `LibraryActions`; do not change mutation semantics or menu item callbacks.
 
-- [ ] **Step 4: Verify GREEN and run the repo gate**
+- [x] **Step 4: Verify GREEN and run the repo gate**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-actions.test.tsx src/components/library/__tests__/library-item-actions.test.tsx
@@ -83,7 +83,7 @@ bun run check
 
 Expected: focused tests and full gate PASS.
 
-- [ ] **Step 5: Commit the control relocation**
+- [x] **Step 5: Commit the control relocation**
 
 ```bash
 git add apps/web/src/components/library/library-actions.tsx apps/web/src/components/library/library-item-actions.tsx apps/web/src/components/library/__tests__/library-actions.test.tsx apps/web/src/components/library/__tests__/library-item-actions.test.tsx

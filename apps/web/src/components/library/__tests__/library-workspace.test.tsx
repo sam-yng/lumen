@@ -55,9 +55,15 @@ vi.mock("@/components/library/library-content", () => ({
   LibraryContent: ({
     selectedIds = new Set<string>(),
     onSelectedIdsChange = () => undefined,
+    tags = [],
+    tagMutationError = null,
+    onSetTag = () => undefined,
   }: {
     selectedIds?: Set<string>;
     onSelectedIdsChange?: (next: Set<string>) => void;
+    tags?: Array<{ id: string; name: string }>;
+    tagMutationError?: Error | null;
+    onSetTag?: (tagId: string, linked: boolean) => void;
   }) => (
     <div data-testid="library-content">
       <span>{selectedIds.size} selected</span>
@@ -67,6 +73,17 @@ vi.mock("@/components/library/library-content", () => ({
       >
         Select alpha and beta
       </button>
+      <button
+        type="button"
+        disabled={selectedIds.size === 0 || tags.length === 0}
+        onClick={() => {
+          const tag = tags[0];
+          if (tag) onSetTag(tag.id, true);
+        }}
+      >
+        Apply first tag
+      </button>
+      {tagMutationError ? <p role="alert">{tagMutationError.message}</p> : null}
     </div>
   ),
 }));
@@ -379,11 +396,7 @@ describe("LibraryWorkspace node routes", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Select alpha and beta" }),
     );
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Tags" }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Exam" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply first tag" }));
 
     await waitFor(() =>
       expect(apiMocks.setTagForNodes).toHaveBeenCalledWith(
@@ -429,11 +442,7 @@ describe("LibraryWorkspace node routes", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Select alpha and beta" }),
     );
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Tags" }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Exam" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply first tag" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not update tags.",
