@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:test-driven-development` before each production-code patch. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** active — implementation started 2026-06-19
+**Status:** completed — shipped and browser-verified 2026-06-19
 **Version:** cross-cutting
 **Area:** library selection, tag assignment, service API
 **Created:** 2026-06-19
@@ -319,7 +319,7 @@ git commit -m "feat(library): tag selected nodes"
 
 **Interfaces:** None; this task records the shipped contract and verification.
 
-- [ ] **Step 1: Update durable docs**
+- [x] **Step 1: Update durable docs**
 
 Document tri-state bulk assignment, the always-visible disabled trigger,
 selection ownership in `LibraryWorkspace`, and the bulk tag-link endpoint.
@@ -327,7 +327,7 @@ Promote this plan from queued to active before implementation and to completed
 only after all automated and browser checks pass, updating `docs/PLANS.md` at
 each lifecycle boundary.
 
-- [ ] **Step 2: Run the full gate**
+- [x] **Step 2: Run the full gate**
 
 ```bash
 bun run check
@@ -335,7 +335,7 @@ bun run check
 
 Expected: PASS with Biome, plan validation, typecheck, and all tests green.
 
-- [ ] **Step 3: Browser happy path**
+- [x] **Step 3: Browser happy path**
 
 Run the web app and verify:
 
@@ -347,7 +347,7 @@ Run the web app and verify:
 5. Selection remains after success and a forced failure.
 6. Root workspace nodes are taggable.
 
-- [ ] **Step 4: Update plan verification and commit docs**
+- [x] **Step 4: Update plan verification and commit docs**
 
 Record exact commands, test counts, and browser observations in the completed
 plan, then run `bun run check` once more.
@@ -356,6 +356,33 @@ plan, then run `bun run check` once more.
 git add docs/product-specs/library-and-notes.md docs/FRONTEND.md docs/exec-plans docs/PLANS.md
 git commit -m "docs(library): document bulk node tagging"
 ```
+
+## Verification
+
+- `bun run check` passed after each production patch and after the durable-docs
+  update: Biome, plan lifecycle, worker bootstrap, typecheck, and **61 test
+  files / 387 tests** green.
+- Focused TDD suites passed:
+  - `tags-read.test.ts`: 11 tests;
+  - `tag-links-route.test.ts`: 3 tests;
+  - `library-actions.test.tsx`: 6 tests;
+  - `library-content.test.tsx` + `library-workspace.test.tsx`: 13 tests.
+- Pinned local React Doctor 0.5.1 diff scan: **0 issues** after the final React
+  patch (the remote score API was unavailable, so no numeric score).
+- Browser happy path against local Next dev + seeded `demo@lumen.test`:
+  - Tags visible and disabled at `0 selected`;
+  - root workspace selected, tagged, refreshed to checked, then untagged;
+  - note pair selected with biology at mixed coverage (`aria-checked="mixed"`),
+    clicking filled it to checked;
+  - a second tag applied and removed without reopening the menu;
+  - checked bulk removal worked; selection remained throughout;
+  - seeded biology assignment restored after verification;
+  - no browser console errors.
+- Failure retention and settled refresh are covered by the workspace integration
+  test; the browser run did not inject a synthetic production failure.
+- Docs sanity: 0 broken internal links, 0 generated schema drift, 0 actionable
+  orphans (the directory-linked prototype `README.md` was a graph false
+  positive), and no freshness findings (repository age is under 30 days).
 
 ## Self-Review
 

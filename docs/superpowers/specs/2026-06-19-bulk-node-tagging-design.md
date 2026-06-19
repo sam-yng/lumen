@@ -3,7 +3,7 @@
 **Date:** 2026-06-19
 **Status:** approved (brainstorm)
 **Area:** library selection, tags
-**Exec plan:** [`bulk-node-tagging.md`](../../exec-plans/active/cross-cutting/bulk-node-tagging.md)
+**Exec plan:** [`bulk-node-tagging.md`](../../exec-plans/completed/cross-cutting/bulk-node-tagging.md)
 
 ## Problem
 

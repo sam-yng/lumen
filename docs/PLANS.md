@@ -43,10 +43,6 @@ same rule when it gains content.
     dependency.
 ## Active
 
-- **cross-cutting** — library tagging
-  - [bulk-node-tagging.md](exec-plans/active/cross-cutting/bulk-node-tagging.md)
-    — add an always-visible tri-state Tags menu for applying or removing tags
-    across any single or multi-selected library nodes.
 - **cross-cutting** — library node recovery
   - [library-node-recovery.md](exec-plans/active/cross-cutting/library-node-recovery.md)
     — recover user-facing features and route behavior regressed during the
@@ -164,6 +160,10 @@ same rule when it gains content.
 
 ### Cross-cutting shipped
 
+- [bulk-node-tagging.md](exec-plans/completed/cross-cutting/bulk-node-tagging.md)
+  (2026-06-19) — always-visible tri-state Tags menu for applying and removing
+  tags across any single or multi-selected library nodes; user-scoped bulk API,
+  retained selection, and mixed-state browser flow verified.
 - [frontend-overhaul.md](exec-plans/completed/cross-cutting/frontend-overhaul.md)
   (PR #30, 2026-06-10) — mobile-first responsive sweep + component-quality pass
   (design: [superpowers/specs](superpowers/specs/2026-06-10-frontend-overhaul-design.md))
