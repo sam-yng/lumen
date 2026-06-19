@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:test-driven-development` before each production-code patch. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** queued — design approved; implementation awaits written-spec review
+**Status:** active — implementation started 2026-06-19
 **Version:** cross-cutting
 **Area:** library selection, tag assignment, service API
 **Created:** 2026-06-19
@@ -50,7 +50,7 @@ Query, Supabase service layer/RLS, Radix dropdown menu, Vitest + Testing Library
 - Produces: `setTagForNodes(input: { tagId: string; nodeIds: string[]; linked: boolean }): Promise<Tables<"tag_links">[]>`
 - Route: `POST /api/library/tag-links/bulk` with the same JSON input.
 
-- [ ] **Step 1: Read the Next.js 16 route-handler guide**
+- [x] **Step 1: Read the Next.js 16 route-handler guide**
 
 Locate the relevant installed guide with:
 
@@ -61,7 +61,7 @@ rg -n "Route Handlers|route.ts" node_modules/next/dist/docs
 Read the matching guide completely and retain the existing authenticated route
 conventions in `app/api/library/tag-links/route.ts`.
 
-- [ ] **Step 2: Write failing service tests**
+- [x] **Step 2: Write failing service tests**
 
 Add tests proving that linking validates all selected nodes, deduplicates input,
 preserves existing links, and inserts only missing links:
@@ -89,17 +89,17 @@ Add separate tests for `linked: false` deleting every matching link, repeating
 either desired state without error, and rejecting the whole request when one
 node is foreign or missing.
 
-- [ ] **Step 3: Run the focused test and verify RED**
+- [x] **Step 3: Run the focused test and verify RED**
 
 Run:
 
 ```bash
-bun run --filter=web test src/server/services/__tests__/tags-read.test.ts
+cd apps/web && bun run test src/server/services/__tests__/tags-read.test.ts
 ```
 
 Expected: FAIL because `setTagOnNodes` is not exported.
 
-- [ ] **Step 4: Implement the minimal bulk service**
+- [x] **Step 4: Implement the minimal bulk service**
 
 In `tags.ts`, deduplicate `nodeIds`, reject an empty list, call
 `assertTagOwned`, select all nodes with `.in("id", nodeIds).eq("user_id",
@@ -111,16 +111,17 @@ the combined existing/inserted links. For `linked: false`, delete with both tag
 and node filters and return the deleted rows. Use `assertNoDatabaseError` after
 every query.
 
-- [ ] **Step 5: Verify GREEN and run the repo gate**
+- [x] **Step 5: Verify GREEN and run the repo gate**
 
 ```bash
-bun run --filter=web test src/server/services/__tests__/tags-read.test.ts
+cd apps/web && bun run test src/server/services/__tests__/tags-read.test.ts
+cd ../..
 bun run check
 ```
 
 Expected: all focused tests and the full gate pass.
 
-- [ ] **Step 6: Add the route and browser API helper test-first**
+- [x] **Step 6: Add the route and browser API helper test-first**
 
 Create a zod schema using `uuidSchema`:
 
@@ -151,7 +152,7 @@ export function setTagForNodes(input: {
 
 Run `bun run check` and expect PASS.
 
-- [ ] **Step 7: Commit the backend slice**
+- [x] **Step 7: Commit the backend slice**
 
 ```bash
 git add apps/web/src/server/services/tags.ts apps/web/src/server/services/__tests__/tags-read.test.ts apps/web/src/app/api/library/tag-links/bulk/route.ts apps/web/src/components/library/library-api.ts

@@ -34,10 +34,6 @@ same rule when it gains content.
 
 ## Queued
 
-- **cross-cutting** — library tagging
-  - [bulk-node-tagging.md](exec-plans/queued/cross-cutting/bulk-node-tagging.md)
-    — add an always-visible tri-state Tags menu for applying or removing tags
-    across any single or multi-selected library nodes.
 - **post-prod** — AI assistant standalone page + post-launch enablement
   - [assistant-launch.md](exec-plans/queued/post-prod/assistant-launch.md)
     — Phase 1 (relocate the assistant to its own gated `/assistant` page) is
@@ -47,6 +43,10 @@ same rule when it gains content.
     dependency.
 ## Active
 
+- **cross-cutting** — library tagging
+  - [bulk-node-tagging.md](exec-plans/active/cross-cutting/bulk-node-tagging.md)
+    — add an always-visible tri-state Tags menu for applying or removing tags
+    across any single or multi-selected library nodes.
 - **cross-cutting** — library node recovery
   - [library-node-recovery.md](exec-plans/active/cross-cutting/library-node-recovery.md)
     — recover user-facing features and route behavior regressed during the

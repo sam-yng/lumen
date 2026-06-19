@@ -231,3 +231,14 @@ export function unlinkTag(linkId: string) {
     method: "DELETE",
   });
 }
+
+export function setTagForNodes(input: {
+  tagId: string;
+  nodeIds: string[];
+  linked: boolean;
+}) {
+  return requestJson<Tables<"tag_links">[]>("/api/library/tag-links/bulk", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
