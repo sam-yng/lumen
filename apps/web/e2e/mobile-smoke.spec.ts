@@ -42,8 +42,8 @@ test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   await nodes.getByRole("button", { name: "Course notes" }).dblclick();
   await expect(page).toHaveURL(/\/course-notes/);
 
-  // Drawer: create a note from the sidebar action. Notes open in the
-  // standalone editor rather than staying inside the workspace shell.
+  // Drawer: create a note from the sidebar action. Creation leaves the route
+  // put inside the workspace; the new note shows in the content list.
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("dialog")
@@ -51,6 +51,11 @@ test("mobile drawer + node lifecycle happy path", async ({ page }) => {
     .click();
   await page.getByLabel("Note title").fill(noteName);
   await page.getByRole("button", { name: "Create note" }).click();
+  await expect(page).toHaveURL(/\/course-notes/);
+  await expect(nodes.getByRole("button", { name: noteName })).toBeVisible();
+
+  // Open the note (double-tap) on its standalone editor route.
+  await nodes.getByRole("button", { name: noteName }).dblclick();
   await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
   await expect(
     page
