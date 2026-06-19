@@ -16,6 +16,7 @@ const apiMocks = vi.hoisted(() => ({
   createWorkspace: vi.fn(),
   deleteTag: vi.fn(),
   fetchLibrarySnapshot: vi.fn(),
+  setTagForNodes: vi.fn(),
   uploadFile: vi.fn(),
   updateTag: vi.fn(),
 }));
@@ -29,6 +30,7 @@ vi.mock("@/components/library/library-api", () => ({
   createWorkspace: apiMocks.createWorkspace,
   deleteTag: apiMocks.deleteTag,
   fetchLibrarySnapshot: apiMocks.fetchLibrarySnapshot,
+  setTagForNodes: apiMocks.setTagForNodes,
   uploadFile: apiMocks.uploadFile,
   updateTag: apiMocks.updateTag,
 }));
@@ -50,7 +52,23 @@ vi.mock("@/components/library/library-shell", () => ({
   ),
 }));
 vi.mock("@/components/library/library-content", () => ({
-  LibraryContent: () => <div data-testid="library-content" />,
+  LibraryContent: ({
+    selectedIds = new Set<string>(),
+    onSelectedIdsChange = () => undefined,
+  }: {
+    selectedIds?: Set<string>;
+    onSelectedIdsChange?: (next: Set<string>) => void;
+  }) => (
+    <div data-testid="library-content">
+      <span>{selectedIds.size} selected</span>
+      <button
+        type="button"
+        onClick={() => onSelectedIdsChange(new Set(["alpha", "beta"]))}
+      >
+        Select alpha and beta
+      </button>
+    </div>
+  ),
 }));
 vi.mock("@/components/library/note-route", () => ({
   NoteRoute: ({ nodeId }: { nodeId: string }) => (
@@ -329,6 +347,100 @@ describe("LibraryWorkspace node routes", () => {
     );
     await waitFor(() =>
       expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/note-1"),
+    );
+  });
+
+  it("persists a tag for selected nodes without clearing selection", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("alpha", "page", { title: "Alpha" }),
+        node("beta", "file", { title: "Beta" }),
+      ],
+      tags: [
+        {
+          id: "tag-1",
+          user_id: "user-1",
+          name: "Exam",
+          color: "#22c55e",
+        },
+      ],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+    apiMocks.setTagForNodes.mockResolvedValue([]);
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select alpha and beta" }),
+    );
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Tags" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Exam" }));
+
+    await waitFor(() =>
+      expect(apiMocks.setTagForNodes).toHaveBeenCalledWith(
+        {
+          tagId: "tag-1",
+          nodeIds: ["alpha", "beta"],
+          linked: true,
+        },
+        expect.anything(),
+      ),
+    );
+    expect(screen.getByText("2 selected")).toBeVisible();
+  });
+
+  it("retains selection and surfaces an error when tag persistence fails", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("alpha", "page", { title: "Alpha" }),
+        node("beta", "file", { title: "Beta" }),
+      ],
+      tags: [
+        {
+          id: "tag-1",
+          user_id: "user-1",
+          name: "Exam",
+          color: "#22c55e",
+        },
+      ],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+    apiMocks.setTagForNodes.mockRejectedValue(
+      new Error("Could not update tags."),
+    );
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select alpha and beta" }),
+    );
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Tags" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Exam" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not update tags.",
+    );
+    expect(screen.getByText("2 selected")).toBeVisible();
+    await waitFor(() =>
+      expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledTimes(2),
     );
   });
 

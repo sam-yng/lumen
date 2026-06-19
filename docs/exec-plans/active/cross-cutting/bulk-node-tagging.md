@@ -250,7 +250,7 @@ git commit -m "feat(library): add tri-state tag menu"
 - `LibraryContent` consumes `selectedIds: Set<string>` and `onSelectedIdsChange(next: Set<string>): void` instead of owning selection state.
 - `LibraryWorkspace` owns `selectedNodeIds` and calls `setTagForNodes` through TanStack Query.
 
-- [ ] **Step 1: Write failing controlled-selection tests**
+- [x] **Step 1: Write failing controlled-selection tests**
 
 Update `renderContent` to own a test wrapper state and prove row gestures emit
 the same single/Ctrl/Shift sets. Add a workspace test that selects nodes, opens
@@ -268,23 +268,23 @@ expect(screen.getByText("2 selected")).toBeVisible();
 Add a rejection case that retains `2 selected`, refreshes the library query,
 and renders the error with `role="alert"` near the actions.
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [x] **Step 2: Run focused tests and verify RED**
 
 ```bash
-bun run --filter=web test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
+cd apps/web && bun run test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
 ```
 
 Expected: FAIL because selection is not controlled and the workspace does not
 provide tag mutation props.
 
-- [ ] **Step 3: Make LibraryContent selection controlled**
+- [x] **Step 3: Make LibraryContent selection controlled**
 
 Remove its local `useState<Set<string>>`. Replace every `setSelectedIds(...)`
 with `onSelectedIdsChange(next)` or a next set calculated from the current prop.
 Keep `anchorIndex`, move/delete dialogs, selection clearing after successful
 move/delete, and the existing blocking delete overlay inside `LibraryContent`.
 
-- [ ] **Step 4: Wire workspace state and mutation**
+- [x] **Step 4: Wire workspace state and mutation**
 
 Add `const [selectedNodeIds, setSelectedNodeIds] = useState(new Set<string>())`
 to `LibraryWorkspace`. Pass it to both `LibraryActions` and `LibraryContent`.
@@ -292,16 +292,17 @@ Create a `useMutation({ mutationFn: setTagForNodes, onSettled: ... })` that
 invalidates `libraryQueryKey` without clearing selection. Pass mutation errors
 to `LibraryActions` for inline `role="alert"` rendering.
 
-- [ ] **Step 5: Verify GREEN and run the repo gate**
+- [x] **Step 5: Verify GREEN and run the repo gate**
 
 ```bash
-bun run --filter=web test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
+cd apps/web && bun run test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
+cd ../..
 bun run check
 ```
 
 Expected: focused tests and full gate pass.
 
-- [ ] **Step 6: Commit the integration slice**
+- [x] **Step 6: Commit the integration slice**
 
 ```bash
 git add apps/web/src/components/library/library-workspace.tsx apps/web/src/components/library/library-content.tsx apps/web/src/components/library/__tests__/library-content.test.tsx apps/web/src/components/library/__tests__/library-workspace.test.tsx

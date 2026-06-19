@@ -14,15 +14,18 @@ export function LibraryContent({
   nodes,
   parentId,
   atRoot,
+  selectedIds,
+  onSelectedIdsChange,
   onOpen,
 }: {
   nodes: LibraryNode[];
   parentId: string | null;
   atRoot: boolean;
+  selectedIds: Set<string>;
+  onSelectedIdsChange: (next: Set<string>) => void;
   onOpen: (nodeId: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [moveOpen, setMoveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -51,14 +54,14 @@ export function LibraryContent({
   const moveMutation = useMutation({
     mutationFn: bulkMoveNodes,
     onSuccess: async () => {
-      setSelectedIds(new Set());
+      onSelectedIdsChange(new Set());
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     },
   });
   const deleteMutation = useMutation({
     mutationFn: bulkDeleteNodes,
     onSuccess: async () => {
-      setSelectedIds(new Set());
+      onSelectedIdsChange(new Set());
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     },
     onSettled: () => setIsDeleting(false),
@@ -72,7 +75,7 @@ export function LibraryContent({
     if (event.shiftKey && anchorIndex.current !== null) {
       const start = Math.min(anchorIndex.current, index);
       const end = Math.max(anchorIndex.current, index);
-      setSelectedIds(
+      onSelectedIdsChange(
         new Set(visibleNodes.slice(start, end + 1).map((node) => node.id)),
       );
       return;
@@ -80,16 +83,14 @@ export function LibraryContent({
 
     anchorIndex.current = index;
     if (event.ctrlKey || event.metaKey) {
-      setSelectedIds((current) => {
-        const next = new Set(current);
-        if (next.has(nodeId)) next.delete(nodeId);
-        else next.add(nodeId);
-        return next;
-      });
+      const next = new Set(selectedIds);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      onSelectedIdsChange(next);
       return;
     }
 
-    setSelectedIds(new Set([nodeId]));
+    onSelectedIdsChange(new Set([nodeId]));
   }
 
   const error = moveMutation.error ?? deleteMutation.error;
@@ -107,7 +108,7 @@ export function LibraryContent({
         }}
         onClear={() => {
           anchorIndex.current = null;
-          setSelectedIds(new Set());
+          onSelectedIdsChange(new Set());
         }}
       />
       {visibleNodes.length > 0 ? (

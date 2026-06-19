@@ -19,18 +19,14 @@ import {
 import type { Tables } from "@/server/db/database.types";
 import { tagSelectionState } from "./library-tags";
 
-const EMPTY_SELECTED_NODE_IDS: ReadonlySet<string> = new Set();
-const EMPTY_TAGS: Tables<"tags">[] = [];
-const EMPTY_TAG_LINKS: Tables<"tag_links">[] = [];
-
 export function LibraryActions({
   atRoot,
-  selectedNodeIds = EMPTY_SELECTED_NODE_IDS,
-  tags = EMPTY_TAGS,
-  tagLinks = EMPTY_TAG_LINKS,
-  tagMutationPending = false,
-  tagMutationError = null,
-  onSetTag = () => undefined,
+  selectedNodeIds,
+  tags,
+  tagLinks,
+  tagMutationPending,
+  tagMutationError,
+  onSetTag,
   onCreateWorkspace,
   onCreateNote,
   onCreateFolder,
@@ -38,12 +34,12 @@ export function LibraryActions({
   onStartLiveSession,
 }: {
   atRoot: boolean;
-  selectedNodeIds?: ReadonlySet<string>;
-  tags?: Tables<"tags">[];
-  tagLinks?: Tables<"tag_links">[];
-  tagMutationPending?: boolean;
-  tagMutationError?: Error | null;
-  onSetTag?: (tagId: string, linked: boolean) => void;
+  selectedNodeIds: ReadonlySet<string>;
+  tags: Tables<"tags">[];
+  tagLinks: Tables<"tag_links">[];
+  tagMutationPending: boolean;
+  tagMutationError: Error | null;
+  onSetTag: (tagId: string, linked: boolean) => void;
   onCreateWorkspace: () => void;
   onCreateNote: () => void;
   onCreateFolder: () => void;
@@ -96,7 +92,7 @@ export function LibraryActions({
           </>
         )}
 
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
