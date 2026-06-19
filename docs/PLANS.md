@@ -160,6 +160,9 @@ same rule when it gains content.
 
 ### Cross-cutting shipped
 
+- [library-tag-controls-and-indicators.md](exec-plans/completed/cross-cutting/library-tag-controls-and-indicators.md)
+  (2026-06-19) — bulk tagging moved beside Move/Delete/Clear; tagged nodes show
+  three stable name chips plus `+N` without changing row height.
 - [bulk-node-tagging.md](exec-plans/completed/cross-cutting/bulk-node-tagging.md)
   (2026-06-19) — always-visible tri-state Tags menu for applying and removing
   tags across any single or multi-selected library nodes; user-scoped bulk API,

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Loader2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useMemo, useRef, useState } from "react";
+import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { bulkDeleteNodes, bulkMoveNodes, libraryQueryKey } from "./library-api";
 import { ConfirmDialog, SelectDialog } from "./library-dialogs";
@@ -15,14 +16,26 @@ export function LibraryContent({
   parentId,
   atRoot,
   selectedIds,
+  tags,
+  tagLinks,
+  tagAssignments,
+  tagMutationPending,
+  tagMutationError,
   onSelectedIdsChange,
+  onSetTag,
   onOpen,
 }: {
   nodes: LibraryNode[];
   parentId: string | null;
   atRoot: boolean;
   selectedIds: Set<string>;
+  tags: Tables<"tags">[];
+  tagLinks: Tables<"tag_links">[];
+  tagAssignments: ReadonlyMap<string, Tables<"tags">[]>;
+  tagMutationPending: boolean;
+  tagMutationError: Error | null;
   onSelectedIdsChange: (next: Set<string>) => void;
+  onSetTag: (tagId: string, linked: boolean) => void;
   onOpen: (nodeId: string) => void;
 }) {
   const queryClient = useQueryClient();
@@ -99,6 +112,11 @@ export function LibraryContent({
     <div className="relative space-y-4" aria-busy={isDeleting}>
       <LibraryItemActions
         selectedCount={selectedIds.size}
+        selectedNodeIds={selectedIds}
+        tags={tags}
+        tagLinks={tagLinks}
+        tagMutationPending={tagMutationPending}
+        tagMutationError={tagMutationError}
         isBusy={isDeleting || moveMutation.isPending}
         onMove={() => {
           if (selectedIds.size > 0) setMoveOpen(true);
@@ -106,6 +124,7 @@ export function LibraryContent({
         onDelete={() => {
           if (selectedIds.size > 0) setDeleteOpen(true);
         }}
+        onSetTag={onSetTag}
         onClear={() => {
           anchorIndex.current = null;
           onSelectedIdsChange(new Set());
@@ -121,6 +140,7 @@ export function LibraryContent({
               key={node.id}
               node={node}
               nodes={nodes}
+              assignedTags={tagAssignments.get(node.id) ?? []}
               isSelected={selectedIds.has(node.id)}
               selectionIndex={index}
               disabled={isDeleting}

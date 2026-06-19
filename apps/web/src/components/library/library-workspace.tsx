@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useReducer, useRef, useState } from "react";
+import { useMemo, useReducer, useRef, useState } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { LibraryActions } from "./library-actions";
@@ -22,7 +22,7 @@ import { canonicalNodePath, nodePath } from "./library-paths";
 import { LibraryRecentsContent } from "./library-recents-content";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
-import { filterNodesBySelectedTags } from "./library-tags";
+import { filterNodesBySelectedTags, tagsByNodeId } from "./library-tags";
 import { LibraryWorkspaceDialogs } from "./library-workspace-dialogs";
 import {
   createLibraryWorkspaceState,
@@ -63,6 +63,10 @@ export function LibraryWorkspace({
     queryFn: fetchLibrarySnapshot,
   });
   const { nodes = [], tags = [], tagLinks = [], recordings = [] } = data ?? {};
+  const tagAssignments = useMemo(
+    () => tagsByNodeId(tags, tagLinks),
+    [tags, tagLinks],
+  );
   const workspace = workspaceSlug
     ? nodes.find(
         (node) => node.kind === "workspace" && node.slug === workspaceSlug,
@@ -234,18 +238,6 @@ export function LibraryWorkspace({
           {atRoot || selectedContainer ? (
             <LibraryActions
               atRoot={atRoot}
-              selectedNodeIds={selectedNodeIds}
-              tags={tags}
-              tagLinks={tagLinks}
-              tagMutationPending={tagMutation.isPending}
-              tagMutationError={tagMutation.error}
-              onSetTag={(tagId, linked) =>
-                tagMutation.mutate({
-                  tagId,
-                  nodeIds: [...selectedNodeIds],
-                  linked,
-                })
-              }
               onCreateWorkspace={() =>
                 dispatch({ type: "openDialog", dialog: "workspace" })
               }
@@ -271,7 +263,19 @@ export function LibraryWorkspace({
             parentId={selectedNode?.id ?? null}
             atRoot={atRoot}
             selectedIds={selectedNodeIds}
+            tags={tags}
+            tagLinks={tagLinks}
+            tagAssignments={tagAssignments}
+            tagMutationPending={tagMutation.isPending}
+            tagMutationError={tagMutation.error}
             onSelectedIdsChange={setSelectedNodeIds}
+            onSetTag={(tagId, linked) =>
+              tagMutation.mutate({
+                tagId,
+                nodeIds: [...selectedNodeIds],
+                linked,
+              })
+            }
             onOpen={openNodeById}
           />
         </div>
