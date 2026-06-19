@@ -18,6 +18,7 @@ export function TextInputDialog({
   open,
   onOpenChange,
   title,
+  label,
   placeholder,
   defaultValue = "",
   submitLabel,
@@ -26,6 +27,8 @@ export function TextInputDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** Accessible name for the field; falls back to the placeholder. */
+  label?: string;
   placeholder?: string;
   defaultValue?: string;
   submitLabel: string;
@@ -52,6 +55,7 @@ export function TextInputDialog({
             <Input
               id={fieldId}
               name="value"
+              aria-label={label ?? placeholder}
               defaultValue={defaultValue}
               placeholder={placeholder}
               autoFocus
