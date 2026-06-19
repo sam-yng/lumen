@@ -6,6 +6,7 @@ import {
 import {
   linkTagToNode,
   listPageNodesByTag,
+  setTagOnNodes,
   unlinkTag,
 } from "@/server/services/tags";
 
@@ -128,5 +129,113 @@ describe("unlinkTag", () => {
       code: "not_found",
       message: "Tag not found.",
     });
+  });
+});
+
+describe("setTagOnNodes", () => {
+  it("rejects an empty node selection as invalid input", async () => {
+    const ctx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [],
+      tag_links: [],
+    });
+
+    await expect(
+      setTagOnNodes(ctx, { tagId: "t1", nodeIds: [], linked: true }),
+    ).rejects.toMatchObject({
+      code: "invalid_input",
+      message: "Select at least one node.",
+    });
+  });
+
+  it("links a tag to every owned node missing it", async () => {
+    const ctx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [docRow({ id: "n1" }), docRow({ id: "n2" })],
+      tag_links: [{ id: "l1", tag_id: "t1", node_id: "n1" }],
+    });
+
+    const links = await setTagOnNodes(ctx, {
+      tagId: "t1",
+      nodeIds: ["n1", "n2", "n2"],
+      linked: true,
+    });
+
+    expect(links.map((link) => link.node_id).toSorted()).toEqual(["n1", "n2"]);
+    expect((ctx.supabase as FakeSupabase).tables.tag_links).toHaveLength(2);
+  });
+
+  it("unlinks a tag from every selected node that has it", async () => {
+    const ctx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [docRow({ id: "n1" }), docRow({ id: "n2" })],
+      tag_links: [
+        { id: "l1", tag_id: "t1", node_id: "n1" },
+        { id: "l2", tag_id: "t1", node_id: "n2" },
+        { id: "l3", tag_id: "t2", node_id: "n2" },
+      ],
+    });
+
+    const removed = await setTagOnNodes(ctx, {
+      tagId: "t1",
+      nodeIds: ["n1", "n2"],
+      linked: false,
+    });
+
+    expect(removed.map((link) => link.id).toSorted()).toEqual(["l1", "l2"]);
+    expect((ctx.supabase as FakeSupabase).tables.tag_links).toEqual([
+      { id: "l3", tag_id: "t2", node_id: "n2" },
+    ]);
+  });
+
+  it("is idempotent when every node already has the desired state", async () => {
+    const linkedCtx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [docRow({ id: "n1" })],
+      tag_links: [{ id: "l1", tag_id: "t1", node_id: "n1" }],
+    });
+    const unlinkedCtx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [docRow({ id: "n1" })],
+      tag_links: [],
+    });
+
+    await expect(
+      setTagOnNodes(linkedCtx, {
+        tagId: "t1",
+        nodeIds: ["n1"],
+        linked: true,
+      }),
+    ).resolves.toMatchObject([{ id: "l1" }]);
+    await expect(
+      setTagOnNodes(unlinkedCtx, {
+        tagId: "t1",
+        nodeIds: ["n1"],
+        linked: false,
+      }),
+    ).resolves.toEqual([]);
+  });
+
+  it("rejects the whole operation when any selected node is not owned", async () => {
+    const ctx = createContext({
+      tags: [{ id: "t1", user_id: "user-1", name: "Exam", color: null }],
+      library_nodes: [
+        docRow({ id: "n1" }),
+        docRow({ id: "n2", user_id: "user-2" }),
+      ],
+      tag_links: [],
+    });
+
+    await expect(
+      setTagOnNodes(ctx, {
+        tagId: "t1",
+        nodeIds: ["n1", "n2"],
+        linked: true,
+      }),
+    ).rejects.toMatchObject({
+      code: "not_found",
+      message: "Node not found.",
+    });
+    expect((ctx.supabase as FakeSupabase).tables.tag_links).toEqual([]);
   });
 });

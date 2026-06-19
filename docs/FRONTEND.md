@@ -66,7 +66,16 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
 - **Selection + bulk actions:** desktop rows support single click, Ctrl/Cmd
   toggle, and Shift range selection; double-click opens. A `LibraryItemActions`
   bar exposes Move / Delete / Clear, disabled while busy, with a blocking
-  loading overlay during bulk delete.
+  loading overlay during bulk delete. `LibraryWorkspace` owns the selected node
+  IDs so `LibraryContent` row gestures and `LibraryActions` share one selection.
+- **Bulk tagging:** `LibraryActions` always renders a Tags trigger, disabled
+  with no selection or while saving. Its checkbox menu is checked when every
+  selected node has a tag, indeterminate when only some do, and unchecked when
+  none do. Clicking checked removes the tag from all selected nodes; clicking
+  indeterminate or unchecked fills missing links. The menu stays open for
+  several changes. `POST /api/library/tag-links/bulk` persists
+  `{ tagId, nodeIds, linked }`, and the settled mutation refreshes `["library"]`
+  without clearing selection.
 - Destructive/text-entry flows use the local `dialog` primitive
   (`TextInputDialog` / `ConfirmDialog`) — never `window.prompt`/`confirm`.
 - **Responsive action bars:** top-bar action buttons keep their icon at all

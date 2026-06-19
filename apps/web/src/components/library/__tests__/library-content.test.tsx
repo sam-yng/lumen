@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LibraryContent } from "@/components/library/library-content";
 import type { LibraryNode } from "@/server/services/library-nodes";
@@ -52,16 +53,31 @@ function renderContent(onOpen = vi.fn()) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return {
-    onOpen,
-    ...render(
-      <QueryClientProvider client={queryClient}>
+  function ControlledContent() {
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(
+      () => new Set(),
+    );
+    return (
+      <>
+        <button type="button" onClick={() => setSelectedIds(new Set())}>
+          Reset selection externally
+        </button>
         <LibraryContent
           nodes={nodes}
           parentId="workspace-1"
           atRoot={false}
+          selectedIds={selectedIds}
+          onSelectedIdsChange={setSelectedIds}
           onOpen={onOpen}
         />
+      </>
+    );
+  }
+  return {
+    onOpen,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <ControlledContent />
       </QueryClientProvider>,
     ),
   };
@@ -110,6 +126,22 @@ describe("LibraryContent desktop selection", () => {
     expect(screen.getByRole("button", { name: "Move" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Clear" })).toBeDisabled();
+  });
+
+  it("reflects selection changes controlled by its parent", () => {
+    renderContent();
+
+    fireEvent.click(screen.getByRole("button", { name: /Alpha/ }));
+    expect(screen.getByText("1 selected")).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset selection externally" }),
+    );
+    expect(screen.getByText("0 selected")).toBeVisible();
+    expect(screen.getByRole("button", { name: /Alpha/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("shows a blocking busy overlay while bulk delete is pending", async () => {

@@ -12,6 +12,7 @@ import {
   createWorkspace,
   fetchLibrarySnapshot,
   libraryQueryKey,
+  setTagForNodes,
   uploadFile,
 } from "./library-api";
 import { LibraryContent } from "./library-content";
@@ -54,6 +55,9 @@ export function LibraryWorkspace({
     createLibraryWorkspaceState,
   );
   const [pdfNode, setPdfNode] = useState<LibraryNode | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -98,6 +102,12 @@ export function LibraryWorkspace({
   const uploadMutation = useMutation({
     mutationFn: uploadFile,
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
+    },
+  });
+  const tagMutation = useMutation({
+    mutationFn: setTagForNodes,
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
     },
   });
@@ -224,6 +234,18 @@ export function LibraryWorkspace({
           {atRoot || selectedContainer ? (
             <LibraryActions
               atRoot={atRoot}
+              selectedNodeIds={selectedNodeIds}
+              tags={tags}
+              tagLinks={tagLinks}
+              tagMutationPending={tagMutation.isPending}
+              tagMutationError={tagMutation.error}
+              onSetTag={(tagId, linked) =>
+                tagMutation.mutate({
+                  tagId,
+                  nodeIds: [...selectedNodeIds],
+                  linked,
+                })
+              }
               onCreateWorkspace={() =>
                 dispatch({ type: "openDialog", dialog: "workspace" })
               }
@@ -248,6 +270,8 @@ export function LibraryWorkspace({
             nodes={filteredNodes}
             parentId={selectedNode?.id ?? null}
             atRoot={atRoot}
+            selectedIds={selectedNodeIds}
+            onSelectedIdsChange={setSelectedNodeIds}
             onOpen={openNodeById}
           />
         </div>

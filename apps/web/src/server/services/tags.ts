@@ -163,6 +163,66 @@ export async function unlinkTag(
   return data;
 }
 
+export async function setTagOnNodes(
+  ctx: ServiceContext,
+  input: { tagId: string; nodeIds: string[]; linked: boolean },
+): Promise<TagLink[]> {
+  const nodeIds = [...new Set(input.nodeIds)];
+  if (nodeIds.length === 0) {
+    throw new ServiceError("invalid_input", "Select at least one node.");
+  }
+
+  await assertTagOwned(ctx, input.tagId);
+
+  const { data: nodes, error: nodesError } = await ctx.supabase
+    .from<LibraryNode>("library_nodes")
+    .select("*")
+    .in("id", nodeIds)
+    .eq("user_id", ctx.userId);
+
+  assertNoDatabaseError(nodesError, "Could not load nodes");
+  if (nodes.length !== nodeIds.length) {
+    throw new ServiceError("not_found", "Node not found.");
+  }
+
+  const { data: existing, error: existingError } = await ctx.supabase
+    .from<TagLink>("tag_links")
+    .select("*")
+    .eq("tag_id", input.tagId)
+    .in("node_id", nodeIds);
+
+  assertNoDatabaseError(existingError, "Could not load tag links");
+
+  if (!input.linked) {
+    const { data, error } = await ctx.supabase
+      .from<TagLink>("tag_links")
+      .delete()
+      .eq("tag_id", input.tagId)
+      .in("node_id", nodeIds)
+      .select("*");
+
+    assertNoDatabaseError(error, "Could not unlink tags");
+    return data;
+  }
+
+  const linkedNodeIds = new Set(existing.map((link) => link.node_id));
+  const missingNodeIds = nodeIds.filter((nodeId) => !linkedNodeIds.has(nodeId));
+  if (missingNodeIds.length === 0) return existing;
+
+  const { data: inserted, error } = await ctx.supabase
+    .from<TagLink>("tag_links")
+    .insert(
+      missingNodeIds.map((nodeId) => ({
+        tag_id: input.tagId,
+        node_id: nodeId,
+      })),
+    )
+    .select("*");
+
+  assertNoDatabaseError(error, "Could not link tags");
+  return [...existing, ...inserted];
+}
+
 export async function listPageNodesByTag(
   ctx: ServiceContext,
   input: { tagId: string },

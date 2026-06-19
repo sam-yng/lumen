@@ -15,8 +15,9 @@ tags. Built across M2 (library + tagging) and M3 (editor).
 - **Audio recordings:** uploading audio or saving a browser recording creates a
   `recordings` row, enqueues local CPU transcription, shows status in the
   library, and opens an in-workspace transcript viewer.
-- **Tags:** create / rename / delete tags; assign / remove tags on documents and
-  files; filter the library by tag.
+- **Tags:** create / rename / delete tags; assign / remove tags on any single or
+  multi-selected library nodes (workspaces, folders, notes, files, and audio)
+  through an always-visible tri-state Tags menu; filter the library by tag.
 
 ## Routes (pre-v2 cleanup)
 
