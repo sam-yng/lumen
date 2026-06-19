@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ItemRow } from "@/components/library/library-item-row";
+import { tagsByNodeId } from "@/components/library/library-tags";
+import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
 
 const page: LibraryNode = {
@@ -78,12 +80,17 @@ function nodeOf(overrides: Partial<LibraryNode> & { id: string }): LibraryNode {
   return { ...page, ...overrides };
 }
 
-function renderRow(node: LibraryNode, nodes: LibraryNode[] = [node]) {
+function renderRow(
+  node: LibraryNode,
+  nodes: LibraryNode[] = [node],
+  assignedTags: Tables<"tags">[] = [],
+) {
   return render(
     <ul>
       <ItemRow
         node={node}
         nodes={nodes}
+        assignedTags={assignedTags}
         isSelected={false}
         selectionIndex={0}
         onSelect={vi.fn()}
@@ -166,5 +173,50 @@ describe("ItemRow display kind", () => {
     );
     expect(container.querySelector(".lucide-mic")).not.toBeNull();
     expect(screen.getByText("audio/webm · 2048 bytes")).toBeInTheDocument();
+  });
+});
+
+const rowTags: Tables<"tags">[] = [
+  { id: "exam", user_id: "user-1", name: "Exam", color: "#22c55e" },
+  { id: "review", user_id: "user-1", name: "Review", color: "#22c55e" },
+  { id: "later", user_id: "user-1", name: "Later", color: null },
+  { id: "archive", user_id: "user-1", name: "Archive", color: null },
+  { id: "urgent", user_id: "user-1", name: "Urgent", color: null },
+];
+
+describe("ItemRow tag summary", () => {
+  it("groups tags by node in stable snapshot order", () => {
+    const links: Tables<"tag_links">[] = [
+      { id: "l-review", node_id: page.id, tag_id: "review" },
+      { id: "l-missing", node_id: page.id, tag_id: "missing" },
+      { id: "l-exam", node_id: page.id, tag_id: "exam" },
+    ];
+
+    const grouped = tagsByNodeId(rowTags, links);
+
+    expect(grouped.get(page.id)).toEqual(rowTags.slice(0, 2));
+    expect(grouped.has("untagged")).toBe(false);
+  });
+
+  it("shows three tag names and summarizes the overflow without wrapping", () => {
+    renderRow(page, [page], rowTags);
+
+    const summary = screen.getByText("Tags:").parentElement;
+    expect(summary).toHaveClass("whitespace-nowrap");
+    expect(screen.getByText("Exam")).toHaveAttribute("title", "Exam");
+    expect(screen.getByText("Review")).toHaveAttribute("title", "Review");
+    expect(screen.getByText("Later")).toHaveAttribute("title", "Later");
+    expect(screen.queryByText("Archive")).toBeNull();
+    expect(screen.queryByText("Urgent")).toBeNull();
+    const overflow = screen.getByTitle("2 more tags: Archive, Urgent");
+    expect(overflow).toHaveTextContent("+2");
+    expect(overflow).toHaveTextContent("2 more tags: Archive, Urgent");
+    expect(overflow).toHaveAttribute("title", "2 more tags: Archive, Urgent");
+  });
+
+  it("renders no tag region for an untagged node", () => {
+    renderRow(page);
+
+    expect(screen.queryByText("Tags:")).toBeNull();
   });
 });

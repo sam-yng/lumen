@@ -33,6 +33,25 @@ export function tagsForNode(snapshot: TagData, nodeId: string) {
   return snapshot.tags.filter((tag) => tagIds.has(tag.id));
 }
 
+export function tagsByNodeId(
+  tags: Tables<"tags">[],
+  tagLinks: Tables<"tag_links">[],
+): ReadonlyMap<string, Tables<"tags">[]> {
+  const tagIdsByNode = new Map<string, Set<string>>();
+  for (const link of tagLinks) {
+    const tagIds = tagIdsByNode.get(link.node_id) ?? new Set<string>();
+    tagIds.add(link.tag_id);
+    tagIdsByNode.set(link.node_id, tagIds);
+  }
+
+  const grouped = new Map<string, Tables<"tags">[]>();
+  for (const [nodeId, tagIds] of tagIdsByNode) {
+    const assigned = tags.filter((tag) => tagIds.has(tag.id));
+    if (assigned.length > 0) grouped.set(nodeId, assigned);
+  }
+  return grouped;
+}
+
 export function tagLinkForNode(
   snapshot: TagData,
   nodeId: string,

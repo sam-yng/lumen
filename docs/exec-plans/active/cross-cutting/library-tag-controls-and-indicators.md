@@ -101,7 +101,7 @@ git commit -m "feat(library): move tag control beside selection actions"
 - Produces `tagsByNodeId(tags: Tables<"tags">[], tagLinks: Tables<"tag_links">[]): ReadonlyMap<string, Tables<"tags">[]>`.
 - `ItemRow` consumes optional `assignedTags?: Tables<"tags">[]`, defaulting to `[]`.
 
-- [ ] **Step 1: Write failing lookup and row tests**
+- [x] **Step 1: Write failing lookup and row tests**
 
 Add lookup assertions proving snapshot order wins over link order, missing tag IDs are ignored, and untagged nodes have no map entry:
 
@@ -113,7 +113,7 @@ expect(tagsByNodeId([exam], [missingTagLink]).has("page-1")).toBe(false);
 
 Add `ItemRow` tests for one through three named chips and for five assigned tags. For five tags, assert the first three names are visible, the fourth and fifth are absent as text, and a `+2` chip has a title/accessibility string containing both hidden names. Assert an untagged row has no `Tags:` region.
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [x] **Step 2: Run focused tests and verify RED**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-item-row.test.tsx
@@ -121,11 +121,11 @@ cd apps/web && bun run test src/components/library/__tests__/library-item-row.te
 
 Expected: FAIL because `tagsByNodeId` and `assignedTags` do not exist.
 
-- [ ] **Step 3: Implement the ordered lookup**
+- [x] **Step 3: Implement the ordered lookup**
 
 Build a `Map<string, Set<string>>` of linked tag IDs by node, then iterate the `tags` array for every linked node so output follows snapshot order and stale tag IDs disappear. Return a `ReadonlyMap` and do not mutate either input.
 
-- [ ] **Step 4: Render the fixed tag region**
+- [x] **Step 4: Render the fixed tag region**
 
 In `ItemRow`, derive:
 
@@ -136,7 +136,7 @@ const hiddenTags = assignedTags.slice(3);
 
 After the flexible title/meta span, render a right-aligned region only when tags exist. Give the region a bounded width, `shrink-0`, `overflow-hidden`, and `whitespace-nowrap`; give each visible chip `min-w-0`, a bounded max width, and `truncate`. Set each chip's `title` and accessible label to the full name. Render a non-shrinking `+${hiddenTags.length}` chip whose title and accessible label list the hidden tag names. Do not add wrapping or vertical padding.
 
-- [ ] **Step 5: Verify GREEN and run the repo gate**
+- [x] **Step 5: Verify GREEN and run the repo gate**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-item-row.test.tsx
@@ -146,7 +146,7 @@ bun run check
 
 Expected: focused tests and full gate PASS.
 
-- [ ] **Step 6: Commit row summaries**
+- [x] **Step 6: Commit row summaries**
 
 ```bash
 git add apps/web/src/components/library/library-tags.ts apps/web/src/components/library/library-item-row.tsx apps/web/src/components/library/__tests__/library-item-row.test.tsx
