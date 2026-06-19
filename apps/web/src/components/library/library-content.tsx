@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Loader2 } from "lucide-react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
@@ -13,6 +13,7 @@ import { ItemRow } from "./library-item-row";
 
 export function LibraryContent({
   nodes,
+  orderedNodes,
   parentId,
   atRoot,
   selectedIds,
@@ -21,11 +22,15 @@ export function LibraryContent({
   tagAssignments,
   tagMutationPending,
   tagMutationError,
+  emptyState,
   onSelectedIdsChange,
   onSetTag,
   onOpen,
 }: {
   nodes: LibraryNode[];
+  // When provided, render this pre-filtered/ordered list (e.g. Recents) instead
+  // of the parent-scoped children.
+  orderedNodes?: LibraryNode[];
   parentId: string | null;
   atRoot: boolean;
   selectedIds: Set<string>;
@@ -34,6 +39,7 @@ export function LibraryContent({
   tagAssignments: ReadonlyMap<string, Tables<"tags">[]>;
   tagMutationPending: boolean;
   tagMutationError: Error | null;
+  emptyState?: ReactNode;
   onSelectedIdsChange: (next: Set<string>) => void;
   onSetTag: (tagId: string, linked: boolean) => void;
   onOpen: (nodeId: string) => void;
@@ -46,6 +52,7 @@ export function LibraryContent({
 
   const visibleNodes = useMemo(
     () =>
+      orderedNodes ??
       nodes
         .filter((node) =>
           atRoot
@@ -53,7 +60,7 @@ export function LibraryContent({
             : node.parent_id === parentId,
         )
         .toSorted((a, b) => a.title.localeCompare(b.title)),
-    [atRoot, nodes, parentId],
+    [atRoot, nodes, orderedNodes, parentId],
   );
   const destinationNodes = nodes
     .filter(
@@ -152,17 +159,19 @@ export function LibraryContent({
           ))}
         </ul>
       ) : (
-        <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-border-strong bg-surface p-8 text-center">
-          <div className="max-w-sm">
-            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-(--accent-soft) text-accent-text">
-              <FileText className="size-5" />
+        (emptyState ?? (
+          <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-border-strong bg-surface p-8 text-center">
+            <div className="max-w-sm">
+              <div className="mx-auto grid size-12 place-items-center rounded-lg bg-(--accent-soft) text-accent-text">
+                <FileText className="size-5" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">Nothing here yet</h3>
+              <p className="mt-1 text-sm text-text-3">
+                Create a note, folder, or file to start building this workspace.
+              </p>
             </div>
-            <h3 className="mt-4 text-lg font-semibold">Nothing here yet</h3>
-            <p className="mt-1 text-sm text-text-3">
-              Create a note, folder, or file to start building this workspace.
-            </p>
           </div>
-        </div>
+        ))
       )}
 
       {error ? (

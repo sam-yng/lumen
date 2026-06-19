@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useReducer, useRef, useState } from "react";
 import { SearchPanel } from "@/components/search/search-panel";
@@ -19,7 +19,6 @@ import { LibraryContent } from "./library-content";
 import { LibraryFilterChips } from "./library-filter-chips";
 import { isFolderNode, isNoteNode } from "./library-node-ui";
 import { canonicalNodePath, nodePath } from "./library-paths";
-import { LibraryRecentsContent } from "./library-recents-content";
 import { LibraryShell } from "./library-shell";
 import { LibrarySidebar } from "./library-sidebar";
 import { filterNodesBySelectedTags, tagsByNodeId } from "./library-tags";
@@ -135,6 +134,13 @@ export function LibraryWorkspace({
     tagLinks,
     selectedTagIds,
   );
+  const recentNotes = filteredNodes
+    .filter((node) => isNoteNode(node, nodes))
+    .toSorted(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime() ||
+        a.title.localeCompare(b.title),
+    );
   const toggleTag = (tagId: string) => dispatch({ type: "toggleTag", tagId });
   const atRoot = workspaceSlug === undefined;
   const isRecentsView = view === "recents";
@@ -226,7 +232,42 @@ export function LibraryWorkspace({
       />
 
       {isRecentsView ? (
-        <LibraryRecentsContent nodes={filteredNodes} onOpen={openNodeById} />
+        <LibraryContent
+          nodes={nodes}
+          orderedNodes={recentNotes}
+          parentId={null}
+          atRoot={atRoot}
+          selectedIds={selectedNodeIds}
+          tags={tags}
+          tagLinks={tagLinks}
+          tagAssignments={tagAssignments}
+          tagMutationPending={tagMutation.isPending}
+          tagMutationError={tagMutation.error}
+          emptyState={
+            <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-border-strong bg-surface p-8 text-center">
+              <div className="max-w-sm">
+                <div className="mx-auto grid size-12 place-items-center rounded-lg bg-(--accent-soft) text-accent-text">
+                  <FileText className="size-5" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">
+                  No recent notes yet
+                </h3>
+                <p className="mt-1 text-sm text-text-3">
+                  Notes appear here after they are created or edited.
+                </p>
+              </div>
+            </div>
+          }
+          onSelectedIdsChange={setSelectedNodeIds}
+          onSetTag={(tagId, linked) =>
+            tagMutation.mutate({
+              tagId,
+              nodeIds: [...selectedNodeIds],
+              linked,
+            })
+          }
+          onOpen={openNodeById}
+        />
       ) : (
         <div className="space-y-5">
           <LibraryFilterChips

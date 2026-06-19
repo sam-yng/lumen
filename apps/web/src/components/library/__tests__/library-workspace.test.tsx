@@ -53,6 +53,7 @@ vi.mock("@/components/library/library-shell", () => ({
 }));
 vi.mock("@/components/library/library-content", () => ({
   LibraryContent: ({
+    orderedNodes,
     selectedIds = new Set<string>(),
     onSelectedIdsChange = () => undefined,
     tags = [],
@@ -60,6 +61,7 @@ vi.mock("@/components/library/library-content", () => ({
     tagAssignments = new Map(),
     onSetTag = () => undefined,
   }: {
+    orderedNodes?: Array<{ id: string; title: string }>;
     selectedIds?: Set<string>;
     onSelectedIdsChange?: (next: Set<string>) => void;
     tags?: Array<{ id: string; name: string }>;
@@ -68,6 +70,13 @@ vi.mock("@/components/library/library-content", () => ({
     onSetTag?: (tagId: string, linked: boolean) => void;
   }) => (
     <div data-testid="library-content">
+      {orderedNodes ? (
+        <ul aria-label="Ordered nodes">
+          {orderedNodes.map((node) => (
+            <li key={node.id}>{node.title}</li>
+          ))}
+        </ul>
+      ) : null}
       <span>{selectedIds.size} selected</span>
       <button
         type="button"
@@ -519,18 +528,14 @@ describe("LibraryWorkspace node routes", () => {
     expect(
       await screen.findByRole("heading", { name: "Recents" }),
     ).toBeVisible();
-    const recentsList = screen.getByRole("list", {
-      name: "Recently updated notes",
-    });
-    const newNote = within(recentsList).getByRole("button", {
-      name: /New note/,
-    });
-    const oldNote = within(recentsList).getByRole("button", {
-      name: /Old note/,
-    });
-    expect(newNote.compareDocumentPosition(oldNote)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
+    // Recents now flows through the shared LibraryContent (mocked here); it
+    // receives the notes pre-ordered most-recent-first, files excluded.
+    const recentsList = screen.getByRole("list", { name: "Ordered nodes" });
+    const items = within(recentsList).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "New note",
+      "Old note",
+    ]);
     expect(screen.queryByText("Syllabus.pdf")).toBeNull();
   });
 });
