@@ -3,7 +3,7 @@
 **Date:** 2026-06-19
 **Status:** approved (brainstorm)
 **Area:** library selection, tag visibility
-**Exec plan:** [`library-tag-controls-and-indicators.md`](../../exec-plans/queued/cross-cutting/library-tag-controls-and-indicators.md)
+**Exec plan:** [`library-tag-controls-and-indicators.md`](../../exec-plans/active/cross-cutting/library-tag-controls-and-indicators.md)
 
 ## Problem
 

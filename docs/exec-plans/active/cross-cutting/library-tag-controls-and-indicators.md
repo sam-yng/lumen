@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:test-driven-development` before each production-code patch. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** queued
+**Status:** active
 **Version:** cross-cutting
 **Area:** library selection, tag visibility
 **Created:** 2026-06-19
