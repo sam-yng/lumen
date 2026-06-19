@@ -25,16 +25,28 @@ test("demo user manages the library through routes", async ({ page }) => {
   const nodes = page.getByRole("list", { name: "Library nodes" });
 
   // Create a workspace through the dialog (multiple "New workspace" triggers
-  // exist); creating it auto-navigates to its own route.
+  // exist); the route stays put after creation.
   await page.getByRole("button", { name: "New workspace" }).first().click();
   await page.getByLabel("Workspace name").fill(workspaceName);
   await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    nodes.getByRole("button", { name: workspaceName }),
+  ).toBeVisible();
+
+  // Open the workspace (double-click) to create a note inside it.
+  await nodes.getByRole("button", { name: workspaceName }).dblclick();
   await expect(page).toHaveURL(/\/testing-[a-z0-9-]+$/i);
 
-  // Create a note inside it; creating it opens the standalone editor route.
+  // Create a note inside it; the route stays put after creation.
   await page.getByRole("button", { name: "New note" }).first().click();
   await page.getByLabel("Note title").fill(noteName);
   await page.getByRole("button", { name: "Create note" }).click();
+  await expect(page).toHaveURL(/\/testing-[a-z0-9-]+$/i);
+  await expect(nodes.getByRole("button", { name: noteName })).toBeVisible();
+
+  // Open the note (double-click) on its standalone editor route.
+  await nodes.getByRole("button", { name: noteName }).dblclick();
   await expect(page).toHaveURL(/\/library\/notes\/[0-9a-f-]+$/i);
   await expect(
     page
