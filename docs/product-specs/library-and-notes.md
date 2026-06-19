@@ -17,7 +17,9 @@ tags. Built across M2 (library + tagging) and M3 (editor).
   library, and opens an in-workspace transcript viewer.
 - **Tags:** create / rename / delete tags; assign / remove tags on any single or
   multi-selected library nodes (workspaces, folders, notes, files, and audio)
-  through an always-visible tri-state Tags menu; filter the library by tag.
+  through an always-visible tri-state Tags menu beside the other selection
+  actions; filter the library by tag. Tagged nodes show up to three stable,
+  named chips plus a `+N` overflow chip without changing row height.
 
 ## Routes (pre-v2 cleanup)
 

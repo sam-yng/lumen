@@ -6,10 +6,12 @@ import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
 import { libraryNodeIcon, nodeMetaLabel } from "./library-node-ui";
 
+const EMPTY_TAGS: Tables<"tags">[] = [];
+
 export function ItemRow({
   node,
   nodes = [node],
-  assignedTags = [],
+  assignedTags = EMPTY_TAGS,
   isSelected,
   selectionIndex,
   disabled = false,

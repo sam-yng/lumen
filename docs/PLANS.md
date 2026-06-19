@@ -43,10 +43,6 @@ same rule when it gains content.
     dependency.
 ## Active
 
-- **cross-cutting** — library tag control placement and node indicators
-  - [library-tag-controls-and-indicators.md](exec-plans/active/cross-cutting/library-tag-controls-and-indicators.md)
-    — move bulk tagging beside Move/Delete/Clear and show up to three stable
-    tag-name chips plus `+N` on each tagged node without changing row height.
 - **cross-cutting** — library node recovery
   - [library-node-recovery.md](exec-plans/active/cross-cutting/library-node-recovery.md)
     — recover user-facing features and route behavior regressed during the
@@ -164,6 +160,9 @@ same rule when it gains content.
 
 ### Cross-cutting shipped
 
+- [library-tag-controls-and-indicators.md](exec-plans/completed/cross-cutting/library-tag-controls-and-indicators.md)
+  (2026-06-19) — bulk tagging moved beside Move/Delete/Clear; tagged nodes show
+  three stable name chips plus `+N` without changing row height.
 - [bulk-node-tagging.md](exec-plans/completed/cross-cutting/bulk-node-tagging.md)
   (2026-06-19) — always-visible tri-state Tags menu for applying and removing
   tags across any single or multi-selected library nodes; user-scoped bulk API,

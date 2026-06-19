@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:test-driven-development` before each production-code patch. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** active
+**Status:** completed — shipped and browser-verified 2026-06-19
 **Version:** cross-cutting
 **Area:** library selection, tag visibility
 **Created:** 2026-06-19
@@ -214,11 +214,11 @@ git commit -m "feat(library): wire node tag indicators"
 
 **Interfaces:** None; this records the shipped interaction contract and verification evidence.
 
-- [ ] **Step 1: Update durable docs**
+- [x] **Step 1: Update durable docs**
 
 Document that bulk tagging belongs to the selection action bar and that rows show up to three ordered name chips plus `+N` without changing row height. Update the plan lifecycle and index in the same patch.
 
-- [ ] **Step 2: Run the full gate**
+- [x] **Step 2: Run the full gate**
 
 ```bash
 bun run check
@@ -226,15 +226,15 @@ bun run check
 
 Expected: PASS with Biome, plan lifecycle, typecheck, and all tests green.
 
-- [ ] **Step 3: Browser happy path**
+- [x] **Step 3: Browser happy path**
 
 Run the web app and verify: Tags appears after Move and nowhere in the creation toolbar; zero selection disables it; checked/mixed/unchecked changes persist without clearing selection; one-to-three names display on the correct nodes; four-or-more tags produce `+N`; long and duplicate-color names remain identifiable; and adding/removing tags does not change row height.
 
-- [ ] **Step 4: Run React Doctor and final verification**
+- [x] **Step 4: Run React Doctor and final verification**
 
 Follow `.agents/skills/react-doctor/SKILL.md` for the changed React files, fix actionable regressions, then run `bun run check` again. Record exact test counts and browser observations in this plan's Verification section before moving it to completed.
 
-- [ ] **Step 5: Commit docs and verification**
+- [x] **Step 5: Commit docs and verification**
 
 ```bash
 git add docs/product-specs/library-and-notes.md docs/FRONTEND.md docs/exec-plans docs/PLANS.md
@@ -243,10 +243,31 @@ git commit -m "docs(library): document node tag indicators"
 
 ## Verification
 
-Pending implementation.
+- `bun run check` passed after each production patch and after durable-doc
+  updates: Biome, plan lifecycle, worker bootstrap, typecheck, and **62 test
+  files / 394 tests** green.
+- Focused TDD suites passed:
+  - `library-actions.test.tsx` + `library-item-actions.test.tsx`: 8 tests;
+  - `library-item-row.test.tsx`: 12 tests;
+  - `library-content.test.tsx` + `library-workspace.test.tsx`: 15 tests.
+- Pinned local React Doctor 0.5.1 diff scan: **0 issues** after fixing the
+  unstable empty-array default; the remote score API was unavailable, so no
+  numeric score was reported. Fetching `@latest` was blocked by the execution
+  safety policy, so the lockfile-installed version was used.
+- Browser happy path against local Next dev + seeded `demo@lumen.test`:
+  - Tags was disabled at zero selection and rendered after Move, before Delete;
+  - five tags on `Course notes` rendered as three names plus `+2` in stable
+    snapshot order, including duplicate-color and long-name cases;
+  - the row measured exactly **52px** before and after tag mutations, while the
+    tag region computed to `white-space: nowrap` and `overflow: hidden`;
+  - a two-node selection produced `aria-checked="mixed"`; filling then removing
+    the tag transitioned mixed → checked → unchecked without clearing either
+    selection;
+  - the menu stayed open across changes and the browser console had no errors.
 
 ## Self-Review
 
 - Spec coverage: Tasks 1–4 cover control ownership, preserved tri-state behavior, stable ordered names, overflow, accessibility, wiring, durable docs, and browser verification.
-- Placeholder scan: the only pending text is the explicit post-implementation Verification section; every implementation step has exact files, commands, expected results, and behavior.
+- Placeholder scan: no TBD/TODO/deferred implementation text remains; every
+  task is checked and verification evidence is recorded above.
 - Type consistency: the plan consistently uses `ReadonlyMap<string, Tables<"tags">[]>`, `ReadonlySet<string>`, and the existing `(tagId: string, linked: boolean) => void` mutation callback.

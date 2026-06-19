@@ -65,10 +65,11 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
   navigates to `/{workspaceSlug}`.
 - **Selection + bulk actions:** desktop rows support single click, Ctrl/Cmd
   toggle, and Shift range selection; double-click opens. A `LibraryItemActions`
-  bar exposes Move / Delete / Clear, disabled while busy, with a blocking
+  bar exposes Move / Tags / Delete / Clear, disabled while busy, with a blocking
   loading overlay during bulk delete. `LibraryWorkspace` owns the selected node
-  IDs so `LibraryContent` row gestures and `LibraryActions` share one selection.
-- **Bulk tagging:** `LibraryActions` always renders a Tags trigger, disabled
+  IDs so `LibraryContent` row gestures and selection actions share one selection.
+- **Bulk tagging:** `LibraryItemActions` always renders a Tags trigger beside
+  Move, disabled
   with no selection or while saving. Its checkbox menu is checked when every
   selected node has a tag, indeterminate when only some do, and unchecked when
   none do. Clicking checked removes the tag from all selected nodes; clicking
@@ -76,6 +77,12 @@ Conventions for the `apps/web/src/app/` and `apps/web/src/components/` layers.
   several changes. `POST /api/library/tag-links/bulk` persists
   `{ tagId, nodeIds, linked }`, and the settled mutation refreshes `["library"]`
   without clearing selection.
+- **Node tag indicators:** `LibraryWorkspace` derives an ordered node-to-tags
+  lookup once per snapshot. Each tagged row shows up to three bounded tag-name
+  chips at its right edge, followed by `+N` when more are assigned. The region
+  stays single-line and non-wrapping, so tag mutations never change row height;
+  full and overflowed names remain available to assistive technology and native
+  titles.
 - Destructive/text-entry flows use the local `dialog` primitive
   (`TextInputDialog` / `ConfirmDialog`) — never `window.prompt`/`confirm`.
 - **Responsive action bars:** top-bar action buttons keep their icon at all
