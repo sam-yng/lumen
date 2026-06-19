@@ -18,6 +18,7 @@ export function LibraryContent({
   selectedIds,
   tags,
   tagLinks,
+  tagAssignments,
   tagMutationPending,
   tagMutationError,
   onSelectedIdsChange,
@@ -30,6 +31,7 @@ export function LibraryContent({
   selectedIds: Set<string>;
   tags: Tables<"tags">[];
   tagLinks: Tables<"tag_links">[];
+  tagAssignments: ReadonlyMap<string, Tables<"tags">[]>;
   tagMutationPending: boolean;
   tagMutationError: Error | null;
   onSelectedIdsChange: (next: Set<string>) => void;
@@ -138,6 +140,7 @@ export function LibraryContent({
               key={node.id}
               node={node}
               nodes={nodes}
+              assignedTags={tagAssignments.get(node.id) ?? []}
               isSelected={selectedIds.has(node.id)}
               selectionIndex={index}
               disabled={isDeleting}

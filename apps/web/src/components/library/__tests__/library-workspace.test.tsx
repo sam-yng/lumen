@@ -57,12 +57,14 @@ vi.mock("@/components/library/library-content", () => ({
     onSelectedIdsChange = () => undefined,
     tags = [],
     tagMutationError = null,
+    tagAssignments = new Map(),
     onSetTag = () => undefined,
   }: {
     selectedIds?: Set<string>;
     onSelectedIdsChange?: (next: Set<string>) => void;
     tags?: Array<{ id: string; name: string }>;
     tagMutationError?: Error | null;
+    tagAssignments?: ReadonlyMap<string, Array<{ name: string }>>;
     onSetTag?: (tagId: string, linked: boolean) => void;
   }) => (
     <div data-testid="library-content">
@@ -84,6 +86,14 @@ vi.mock("@/components/library/library-content", () => ({
         Apply first tag
       </button>
       {tagMutationError ? <p role="alert">{tagMutationError.message}</p> : null}
+      <span data-testid="tag-assignments">
+        {[...tagAssignments.entries()]
+          .map(
+            ([nodeId, assigned]) =>
+              `${nodeId}:${assigned.map((tag) => tag.name).join(",")}`,
+          )
+          .join(";")}
+      </span>
     </div>
   ),
 }));
@@ -450,6 +460,34 @@ describe("LibraryWorkspace node routes", () => {
     expect(screen.getByText("2 selected")).toBeVisible();
     await waitFor(() =>
       expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it("derives node tag assignments in snapshot tag order", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("alpha", "page", { title: "Alpha" }),
+      ],
+      tags: [
+        { id: "exam", user_id: "user-1", name: "Exam", color: null },
+        { id: "review", user_id: "user-1", name: "Review", color: null },
+      ],
+      tagLinks: [
+        { id: "l-review", node_id: "alpha", tag_id: "review" },
+        { id: "l-exam", node_id: "alpha", tag_id: "exam" },
+      ],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    expect(await screen.findByTestId("tag-assignments")).toHaveTextContent(
+      "alpha:Exam,Review",
     );
   });
 

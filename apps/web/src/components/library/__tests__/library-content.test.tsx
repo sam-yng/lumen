@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LibraryContent } from "@/components/library/library-content";
+import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
 
 const apiMocks = vi.hoisted(() => ({
@@ -49,7 +50,10 @@ const nodes = [
   node("gamma", "Gamma"),
 ];
 
-function renderContent(onOpen = vi.fn()) {
+function renderContent(
+  onOpen = vi.fn(),
+  tagAssignments: ReadonlyMap<string, Tables<"tags">[]> = new Map(),
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -71,6 +75,7 @@ function renderContent(onOpen = vi.fn()) {
           tagLinks={[]}
           tagMutationPending={false}
           tagMutationError={null}
+          tagAssignments={tagAssignments}
           onSelectedIdsChange={setSelectedIds}
           onSetTag={vi.fn()}
           onOpen={onOpen}
@@ -87,6 +92,13 @@ function renderContent(onOpen = vi.fn()) {
     ),
   };
 }
+
+const assignedTags: Tables<"tags">[] = [
+  { id: "t1", user_id: "user-1", name: "Exam", color: null },
+  { id: "t2", user_id: "user-1", name: "Review", color: null },
+  { id: "t3", user_id: "user-1", name: "Later", color: null },
+  { id: "t4", user_id: "user-1", name: "Archive", color: null },
+];
 
 describe("LibraryContent desktop selection", () => {
   beforeEach(() => {
@@ -180,5 +192,17 @@ describe("LibraryContent desktop selection", () => {
     expect(apiMocks.bulkDeleteNodes.mock.calls[0]?.[0]).toEqual({
       ids: ["alpha"],
     });
+  });
+
+  it("renders the assigned tag summary on the matching node", () => {
+    renderContent(vi.fn(), new Map([["alpha", assignedTags]]));
+
+    expect(screen.getByText("Exam")).toBeVisible();
+    expect(screen.getByText("Review")).toBeVisible();
+    expect(screen.getByText("Later")).toBeVisible();
+    expect(screen.getByTitle("1 more tags: Archive")).toHaveTextContent("+1");
+    expect(screen.getByRole("button", { name: /Beta/ })).not.toHaveTextContent(
+      "Tags:",
+    );
   });
 });

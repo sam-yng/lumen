@@ -165,13 +165,13 @@ git commit -m "feat(library): show tag summaries on nodes"
 - `LibraryContent` consumes `tagsByNodeId: ReadonlyMap<string, Tables<"tags">[]>` plus the tag-control props defined in Task 1.
 - `LibraryWorkspace` computes the lookup with `useMemo(() => tagsByNodeId(tags, tagLinks), [tags, tagLinks])` and keeps `setTagForNodes` ownership unchanged.
 
-- [ ] **Step 1: Write failing integration tests**
+- [x] **Step 1: Write failing integration tests**
 
 Extend the controlled `LibraryContent` fixture with tags, links, a lookup, mutation state, and `onSetTag`. Assert Tags appears between Move and Delete, a selected pair produces the expected callback, and tagged rows receive their named/overflow summaries.
 
 Update the mocked `LibraryContent` in `library-workspace.test.tsx` to expose its received `onSetTag`, `tagMutationError`, and lookup. Keep the existing persistence tests but trigger the callback through the mock and assert the lookup maps the tagged node to the snapshot-ordered tag records.
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [x] **Step 2: Run focused tests and verify RED**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
@@ -179,15 +179,15 @@ cd apps/web && bun run test src/components/library/__tests__/library-content.tes
 
 Expected: FAIL because the workspace/content prop chain does not carry the relocated control or assignment lookup.
 
-- [ ] **Step 3: Wire control props and row assignments**
+- [x] **Step 3: Wire control props and row assignments**
 
 Pass selection, tags, links, tag pending/error state, and `onSetTag` from `LibraryWorkspace` to `LibraryContent`, then into `LibraryItemActions`. Pass `tagsByNodeId.get(node.id) ?? []` to each `ItemRow`. Remove the old tag props from `LibraryActions`.
 
-- [ ] **Step 4: Derive the lookup once in the workspace**
+- [x] **Step 4: Derive the lookup once in the workspace**
 
 Import `useMemo` and `tagsByNodeId`, derive the map before conditional returns, and pass it to `LibraryContent`. Keep query invalidation on mutation settlement and do not clear `selectedNodeIds`.
 
-- [ ] **Step 5: Verify GREEN and run the repo gate**
+- [x] **Step 5: Verify GREEN and run the repo gate**
 
 ```bash
 cd apps/web && bun run test src/components/library/__tests__/library-content.test.tsx src/components/library/__tests__/library-workspace.test.tsx
@@ -197,7 +197,7 @@ bun run check
 
 Expected: focused tests and full gate PASS.
 
-- [ ] **Step 6: Commit workspace integration**
+- [x] **Step 6: Commit workspace integration**
 
 ```bash
 git add apps/web/src/components/library/library-content.tsx apps/web/src/components/library/library-workspace.tsx apps/web/src/components/library/__tests__/library-content.test.tsx apps/web/src/components/library/__tests__/library-workspace.test.tsx
