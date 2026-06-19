@@ -16,11 +16,11 @@ export function LibraryFilterChips({
   onClearTags: () => void;
 }) {
   const base =
-    "relative inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-[background,border-color,color] duration-150 ease-[var(--ease)] pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-['']";
+    "relative inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-[background,border-color,color] duration-150 ease-(--ease) pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-['']";
 
   return (
     <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 [&::-webkit-scrollbar]:hidden">
-      <span className="mr-1 shrink-0 font-mono text-[11.5px] text-[var(--text-3)] uppercase">
+      <span className="mr-1 shrink-0 font-mono text-[11.5px] text-text-3 uppercase">
         Filter
       </span>
       <button
@@ -29,8 +29,8 @@ export function LibraryFilterChips({
         aria-pressed={selectedTagIds.size === 0}
         className={`${base} ${
           selectedTagIds.size === 0
-            ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--accent-text)]"
-            : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)] hover:border-[var(--border-strong)]"
+            ? "border-(--accent-line) bg-(--accent-soft) text-accent-text"
+            : "border-border-soft bg-surface-2 text-text-2 hover:border-border-strong"
         }`}
       >
         All
@@ -45,8 +45,8 @@ export function LibraryFilterChips({
             aria-pressed={selected}
             className={`${base} ${
               selected
-                ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--accent-text)]"
-                : "border-[var(--border-soft)] bg-[var(--surface-2)] text-[var(--text-2)] hover:border-[var(--border-strong)]"
+                ? "border-(--accent-line) bg-(--accent-soft) text-accent-text"
+                : "border-border-soft bg-surface-2 text-text-2 hover:border-border-strong"
             }`}
           >
             <span

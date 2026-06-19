@@ -23,12 +23,12 @@ export function ForgotPasswordForm() {
 
   if (state && "status" in state && state.status === "check-email") {
     return (
-      <Card className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]">
+      <Card className="w-full max-w-[360px] border-border-soft bg-surface shadow-(--shadow-pop)">
         <CardHeader className="gap-2">
           <CardTitle className="text-[22px] font-semibold leading-tight">
             Check your email
           </CardTitle>
-          <CardDescription className="text-[var(--text-2)]">
+          <CardDescription className="text-text-2">
             If that address has an account, a reset link is on its way.
           </CardDescription>
         </CardHeader>
@@ -37,12 +37,12 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]">
+    <Card className="w-full max-w-[360px] border-border-soft bg-surface shadow-(--shadow-pop)">
       <CardHeader className="gap-2">
         <CardTitle className="text-[22px] font-semibold leading-tight">
           Reset password
         </CardTitle>
-        <CardDescription className="text-[var(--text-2)]">
+        <CardDescription className="text-text-2">
           We'll email you a reset link.
         </CardDescription>
       </CardHeader>
@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="email"
-              className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              className="font-mono text-[11.5px] font-medium text-text-2"
             >
               Email
             </Label>
@@ -73,10 +73,10 @@ export function ForgotPasswordForm() {
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "…" : "Send reset link"}
           </Button>
-          <p className="text-sm text-[var(--text-3)]">
+          <p className="text-sm text-text-3">
             <Link
               href="/login"
-              className="font-medium text-[var(--accent-text)] underline-offset-4 hover:underline"
+              className="font-medium text-accent-text underline-offset-4 hover:underline"
             >
               Back to log in
             </Link>

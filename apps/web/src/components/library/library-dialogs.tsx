@@ -27,7 +27,8 @@ export function TextInputDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  label: string;
+  /** Accessible name for the field; falls back to the placeholder. */
+  label?: string;
   placeholder?: string;
   defaultValue?: string;
   submitLabel: string;
@@ -51,10 +52,10 @@ export function TextInputDialog({
           }}
         >
           <div className="space-y-1.5">
-            <Label htmlFor={fieldId}>{label}</Label>
             <Input
               id={fieldId}
               name="value"
+              aria-label={label ?? placeholder}
               defaultValue={defaultValue}
               placeholder={placeholder}
               autoFocus
@@ -157,7 +158,7 @@ export function ConfirmDialog({
       <DialogContent>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         {description ? (
-          <DialogDescription className="mt-1.5 text-[13px] text-[var(--text-3)]">
+          <DialogDescription className="mt-1.5 text-[13px] text-text-3">
             {description}
           </DialogDescription>
         ) : null}

@@ -43,7 +43,7 @@ export function LibraryShell({
         </SheetContent>
       </Sheet>
       <section className="flex min-h-0 flex-col overflow-hidden">
-        <div className="sticky top-0 z-20 flex min-h-[var(--topbar-h)] items-center gap-1 border-b border-[var(--border-soft)] bg-background/95 px-4 backdrop-blur lg:px-6">
+        <div className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center gap-1 border-b border-border-soft bg-background/95 px-4 backdrop-blur lg:px-6">
           <Button
             type="button"
             variant="ghost"

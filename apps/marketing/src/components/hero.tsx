@@ -37,7 +37,7 @@ export function Hero() {
           >
             <a
               href={`${siteConfig.appUrl}/signup`}
-              className="bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-medium shadow-[var(--shadow-accent)] transition-opacity hover:opacity-90"
+              className="bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-medium shadow-(--shadow-accent) transition-opacity hover:opacity-90"
             >
               Get started
             </a>

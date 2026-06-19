@@ -198,11 +198,11 @@ function saveStatusLabel(saveState: SaveState) {
 }
 
 function saveStatusTone(saveState: SaveState) {
-  if (saveState === "dirty") return "bg-[var(--warn)]";
-  if (saveState === "saving") return "bg-[var(--warn)] animate-pulse";
-  if (saveState === "error") return "bg-[var(--danger)]";
-  if (saveState === "saved") return "bg-[var(--ok)]";
-  return "bg-[var(--text-4)]";
+  if (saveState === "dirty") return "bg-warn";
+  if (saveState === "saving") return "bg-warn animate-pulse";
+  if (saveState === "error") return "bg-danger";
+  if (saveState === "saved") return "bg-ok";
+  return "bg-text-4";
 }
 
 function DocumentHeader({
@@ -216,14 +216,12 @@ function DocumentHeader({
   const statusTone = saveStatusTone(saveState);
 
   return (
-    <div className="flex min-h-[var(--topbar-h)] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] px-4 py-3">
+    <div className="flex min-h-(--topbar-h) shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border-soft px-4 py-3">
       <div className="min-w-0">
-        <p className="font-mono text-[11.5px] text-[var(--text-3)]">
-          Library / note
-        </p>
+        <p className="font-mono text-[11.5px] text-text-3">Library / note</p>
         <h3 className="truncate text-[16px] font-semibold">{title}</h3>
       </div>
-      <div className="inline-flex items-center gap-2 font-mono text-[11.5px] text-[var(--text-3)]">
+      <div className="inline-flex items-center gap-2 font-mono text-[11.5px] text-text-3">
         <span className={`size-2 rounded-full ${statusTone}`} />
         <span className="hidden sm:inline">{status}</span>
         <span className="sr-only">{status}</span>
@@ -240,7 +238,7 @@ function EditorToolbar({
   onOpenLinkDialog: () => void;
 }) {
   return (
-    <div className="z-10 flex min-h-[40px] shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
+    <div className="z-10 flex min-h-[40px] shrink-0 items-center gap-1 overflow-x-auto border-b border-border-soft bg-surface px-3 whitespace-nowrap [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:overflow-visible sm:whitespace-normal">
       <ToolbarButton
         label="Bold"
         active={editor.isActive("bold")}
@@ -255,7 +253,7 @@ function EditorToolbar({
       >
         <Italic className="size-4" />
       </ToolbarButton>
-      <span className="mx-1 h-5 w-px bg-[var(--border-soft)]" />
+      <span className="mx-1 h-5 w-px bg-border-soft" />
       <ToolbarButton
         label="Heading"
         active={editor.isActive("heading", { level: 2 })}
@@ -277,7 +275,7 @@ function EditorToolbar({
       >
         <ListChecks className="size-4" />
       </ToolbarButton>
-      <span className="mx-1 h-5 w-px bg-[var(--border-soft)]" />
+      <span className="mx-1 h-5 w-px bg-border-soft" />
       <ToolbarButton
         label="Link"
         active={editor.isActive("link")}
@@ -331,9 +329,9 @@ function EditorMeta({
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className="l-chip border-dashed text-[var(--text-3)]">Tag</span>
+        <span className="l-chip border-dashed text-text-3">Tag</span>
       </div>
-      <p className="mb-6 font-mono text-[11.5px] text-[var(--text-3)]">
+      <p className="mb-6 font-mono text-[11.5px] text-text-3">
         Updated {updated} · {wordCount} words · in Library
       </p>
     </>
@@ -375,7 +373,7 @@ function LinkDialog({
               onChange={(event) => onHrefChange(event.target.value)}
               autoFocus
             />
-            <p className="text-[12px] text-[var(--text-3)]">
+            <p className="text-[12px] text-text-3">
               Leave empty to remove the link.
             </p>
           </div>
@@ -525,7 +523,7 @@ export function DocumentEditor({
   return (
     <section
       data-testid="document-editor-shell"
-      className="flex h-[calc(100dvh-var(--topbar-h)-2rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)] lg:h-[calc(100dvh-var(--topbar-h)-3rem)]"
+      className="flex h-[calc(100dvh-var(--topbar-h)-2rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border-soft bg-surface lg:h-[calc(100dvh-var(--topbar-h)-3rem)]"
     >
       <DocumentHeader saveState={saveState} title={page.title} />
       <EditorToolbar editor={editor} onOpenLinkDialog={linkDialog.openDialog} />

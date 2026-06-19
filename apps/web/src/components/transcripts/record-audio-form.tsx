@@ -52,17 +52,17 @@ export function RecordAudioForm({ onSave }: { onSave: (file: File) => void }) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)]">
+    <div className="flex items-center gap-2 rounded-md border border-border-soft bg-surface-2">
       <span
         className={`grid size-8 place-items-center rounded-md ${
           recording
-            ? "bg-[var(--danger-soft)] text-[var(--danger)]"
-            : "bg-[var(--surface-3)] text-[var(--text-3)]"
+            ? "bg-(--danger-soft) text-danger"
+            : "bg-surface-3 text-text-3"
         }`}
       >
         <Mic className={`size-4 ${recording ? "animate-pulse" : ""}`} />
       </span>
-      <span className="w-12 font-mono text-[11.5px] text-[var(--text-3)]">
+      <span className="w-12 font-mono text-[11.5px] text-text-3">
         {formatElapsed(elapsed)}
       </span>
       <Button

@@ -22,12 +22,12 @@ export function FeatureGrid() {
             feature.soon ? (
               <div
                 key={feature.title}
-                className="reveal bg-surface-inset relative rounded-xl border border-dashed border-[var(--border)] p-6"
+                className="reveal bg-surface-inset relative rounded-xl border border-dashed border-border p-6"
                 style={{ "--i": i } as CSSProperties}
               >
                 {feature.badge ? (
-                  <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--accent-text)]">
-                    <span className="size-[5px] rounded-full bg-[var(--accent)]" />
+                  <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-(--accent-soft) px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-accent-text">
+                    <span className="size-[5px] rounded-full bg-accent" />
                     {feature.badge}
                   </span>
                 ) : null}
@@ -41,7 +41,7 @@ export function FeatureGrid() {
             ) : (
               <div
                 key={feature.title}
-                className="reveal border-border-soft bg-surface/60 rounded-xl border p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[var(--accent-line)] hover:shadow-[0_12px_40px_-12px_var(--accent-glow)]"
+                className="reveal border-border-soft bg-surface/60 rounded-xl border p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-(--accent-line) hover:shadow-[0_12px_40px_-12px_var(--accent-glow)]"
                 style={{ "--i": i } as CSSProperties}
               >
                 <h3 className="text-[15px] font-semibold text-foreground">

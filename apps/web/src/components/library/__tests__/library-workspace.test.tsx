@@ -315,7 +315,7 @@ describe("LibraryWorkspace node routes", () => {
       name: "New note",
     });
     fireEvent.click(actionButtons.at(-1) as HTMLElement);
-    fireEvent.change(screen.getByLabelText("Note title"), {
+    fireEvent.change(screen.getByPlaceholderText("Untitled note"), {
       target: { value: "New note" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create note" }));

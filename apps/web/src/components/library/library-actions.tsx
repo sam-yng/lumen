@@ -19,7 +19,7 @@ export function LibraryActions({
   onStartLiveSession: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-soft)] pb-4">
+    <div className="flex flex-wrap items-center gap-2 border-b border-border-soft pb-4">
       {atRoot ? (
         <Button type="button" size="sm" onClick={onCreateWorkspace}>
           <FolderPlus className="size-4" />

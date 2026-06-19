@@ -161,7 +161,7 @@ describe("library-nodes service", () => {
     expect(remaining).not.toContain("b");
   });
 
-  it("allows pinning workspaces and container pages only", async () => {
+  it("allows pinning workspaces and folders only", async () => {
     const ctx = createContext({
       library_nodes: [
         nodeRow({ id: "ws", kind: "workspace", workspace_id: "ws" }),
@@ -195,10 +195,10 @@ describe("library-nodes service", () => {
 
     await expect(
       updateLibraryNode(ctx, { id: "leaf", isPinned: true }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Only workspaces and folders can be pinned/);
     await expect(
       updateLibraryNode(ctx, { id: "file", isPinned: true }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Only workspaces and folders can be pinned/);
   });
 
   it("returns a snapshot scoped to the current user", async () => {

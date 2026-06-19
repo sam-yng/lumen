@@ -133,7 +133,7 @@ function assertPinEligible(nodes: LibraryNode[], node: LibraryNode) {
   if (node.kind === "page" && nodeHasChildren(nodes, node.id)) return;
   throw new ServiceError(
     "invalid_input",
-    "Only workspaces and container pages can be pinned.",
+    "Only workspaces and folders can be pinned.",
   );
 }
 

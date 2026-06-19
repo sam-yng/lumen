@@ -33,7 +33,7 @@ export function CitedText({
             <span
               key={part.start}
               title="This citation does not match any source from this answer."
-              className="mx-0.5 inline-flex items-center rounded border border-dashed border-[var(--border-soft)] px-1 align-baseline font-mono text-[11px] text-[var(--text-3)] line-through"
+              className="mx-0.5 inline-flex items-center rounded border border-dashed border-border-soft px-1 align-baseline font-mono text-[11px] text-text-3 line-through"
             >
               {part.label}
             </span>
@@ -44,7 +44,7 @@ export function CitedText({
             key={part.start}
             href={citationHref(source)}
             title={source.title}
-            className="mx-0.5 inline-flex items-center rounded bg-[var(--accent-soft)] px-1 align-baseline font-mono text-[11px] text-[var(--accent-text)] hover:underline"
+            className="mx-0.5 inline-flex items-center rounded bg-(--accent-soft) px-1 align-baseline font-mono text-[11px] text-accent-text hover:underline"
           >
             {part.label}
           </Link>
@@ -68,20 +68,20 @@ export function SourceCards({ sources }: { sources: GroundedSource[] }) {
           <li key={source.citationId}>
             <Link
               href={citationHref(source)}
-              className="block rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-2 py-1.5 transition hover:bg-[var(--surface-3)]"
+              className="block rounded-md border border-border-soft bg-surface-2 px-2 py-1.5 transition hover:bg-surface-3"
             >
               <span className="flex items-center gap-1.5 text-xs font-medium">
-                <span className="font-mono text-[10px] text-[var(--accent-text)]">
+                <span className="font-mono text-[10px] text-accent-text">
                   {source.citationId}
                 </span>
                 {source.kind === "transcript" ? (
-                  <Mic className="size-3 shrink-0 text-[var(--text-3)]" />
+                  <Mic className="size-3 shrink-0 text-text-3" />
                 ) : (
-                  <FileText className="size-3 shrink-0 text-[var(--text-3)]" />
+                  <FileText className="size-3 shrink-0 text-text-3" />
                 )}
                 <span className="truncate">{source.title}</span>
                 {timestamp ? (
-                  <span className="ml-auto shrink-0 font-mono text-[10px] text-[var(--text-3)]">
+                  <span className="ml-auto shrink-0 font-mono text-[10px] text-text-3">
                     {timestamp}
                   </span>
                 ) : null}

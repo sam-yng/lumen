@@ -48,6 +48,9 @@ same rule when it gains content.
     — recover user-facing features and route behavior regressed during the
     navigation-node-tree implementation while keeping the `library_nodes`
     foundation.
+  - [pdf-uploads-and-viewer.md](exec-plans/active/cross-cutting/pdf-uploads-and-viewer.md)
+    — restrict library uploads to PDF + audio (server-authoritative) and add an
+    in-app PDF viewer modal built on `@extend/pdf-viewer`.
 - **production** — targeted production deployment fixes
   - [railway-worker-whisper-bootstrap.md](exec-plans/active/production/railway-worker-whisper-bootstrap.md)
     — make the Railway worker image prebuild and verify `whisper-cli` so the

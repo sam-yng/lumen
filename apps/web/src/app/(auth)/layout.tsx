@@ -15,7 +15,7 @@ export default function AuthLayout({
 }) {
   return (
     <main className="grid min-h-dvh bg-background text-foreground min-[860px]:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden border-r border-[var(--border-soft)] bg-[var(--surface)] p-10 min-[860px]:flex min-[860px]:flex-col min-[860px]:justify-between">
+      <section className="relative hidden overflow-hidden border-r border-border-soft bg-surface p-10 min-[860px]:flex min-[860px]:flex-col min-[860px]:justify-between">
         <div
           className="pointer-events-none absolute -top-28 -left-28 size-80 rounded-full opacity-70 blur-3xl"
           style={{ background: "var(--accent-glow)" }}
@@ -28,22 +28,22 @@ export default function AuthLayout({
           <h1 className="max-w-xl font-serif text-[38px] leading-[1.15] text-foreground">
             A quiet vault for notes, recordings, and the thoughts between them.
           </h1>
-          <p className="mt-5 max-w-md text-sm leading-6 text-[var(--text-2)]">
+          <p className="mt-5 max-w-md text-sm leading-6 text-text-2">
             Build a study library that keeps context close: folders, rich notes,
             uploaded files, transcripts, tags, and fast full-text recall.
           </p>
           <div className="mt-9 grid max-w-md gap-3">
             {FEATURES.map(({ label, icon: Icon }) => (
               <div key={label} className="flex items-center gap-3">
-                <span className="grid size-7 place-items-center rounded-md bg-[var(--accent-soft)] text-[var(--accent-text)]">
+                <span className="grid size-7 place-items-center rounded-md bg-(--accent-soft) text-accent-text">
                   <Icon className="size-4" />
                 </span>
-                <span className="text-sm text-[var(--text-2)]">{label}</span>
+                <span className="text-sm text-text-2">{label}</span>
               </div>
             ))}
           </div>
         </div>
-        <p className="relative font-mono text-[11.5px] leading-5 text-[var(--text-3)]">
+        <p className="relative font-mono text-[11.5px] leading-5 text-text-3">
           Private by default · your recordings never leave your machine
         </p>
       </section>

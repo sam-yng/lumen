@@ -21,12 +21,12 @@ export function ResetPasswordForm() {
   );
 
   return (
-    <Card className="w-full max-w-[360px] border-[var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-pop)]">
+    <Card className="w-full max-w-[360px] border-border-soft bg-surface shadow-(--shadow-pop)">
       <CardHeader className="gap-2">
         <CardTitle className="text-[22px] font-semibold leading-tight">
           Set a new password
         </CardTitle>
-        <CardDescription className="text-[var(--text-2)]">
+        <CardDescription className="text-text-2">
           Choose a new password for your account.
         </CardDescription>
       </CardHeader>
@@ -35,7 +35,7 @@ export function ResetPasswordForm() {
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="password"
-              className="font-mono text-[11.5px] font-medium text-[var(--text-2)]"
+              className="font-mono text-[11.5px] font-medium text-text-2"
             >
               New password
             </Label>

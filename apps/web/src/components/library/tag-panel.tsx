@@ -49,6 +49,7 @@ function TagControls({ tag }: { tag: TagRow }) {
         onOpenChange={setRenameOpen}
         title={`Rename ${tag.name}`}
         label="Tag name"
+        placeholder="Tag name"
         defaultValue={tag.name}
         submitLabel="Rename"
         onSubmit={(name) => rename.mutate({ id: tag.id, name })}
@@ -80,7 +81,7 @@ export function TagPanel({
   const [color, setColor] = useState<string>(TAG_COLOR_PRESETS[0].value);
 
   return (
-    <section className="space-y-3 border-t border-[var(--border-soft)] pt-4">
+    <section className="space-y-3 border-t border-border-soft pt-4">
       <form
         className="flex flex-col gap-2 sm:flex-row sm:items-center"
         data-drawer-stay
@@ -121,10 +122,10 @@ export function TagPanel({
               aria-label={`Filter by ${tag.name}`}
               aria-pressed={selectedTagIds.has(tag.id)}
               onClick={() => onToggleTag(tag.id)}
-              className={`grid h-8 w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_2rem] items-center gap-2 rounded-md px-2 pr-16 text-left text-[13px] transition hover:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-soft)] ${
+              className={`grid h-8 w-full min-w-0 justify-between grid-cols-[auto_minmax(0,1fr)_2rem] items-center gap-2 rounded-md px-2 text-left text-[13px] transition hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent-soft) ${
                 selectedTagIds.has(tag.id)
-                  ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
-                  : "text-[var(--text-2)]"
+                  ? "bg-(--accent-soft) text-accent-text"
+                  : "text-text-2"
               }`}
             >
               <span
@@ -134,7 +135,7 @@ export function TagPanel({
                 #
               </span>
               <span className="truncate">{tag.name}</span>
-              <span className="justify-self-end text-xs tabular-nums text-[var(--text-4)] group-hover:hidden group-focus-within:hidden">
+              <span className="ml-auto text-xs tabular-nums text-text-4 group-hover:hidden group-focus-within:hidden">
                 {tagLinks.filter((link) => link.tag_id === tag.id).length}
               </span>
             </button>

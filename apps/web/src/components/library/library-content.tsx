@@ -96,10 +96,24 @@ export function LibraryContent({
 
   return (
     <div className="relative space-y-4" aria-busy={isDeleting}>
+      <LibraryItemActions
+        selectedCount={selectedIds.size}
+        isBusy={isDeleting || moveMutation.isPending}
+        onMove={() => {
+          if (selectedIds.size > 0) setMoveOpen(true);
+        }}
+        onDelete={() => {
+          if (selectedIds.size > 0) setDeleteOpen(true);
+        }}
+        onClear={() => {
+          anchorIndex.current = null;
+          setSelectedIds(new Set());
+        }}
+      />
       {visibleNodes.length > 0 ? (
         <ul
           aria-label="Library nodes"
-          className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)] px-3"
+          className="rounded-md border border-border-soft bg-surface"
         >
           {visibleNodes.map((node, index) => (
             <ItemRow
@@ -117,33 +131,18 @@ export function LibraryContent({
           ))}
         </ul>
       ) : (
-        <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface)] p-8 text-center">
+        <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-border-strong bg-surface p-8 text-center">
           <div className="max-w-sm">
-            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-text)]">
+            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-(--accent-soft) text-accent-text">
               <FileText className="size-5" />
             </div>
             <h3 className="mt-4 text-lg font-semibold">Nothing here yet</h3>
-            <p className="mt-1 text-sm text-[var(--text-3)]">
+            <p className="mt-1 text-sm text-text-3">
               Create a note, folder, or file to start building this workspace.
             </p>
           </div>
         </div>
       )}
-
-      <LibraryItemActions
-        selectedCount={selectedIds.size}
-        isBusy={isDeleting || moveMutation.isPending}
-        onMove={() => {
-          if (selectedIds.size > 0) setMoveOpen(true);
-        }}
-        onDelete={() => {
-          if (selectedIds.size > 0) setDeleteOpen(true);
-        }}
-        onClear={() => {
-          anchorIndex.current = null;
-          setSelectedIds(new Set());
-        }}
-      />
 
       {error ? (
         <p role="alert" className="text-sm text-destructive">
@@ -155,7 +154,7 @@ export function LibraryContent({
         <div className="absolute inset-0 z-20 grid place-items-center rounded-md bg-background/70 backdrop-blur-[1px]">
           <output
             aria-label="Deleting selected nodes"
-            className="flex items-center gap-2 rounded-md border bg-[var(--surface)] px-3 py-2 text-sm shadow-[var(--shadow-pop)]"
+            className="flex items-center gap-2 rounded-md border bg-surface px-3 py-2 text-sm shadow-(--shadow-pop)"
           >
             <Loader2 className="size-4 animate-spin" />
             Deleting selected nodes…

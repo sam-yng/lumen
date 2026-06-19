@@ -5,21 +5,21 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group/button relative inline-flex shrink-0 touch-manipulation items-center justify-center rounded-md border border-transparent bg-clip-padding text-[13px] font-medium whitespace-nowrap transition-[background,border-color,color,box-shadow,transform] duration-150 ease-[var(--ease)] outline-none select-none pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-[''] focus-visible:border-[var(--accent-line)] focus-visible:ring-3 focus-visible:ring-[var(--accent-soft)] active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button relative inline-flex shrink-0 touch-manipulation items-center justify-center rounded-md border border-transparent bg-clip-padding text-[13px] font-medium whitespace-nowrap transition-[background,border-color,color,box-shadow,transform] duration-150 ease-(--ease) outline-none select-none pointer-coarse:before:absolute pointer-coarse:before:-inset-1.5 pointer-coarse:before:content-[''] focus-visible:border-(--accent-line) focus-visible:ring-3 focus-visible:ring-(--accent-soft) active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-accent)] hover:bg-[var(--accent-bright)]",
+          "bg-primary text-primary-foreground shadow-(--shadow-accent) hover:bg-(--accent-bright)",
         outline:
-          "border-border bg-[var(--canvas)] text-foreground hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] aria-expanded:bg-[var(--surface-2)] aria-expanded:text-foreground",
+          "border-border bg-canvas text-foreground hover:border-border-strong hover:bg-surface-2 aria-expanded:bg-surface-2 aria-expanded:text-foreground",
         secondary:
-          "border-border bg-secondary text-secondary-foreground hover:bg-[var(--surface-3)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-border bg-secondary text-secondary-foreground hover:bg-surface-3 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
-          "text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-foreground aria-expanded:bg-[var(--surface-2)] aria-expanded:text-foreground",
+          "text-text-2 hover:bg-surface-2 hover:text-foreground aria-expanded:bg-surface-2 aria-expanded:text-foreground",
         destructive:
-          "bg-[var(--danger-soft)] text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
-        link: "text-[var(--accent-text)] underline-offset-4 hover:underline",
+          "bg-(--danger-soft) text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+        link: "text-accent-text underline-offset-4 hover:underline",
       },
       size: {
         default:

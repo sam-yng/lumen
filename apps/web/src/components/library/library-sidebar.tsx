@@ -3,8 +3,6 @@
 import {
   ChevronRight,
   Clock,
-  FileText,
-  Folder,
   Library as LibraryIcon,
   LogOut,
   Plus,
@@ -18,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ASSISTANT_ENABLED } from "@/lib/assistant-flags";
 import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
+import { libraryNodeIcon } from "./library-node-ui";
 import { canonicalNodePath } from "./library-paths";
 import { TagPanel } from "./tag-panel";
 
@@ -47,9 +46,9 @@ function NodeTreeBranch({
         <Link
           href={canonicalNodePath(nodes, node)}
           aria-current={selectedNodeId === node.id ? "page" : undefined}
-          className={`group relative flex h-[var(--row-h)] items-center gap-2 rounded-md pr-2 text-[13px] text-[var(--text-2)] transition hover:bg-[var(--surface-2)] hover:text-foreground ${
+          className={`group relative flex h-(--row-h) items-center gap-2 rounded-md pr-2 text-[13px] text-text-2 transition hover:bg-surface-2 hover:text-foreground ${
             selectedNodeId === node.id
-              ? "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]"
+              ? "bg-(--accent-soft) font-medium text-accent-text"
               : ""
           }`}
           style={{ paddingLeft: 8 + depth * 16 }}
@@ -57,12 +56,11 @@ function NodeTreeBranch({
           {selectedNodeId === node.id ? (
             <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
           ) : null}
-          <ChevronRight className="size-3.5 shrink-0 text-[var(--text-4)]" />
-          {node.kind === "workspace" ? (
-            <Folder className="size-4 shrink-0" />
-          ) : (
-            <FileText className="size-4 shrink-0" />
-          )}
+          <ChevronRight className="size-3.5 shrink-0 text-text-4" />
+          {(() => {
+            const Icon = libraryNodeIcon(node, nodes);
+            return <Icon className="size-4 shrink-0" />;
+          })()}
           <span className="truncate">{node.title}</span>
         </Link>
         <NodeTreeBranch
@@ -138,13 +136,12 @@ export function LibrarySidebar({
     .toSorted((a, b) => a.title.localeCompare(b.title));
   const navItem =
     "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px]";
-  const navActive =
-    "bg-[var(--accent-soft)] font-medium text-[var(--accent-text)]";
-  const navIdle = "text-[var(--text-2)] hover:bg-[var(--surface-2)]";
+  const navActive = "bg-(--accent-soft) font-medium text-accent-text";
+  const navIdle = "text-text-2 hover:bg-surface-2";
 
   return (
-    <aside className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--surface)] lg:border-r lg:border-[var(--border-soft)]">
-      <div className="border-b border-[var(--border-soft)] p-4">
+    <aside className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface lg:border-r lg:border-border-soft">
+      <div className="border-b border-border-soft p-4">
         <div className="mb-4 flex items-center justify-between">
           <div className="inline-flex items-center gap-2">
             <span className="size-[11px] rounded-full bg-primary shadow-[0_0_24px_var(--accent-glow)]" />
@@ -190,19 +187,19 @@ export function LibrarySidebar({
           </Link>
           {ASSISTANT_ENABLED ? (
             <Link href="/assistant" className={`${navItem} ${navIdle}`}>
-              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              <Sparkles className="size-4 text-accent-text" />
               Ask Lumen
             </Link>
           ) : (
             <span
               aria-disabled="true"
               title="Ask Lumen — enabling after launch"
-              className={`${navItem} cursor-not-allowed text-[var(--text-2)] opacity-60`}
+              className={`${navItem} cursor-not-allowed text-text-2 opacity-60`}
             >
-              <Sparkles className="size-4 text-[var(--accent-text)]" />
+              <Sparkles className="size-4 text-accent-text" />
               Ask Lumen
-              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-1.5 py-px font-mono text-[10px] text-[var(--accent-text)] uppercase">
-                <span className="size-[5px] rounded-full bg-[var(--accent)]" />
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-(--accent-soft) px-1.5 py-px font-mono text-[10px] text-accent-text uppercase">
+                <span className="size-[5px] rounded-full bg-accent" />
                 soon
               </span>
             </span>
@@ -211,30 +208,29 @@ export function LibrarySidebar({
 
         {pinned.length > 0 ? (
           <section className="mb-4">
-            <p className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+            <p className="mb-2 font-mono text-[11.5px] font-medium text-text-3 uppercase">
               Pinned
             </p>
             <nav className="space-y-1" aria-label="Pinned">
-              {pinned.map((node) => (
-                <Link
-                  key={node.id}
-                  href={canonicalNodePath(nodes, node)}
-                  className={`${navItem} ${navIdle}`}
-                >
-                  {node.kind === "workspace" ? (
-                    <Folder className="size-4" />
-                  ) : (
-                    <FileText className="size-4" />
-                  )}
-                  <span className="truncate">{node.title}</span>
-                </Link>
-              ))}
+              {pinned.map((node) => {
+                const Icon = libraryNodeIcon(node, nodes);
+                return (
+                  <Link
+                    key={node.id}
+                    href={canonicalNodePath(nodes, node)}
+                    className={`${navItem} ${navIdle}`}
+                  >
+                    <Icon className="size-4" />
+                    <span className="truncate">{node.title}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </section>
         ) : null}
 
         <section className="mb-4">
-          <p className="mb-2 font-mono text-[11.5px] font-medium text-[var(--text-3)] uppercase">
+          <p className="mb-2 font-mono text-[11.5px] font-medium text-text-3 uppercase">
             Library
           </p>
           <nav className="space-y-1" aria-label="Library tree">
@@ -249,14 +245,14 @@ export function LibrarySidebar({
           onToggleTag={onToggleTag}
         />
       </div>
-      <div className="border-t border-[var(--border-soft)] p-4">
+      <div className="border-t border-border-soft p-4">
         <div className="flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--busy))] text-sm font-semibold text-[var(--on-accent)]">
+          <div className="grid size-9 place-items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--busy))] text-sm font-semibold text-(--on-accent)">
             {userEmail.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">Workspace</p>
-            <p className="truncate text-xs text-[var(--text-3)]">{userEmail}</p>
+            <p className="truncate text-xs text-text-3">{userEmail}</p>
           </div>
           <form action={signOutAction}>
             <Button

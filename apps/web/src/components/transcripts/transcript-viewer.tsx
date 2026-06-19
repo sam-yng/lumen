@@ -64,11 +64,11 @@ function StatusState({
 }) {
   if (recording.status === "live") {
     return (
-      <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
+      <div className="grid min-h-80 place-items-center rounded-md border border-border-soft bg-surface p-6 text-center">
         <div className="space-y-3">
-          <Mic className="mx-auto size-8 animate-pulse text-[var(--danger)]" />
+          <Mic className="mx-auto size-8 animate-pulse text-danger" />
           <p className="font-medium">Live session in progress</p>
-          <p className="max-w-md font-mono text-[11.5px] text-[var(--text-3)]">
+          <p className="max-w-md font-mono text-[11.5px] text-text-3">
             This recording is still being captured. If the session was
             interrupted before it could be saved, delete it from the library.
           </p>
@@ -79,11 +79,11 @@ function StatusState({
 
   if (recording.status === "failed") {
     return (
-      <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
+      <div className="grid min-h-80 place-items-center rounded-md border border-border-soft bg-surface p-6 text-center">
         <div className="space-y-3">
           <AlertCircle className="mx-auto size-8 text-destructive" />
           <p className="font-medium">Transcription failed</p>
-          <p className="max-w-md font-mono text-[11.5px] text-[var(--text-3)]">
+          <p className="max-w-md font-mono text-[11.5px] text-text-3">
             {recording.error ??
               "The local worker could not transcribe this file."}
           </p>
@@ -108,28 +108,28 @@ function StatusState({
 
   const processing = recording.status === "processing";
   return (
-    <div className="grid min-h-80 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-center">
+    <div className="grid min-h-80 place-items-center rounded-md border border-border-soft bg-surface p-6 text-center">
       <div className="w-full max-w-md space-y-4">
         {processing ? (
-          <Loader2 className="mx-auto size-8 animate-spin text-[var(--busy)]" />
+          <Loader2 className="mx-auto size-8 animate-spin text-busy" />
         ) : (
-          <Clock className="mx-auto size-8 text-[var(--warn)]" />
+          <Clock className="mx-auto size-8 text-warn" />
         )}
         <div>
           <span
-            className={`l-badge mx-auto ${processing ? "bg-[var(--busy-soft)] text-[var(--busy)]" : "bg-[var(--warn-soft)] text-[var(--warn)]"}`}
+            className={`l-badge mx-auto ${processing ? "bg-(--busy-soft) text-busy" : "bg-(--warn-soft) text-warn"}`}
           >
             {processing ? "transcribing" : "queued"}
           </span>
           <p className="mt-3 font-medium">
             {processing ? "Transcribing locally" : "Queued for transcription"}
           </p>
-          <p className="mt-1 font-mono text-[11.5px] text-[var(--text-3)]">
+          <p className="mt-1 font-mono text-[11.5px] text-text-3">
             base.en · local CPU · no data leaves your machine
           </p>
         </div>
         {processing ? (
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
+          <div className="h-2 overflow-hidden rounded-full bg-surface-3">
             <div className="h-full w-2/3 rounded-full bg-[linear-gradient(90deg,var(--busy),var(--accent))]" />
           </div>
         ) : null}
@@ -222,15 +222,15 @@ export function TranscriptViewer({
 
   if (isLoading) {
     return (
-      <section className="grid min-h-96 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6">
-        <Loader2 className="size-6 animate-spin text-[var(--text-3)]" />
+      <section className="grid min-h-96 place-items-center rounded-md border border-border-soft bg-surface p-6">
+        <Loader2 className="size-6 animate-spin text-text-3" />
       </section>
     );
   }
 
   if (error || !data) {
     return (
-      <section className="grid min-h-96 place-items-center rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-6 text-sm text-destructive">
+      <section className="grid min-h-96 place-items-center rounded-md border border-border-soft bg-surface p-6 text-sm text-destructive">
         {error instanceof Error ? error.message : "Could not load transcript."}
       </section>
     );
@@ -244,17 +244,17 @@ export function TranscriptViewer({
   }
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface)]">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-soft)] p-4">
+    <section className="min-w-0 overflow-hidden rounded-md border border-border-soft bg-surface">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft p-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--busy-soft)] bg-[var(--busy-soft)] text-[var(--busy)]">
+          <div className="grid size-10 shrink-0 place-items-center rounded-md border border-(--busy-soft) bg-(--busy-soft) text-busy">
             <Mic className="size-5" />
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-[19px] font-semibold">
               {data.node.title}
             </h3>
-            <p className="font-mono text-[11.5px] text-[var(--text-3)]">
+            <p className="font-mono text-[11.5px] text-text-3">
               {data.recording.duration_sec
                 ? `${formatTime(data.recording.duration_sec * 1000)} · `
                 : ""}
@@ -264,7 +264,7 @@ export function TranscriptViewer({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="l-badge bg-[var(--ok-soft)] text-[var(--ok)]">
+          <span className="l-badge bg-(--ok-soft) text-ok">
             {data.recording.status}
           </span>
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
@@ -288,14 +288,14 @@ export function TranscriptViewer({
             // finalized from stored segments but no audio object was ever
             // uploaded, so there is nothing to play. The segment list below
             // still renders (deep links highlight; seeks no-op).
-            <div className="border-b border-[var(--border-soft)] p-3">
-              <p className="text-center font-mono text-[11.5px] text-[var(--text-3)]">
+            <div className="border-b border-border-soft p-3">
+              <p className="text-center font-mono text-[11.5px] text-text-3">
                 No audio — this session was interrupted and recovered from its
                 live transcript.
               </p>
             </div>
           ) : (
-            <div className="sticky top-0 z-10 border-b border-[var(--border-soft)] bg-[var(--surface)] p-3">
+            <div className="sticky top-0 z-10 border-b border-border-soft bg-surface p-3">
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -318,7 +318,7 @@ export function TranscriptViewer({
                 </Button>
                 <button
                   type="button"
-                  className="relative flex h-14 min-w-0 flex-1 items-center gap-px overflow-hidden rounded-md border border-[var(--border-soft)] bg-[var(--surface-2)] px-2"
+                  className="relative flex h-14 min-w-0 flex-1 items-center gap-px overflow-hidden rounded-md border border-border-soft bg-surface-2 px-2"
                   aria-label="Seek audio"
                   onClick={(event) => {
                     const rect = event.currentTarget.getBoundingClientRect();
@@ -331,7 +331,7 @@ export function TranscriptViewer({
                     return (
                       <span
                         key={bar.id}
-                        className={`flex-1 rounded-full ${filled ? "bg-primary" : "bg-[var(--border-strong)]"}`}
+                        className={`flex-1 rounded-full ${filled ? "bg-primary" : "bg-border-strong"}`}
                         style={{ height: `${bar.height}%` }}
                       />
                     );
@@ -343,7 +343,7 @@ export function TranscriptViewer({
                     }}
                   />
                 </button>
-                <p className="shrink-0 text-right font-mono text-[11.5px] text-[var(--text-3)] sm:w-[92px]">
+                <p className="shrink-0 text-right font-mono text-[11.5px] text-text-3 sm:w-[92px]">
                   {formatTime(currentTime * 1000)} /{" "}
                   {formatTime(duration * 1000)}
                 </p>
@@ -396,21 +396,21 @@ export function TranscriptViewer({
                     if (element) segmentRefs.current.set(segment.id, element);
                     else segmentRefs.current.delete(segment.id);
                   }}
-                  className={`grid min-h-[44px] w-full grid-cols-1 gap-0.5 rounded-md border-l-2 px-3 py-2 text-left transition hover:bg-[var(--surface-2)] sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3 ${
+                  className={`grid min-h-[44px] w-full grid-cols-1 gap-0.5 rounded-md border-l-2 px-3 py-2 text-left transition hover:bg-surface-2 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-3 ${
                     index === activeIndex
-                      ? "border-l-primary bg-[var(--accent-soft)]"
+                      ? "border-l-primary bg-(--accent-soft)"
                       : "border-l-transparent"
                   }`}
                   onClick={() => seek(segment.start_ms / 1000)}
                 >
                   <span
-                    className={`font-mono text-[11.5px] ${index === activeIndex ? "text-[var(--accent-text)]" : "text-[var(--text-3)]"}`}
+                    className={`font-mono text-[11.5px] ${index === activeIndex ? "text-accent-text" : "text-text-3"}`}
                   >
                     {formatTime(segment.start_ms)}
                   </span>
                   <span className="min-w-0">
                     {segment.speaker ? (
-                      <span className="mb-1 block font-mono text-[10px] uppercase text-[var(--text-4)]">
+                      <span className="mb-1 block font-mono text-[10px] uppercase text-text-4">
                         {segment.speaker}
                       </span>
                     ) : null}
