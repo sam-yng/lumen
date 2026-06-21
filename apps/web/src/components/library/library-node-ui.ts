@@ -1,4 +1,3 @@
-import type { Content } from "@tiptap/core";
 import {
   File as FileIcon,
   FileText,
@@ -9,18 +8,7 @@ import {
 } from "lucide-react";
 import type { LibraryNode } from "@/server/services/library-nodes";
 
-export const FOLDER_NODE_TYPE = "lumen-folder";
-
-export function folderNodeContent() {
-  return { type: FOLDER_NODE_TYPE } as const;
-}
-
-export function emptyNoteContent(): Content {
-  return {
-    type: "doc",
-    content: [{ type: "paragraph", content: [] }],
-  };
-}
+const FOLDER_NODE_TYPE = "lumen-folder";
 
 function isFolderContent(value: unknown) {
   return (
@@ -53,7 +41,7 @@ export type LibraryNodeDisplayKind =
 // The DB `kind` enum has four values; the UI presents five "types" by splitting
 // page nodes into folders (containers) and files (authored notes) and treating
 // uploaded `file` nodes as imported files.
-export function libraryNodeDisplayKind(
+function libraryNodeDisplayKind(
   node: LibraryNode,
   nodes: LibraryNode[],
 ): LibraryNodeDisplayKind {

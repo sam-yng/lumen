@@ -46,10 +46,7 @@ export function runGetDocument(ctx: ServiceContext, args: { id: string }) {
   return guard(async () => ok(await getPageNodeDetail(ctx, { id: args.id })));
 }
 
-export function runGetTranscript(
-  ctx: ServiceContext,
-  args: { recordingId: string },
-) {
+function runGetTranscript(ctx: ServiceContext, args: { recordingId: string }) {
   return guard(async () =>
     ok(await getTranscriptDetail(ctx, { recordingId: args.recordingId })),
   );
