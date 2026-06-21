@@ -21,7 +21,7 @@ export async function readDocumentResource(
   };
 }
 
-export async function readTranscriptResource(
+async function readTranscriptResource(
   ctx: ServiceContext,
   recordingId: string,
 ): Promise<ReadResourceResult> {

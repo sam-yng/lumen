@@ -67,7 +67,7 @@ export function normalizeWhisperJson(value: unknown): TranscriptionResult {
   };
 }
 
-export function getWhisperJsonSidecarCandidates(audioPath: string): string[] {
+function getWhisperJsonSidecarCandidates(audioPath: string): string[] {
   const wavPath = getWhisperWavPath(audioPath);
   const candidates = [
     `${wavPath}.json`,
