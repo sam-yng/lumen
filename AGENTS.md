@@ -135,6 +135,8 @@ turbo.json               workspace task pipeline
 - [ARCHITECTURE.md](ARCHITECTURE.md) — system + v2+ seams.
 - [BACKPRESSURE.md](BACKPRESSURE.md) — the check gate, in plain English.
 - [docs/SECURITY.md](docs/SECURITY.md) — auth model, RLS, the worker caveat.
+- [docs/DEMO.md](docs/DEMO.md) — concise interview demo runbook, architecture
+  explanations, and visual flow references.
 - [docs/design-docs/index.md](docs/design-docs/index.md) — beliefs + design.
 - [docs/product-specs/index.md](docs/product-specs/index.md) — feature specs.
 - [docs/PLANS.md](docs/PLANS.md) — lifecycle exec-plans (queued/active/completed/archive).
