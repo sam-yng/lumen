@@ -1,11 +1,18 @@
 "use client";
 
-import { Pencil, Tag, Trash2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { LoaderCircle, Pencil, Tag, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Tables } from "@/server/db/database.types";
-import { createTag, deleteTag, updateTag } from "./library-api";
+import type { LibraryNodeSnapshot } from "@/server/services/library-nodes";
+import {
+  createTag,
+  deleteTag,
+  libraryQueryKey,
+  updateTag,
+} from "./library-api";
 import { ConfirmDialog, TextInputDialog } from "./library-dialogs";
 import { useLibraryMutation } from "./library-hooks";
 import { TAG_COLOR_PRESETS, TagColorPicker } from "./tag-color-picker";
@@ -77,7 +84,24 @@ export function TagPanel({
   selectedTagIds: ReadonlySet<string>;
   onToggleTag: (tagId: string) => void;
 }) {
-  const create = useLibraryMutation(createTag);
+  const queryClient = useQueryClient();
+  const create = useMutation({
+    mutationFn: createTag,
+    onSuccess: (tag) => {
+      queryClient.setQueryData<LibraryNodeSnapshot>(
+        libraryQueryKey,
+        (snapshot) =>
+          snapshot
+            ? {
+                ...snapshot,
+                tags: [...snapshot.tags, tag].toSorted((a, b) =>
+                  a.name.localeCompare(b.name),
+                ),
+              }
+            : snapshot,
+      );
+    },
+  });
   const [color, setColor] = useState<string>(TAG_COLOR_PRESETS[0].value);
 
   return (
@@ -91,10 +115,16 @@ export function TagPanel({
           const formData = new FormData(form);
           const name = String(formData.get("name") ?? "");
           const nextColor = String(formData.get("color") ?? "");
-          if (!name.trim()) return;
-          create.mutate({ name, color: nextColor || null });
-          form.reset();
-          setColor(TAG_COLOR_PRESETS[0].value);
+          if (!name.trim() || create.isPending) return;
+          create.mutate(
+            { name: name.trim(), color: nextColor || null },
+            {
+              onSuccess: () => {
+                form.reset();
+                setColor(TAG_COLOR_PRESETS[0].value);
+              },
+            },
+          );
         }}
       >
         <TagColorPicker name="color" value={color} onChange={setColor} />
@@ -105,12 +135,37 @@ export function TagPanel({
             aria-label="Tag name"
             className="min-w-0 flex-1"
           />
-          <Button type="submit" variant="outline" title="Create tag">
-            <span className="sr-only">Create tag</span>
-            <Tag className="size-4" />
+          <Button
+            type="submit"
+            variant="outline"
+            title={create.isPending ? "Creating tag" : "Create tag"}
+            disabled={create.isPending}
+          >
+            <span className="sr-only">
+              {create.isPending ? "Creating tag" : "Create tag"}
+            </span>
+            {create.isPending ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <Tag className="size-4" />
+            )}
           </Button>
         </div>
       </form>
+      {create.isPending ? (
+        <output
+          aria-label={`Creating ${create.variables.name}`}
+          className="flex items-center gap-1.5 text-xs text-text-3"
+        >
+          <LoaderCircle className="size-3.5 animate-spin" />
+          Creating {create.variables.name}…
+        </output>
+      ) : null}
+      {create.error ? (
+        <p role="alert" className="text-xs text-destructive">
+          {create.error.message}
+        </p>
+      ) : null}
       <div className="space-y-1">
         {tags.map((tag) => (
           <div

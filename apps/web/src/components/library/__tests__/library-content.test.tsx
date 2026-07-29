@@ -107,20 +107,20 @@ describe("LibraryContent desktop selection", () => {
 
   it("supports single, Ctrl/Cmd toggle, Shift range, double-click, and clear", () => {
     const { onOpen } = renderContent();
-    const alpha = screen.getByRole("button", { name: /Alpha/ });
-    const beta = screen.getByRole("button", { name: /Beta/ });
-    const gamma = screen.getByRole("button", { name: /Gamma/ });
+    const alpha = screen.getByRole("button", { name: /^Alpha/ });
+    const beta = screen.getByRole("button", { name: /^Beta/ });
+    const gamma = screen.getByRole("button", { name: /^Gamma/ });
 
     fireEvent.click(alpha);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     fireEvent.click(beta, { ctrlKey: true });
     expect(screen.getByText("2 selected")).toBeInTheDocument();
     fireEvent.click(gamma, { shiftKey: true });
-    expect(screen.getByRole("button", { name: /Beta/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^Beta/ })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: /Gamma/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^Gamma/ })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -136,6 +136,30 @@ describe("LibraryContent desktop selection", () => {
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
   });
 
+  it("clears every selected node from a selected row check control", () => {
+    renderContent();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Alpha/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Beta/ }), {
+      ctrlKey: true,
+    });
+    expect(screen.getByText("2 selected")).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Clear selection (Alpha)" }),
+    );
+
+    expect(screen.getByText("0 selected")).toBeVisible();
+    expect(screen.getByRole("button", { name: /^Alpha/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByRole("button", { name: /^Beta/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
   it("keeps the selection action bar mounted before anything is selected", () => {
     renderContent();
 
@@ -148,14 +172,14 @@ describe("LibraryContent desktop selection", () => {
   it("reflects selection changes controlled by its parent", () => {
     renderContent();
 
-    fireEvent.click(screen.getByRole("button", { name: /Alpha/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Alpha/ }));
     expect(screen.getByText("1 selected")).toBeVisible();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Reset selection externally" }),
     );
     expect(screen.getByText("0 selected")).toBeVisible();
-    expect(screen.getByRole("button", { name: /Alpha/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^Alpha/ })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
@@ -170,7 +194,7 @@ describe("LibraryContent desktop selection", () => {
     );
     renderContent();
 
-    fireEvent.click(screen.getByRole("button", { name: /Alpha/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Alpha/ }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Delete selected" }),
@@ -181,7 +205,7 @@ describe("LibraryContent desktop selection", () => {
         name: "Deleting selected nodes",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Alpha/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Alpha/ })).toBeDisabled();
 
     resolveDelete([]);
     await waitFor(() =>
@@ -201,7 +225,7 @@ describe("LibraryContent desktop selection", () => {
     expect(screen.getByText("Review")).toBeVisible();
     expect(screen.getByText("Later")).toBeVisible();
     expect(screen.getByTitle("1 more tags: Archive")).toHaveTextContent("+1");
-    expect(screen.getByRole("button", { name: /Beta/ })).not.toHaveTextContent(
+    expect(screen.getByRole("button", { name: /^Beta/ })).not.toHaveTextContent(
       "Tags:",
     );
   });

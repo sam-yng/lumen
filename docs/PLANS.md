@@ -160,6 +160,11 @@ same rule when it gains content.
 
 ### Cross-cutting shipped
 
+- [demo-library-readiness.md](exec-plans/completed/cross-cutting/demo-library-readiness.md)
+  (2026-07-29) — polished demo-facing library creation and selection controls,
+  added immediate navigation feedback with same-route protection, removed
+  avoidable tag-mutation refetches, and rewrote the demo runbook as a
+  plain-language walkthrough.
 - [marketing-favicon.md](exec-plans/completed/cross-cutting/marketing-favicon.md)
   (2026-06-19) — marketing now mirrors the web app favicon, scalable icon, and
   Apple touch icon through Next.js file-based metadata.

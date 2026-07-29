@@ -1,11 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useReducer, useRef, useState } from "react";
+import { AppLoadingState } from "@/components/app-loading-state";
 import { SearchPanel } from "@/components/search/search-panel";
-import type { LibraryNode } from "@/server/services/library-nodes";
+import type {
+  LibraryNode,
+  LibraryNodeSnapshot,
+} from "@/server/services/library-nodes";
 import { LibraryActions } from "./library-actions";
 import {
   createPage,
@@ -31,6 +35,52 @@ import { LibraryWorkspaceTopBar } from "./library-workspace-top-bar";
 import { PdfViewerDialog } from "./pdf-viewer-dialog";
 
 type SignOutAction = () => Promise<void>;
+type TagMutationInput = {
+  tagId: string;
+  nodeIds: string[];
+  linked: boolean;
+};
+type TagLink = LibraryNodeSnapshot["tagLinks"][number];
+
+function withTagAssignment(
+  snapshot: LibraryNodeSnapshot,
+  input: TagMutationInput,
+  serverLinks?: TagLink[],
+): LibraryNodeSnapshot {
+  const nodeIds = [...new Set(input.nodeIds)];
+  const targetNodeIds = new Set(nodeIds);
+  const retainedLinks: TagLink[] = [];
+  const currentLinks = new Map<string, TagLink>();
+  for (const link of snapshot.tagLinks) {
+    if (link.tag_id === input.tagId && targetNodeIds.has(link.node_id)) {
+      currentLinks.set(link.node_id, link);
+    } else {
+      retainedLinks.push(link);
+    }
+  }
+
+  if (!input.linked) {
+    return { ...snapshot, tagLinks: retainedLinks };
+  }
+
+  const confirmedLinks = new Map<string, TagLink>();
+  for (const link of serverLinks ?? []) {
+    if (link.tag_id === input.tagId && targetNodeIds.has(link.node_id)) {
+      confirmedLinks.set(link.node_id, link);
+    }
+  }
+  const assignedLinks = nodeIds.map(
+    (nodeId) =>
+      confirmedLinks.get(nodeId) ??
+      currentLinks.get(nodeId) ?? {
+        id: `optimistic:${input.tagId}:${nodeId}`,
+        tag_id: input.tagId,
+        node_id: nodeId,
+      },
+  );
+
+  return { ...snapshot, tagLinks: [...retainedLinks, ...assignedLinks] };
+}
 
 export function LibraryWorkspace({
   signOutAction,
@@ -57,6 +107,16 @@ export function LibraryWorkspace({
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [navigationLabel, setNavigationLabel] = useState<string | null>(null);
+  const beginNavigation = (href: string, label: string) => {
+    if (href === window.location.pathname) return false;
+    setNavigationLabel(label);
+    return true;
+  };
+  const navigateTo = (href: string, label: string) => {
+    if (!beginNavigation(href, label)) return;
+    router.push(href);
+  };
   const { data, error, isLoading } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: fetchLibrarySnapshot,
@@ -88,7 +148,7 @@ export function LibraryWorkspace({
     mutationFn: createWorkspace,
     onSuccess: async (node) => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
-      router.push(`/${node.slug}`);
+      navigateTo(`/${node.slug}`, node.title);
     },
   });
   const createPageMutation = useMutation({
@@ -96,9 +156,9 @@ export function LibraryWorkspace({
     onSuccess: async (node) => {
       await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
       if (node.kind === "page" && !isFolderNode(node, [node])) {
-        router.push(`/library/notes/${node.id}`);
+        navigateTo(`/library/notes/${node.id}`, node.title);
       } else if (data) {
-        router.push(canonicalNodePath(data.nodes, node));
+        navigateTo(canonicalNodePath(data.nodes, node), node.title);
       }
     },
   });
@@ -110,17 +170,33 @@ export function LibraryWorkspace({
   });
   const tagMutation = useMutation({
     mutationFn: setTagForNodes,
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: libraryQueryKey });
+    onMutate: (input) => {
+      void queryClient.cancelQueries({ queryKey: libraryQueryKey });
+      const previous =
+        queryClient.getQueryData<LibraryNodeSnapshot>(libraryQueryKey);
+      queryClient.setQueryData<LibraryNodeSnapshot>(
+        libraryQueryKey,
+        (snapshot) =>
+          snapshot ? withTagAssignment(snapshot, input) : snapshot,
+      );
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(libraryQueryKey, context.previous);
+      }
+    },
+    onSuccess: (links, input) => {
+      queryClient.setQueryData<LibraryNodeSnapshot>(
+        libraryQueryKey,
+        (snapshot) =>
+          snapshot ? withTagAssignment(snapshot, input, links) : snapshot,
+      );
     },
   });
 
   if (isLoading) {
-    return (
-      <div className="grid min-h-96 flex-1 place-items-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AppLoadingState label="Loading library" />;
   }
   if (error || !data) {
     return (
@@ -150,12 +226,14 @@ export function LibraryWorkspace({
   const crumbs = nodePath(nodes, selectedNode?.id ?? null);
   const openNode = (node: LibraryNode) => {
     if (isNoteNode(node, nodes)) {
-      router.push(`/library/notes/${node.id}`);
+      navigateTo(`/library/notes/${node.id}`, node.title);
       return;
     }
     if (node.kind === "audio") {
       const recording = recordings.find((item) => item.node_id === node.id);
-      if (recording) router.push(`/library/transcripts/${recording.id}`);
+      if (recording) {
+        navigateTo(`/library/transcripts/${recording.id}`, node.title);
+      }
       return;
     }
     if (node.kind === "file") {
@@ -167,17 +245,28 @@ export function LibraryWorkspace({
       }
       return;
     }
-    router.push(canonicalNodePath(nodes, node));
+    navigateTo(canonicalNodePath(nodes, node), node.title);
   };
   const openNodeById = (id: string) => {
     const node = nodes.find((candidate) => candidate.id === id);
     if (node) openNode(node);
   };
+  const actionLabel = createWorkspaceMutation.isPending
+    ? "Creating workspace"
+    : createPageMutation.isPending
+      ? `Creating ${createPageMutation.variables?.role ?? "item"}`
+      : uploadMutation.isPending
+        ? "Uploading file"
+        : null;
+  const loadingLabel = navigationLabel
+    ? `Opening ${navigationLabel}`
+    : actionLabel;
 
   return (
     <LibraryShell
       sidebar={
         <LibrarySidebar
+          atRoot={pageParent === null}
           nodes={nodes}
           view={isRecentsView ? "recents" : "library"}
           tags={tags}
@@ -193,6 +282,7 @@ export function LibraryWorkspace({
             })
           }
           onFocusSearch={() => searchInputRef.current?.focus()}
+          onNavigate={beginNavigation}
           onToggleTag={toggleTag}
         />
       }
@@ -202,7 +292,7 @@ export function LibraryWorkspace({
           crumbs={crumbs}
           isRecentsView={isRecentsView}
           onFocusSearch={() => searchInputRef.current?.focus()}
-          onOpenLibrary={() => router.push("/")}
+          onOpenLibrary={() => navigateTo("/", "Library")}
           onOpenNode={openNode}
           onRecord={(file) => {
             if (pageParent) {
@@ -293,8 +383,9 @@ export function LibraryWorkspace({
               }
               onStartLiveSession={() => {
                 if (!pageParent) return;
-                router.push(
+                navigateTo(
                   `/library/live?workspaceId=${pageParent.workspace_id}&parentId=${pageParent.id}`,
+                  "Live session",
                 );
               }}
             />
@@ -363,6 +454,7 @@ export function LibraryWorkspace({
         src={pdfNode ? `/api/library/nodes/${pdfNode.id}/content` : null}
         title={pdfNode?.title ?? "PDF"}
       />
+      {loadingLabel ? <AppLoadingState label={loadingLabel} overlay /> : null}
     </LibraryShell>
   );
 }

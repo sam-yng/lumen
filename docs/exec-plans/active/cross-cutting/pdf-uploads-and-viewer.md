@@ -61,7 +61,7 @@ Query, Supabase node services, Vitest + Testing Library, shadcn/ui, EmbedPDF.
 ### Task 3: Install `@extend/pdf-viewer`
 
 **Files:**
-- Add: `apps/web/src/components/ui/pdf-viewer.tsx` (+ registry deps)
+- Add: `apps/web/src/components/extend-ui/pdf-viewer.tsx` (+ registry deps)
 - Modify: `apps/web/package.json` (embedpdf/hugeicons/pdf-lib deps)
 
 **Steps:**

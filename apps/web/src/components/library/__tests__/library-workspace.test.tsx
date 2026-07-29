@@ -22,7 +22,31 @@ const apiMocks = vi.hoisted(() => ({
 }));
 const routerMocks = vi.hoisted(() => ({ push: vi.fn() }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => routerMocks }));
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+    onNavigate,
+    ...props
+  }: React.ComponentProps<"a"> & {
+    href: string;
+    onNavigate?: () => void;
+  }) => (
+    <a
+      {...props}
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        onNavigate?.();
+      }}
+    >
+      {children}
+    </a>
+  ),
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerMocks,
+}));
 vi.mock("@/components/library/library-api", () => ({
   libraryQueryKey: ["library"],
   createPage: apiMocks.createPage,
@@ -53,20 +77,24 @@ vi.mock("@/components/library/library-shell", () => ({
 }));
 vi.mock("@/components/library/library-content", () => ({
   LibraryContent: ({
+    nodes = [],
     orderedNodes,
     selectedIds = new Set<string>(),
     onSelectedIdsChange = () => undefined,
     tags = [],
     tagMutationError = null,
     tagAssignments = new Map(),
+    onOpen = () => undefined,
     onSetTag = () => undefined,
   }: {
+    nodes?: Array<{ id: string; kind: string; title: string }>;
     orderedNodes?: Array<{ id: string; title: string }>;
     selectedIds?: Set<string>;
     onSelectedIdsChange?: (next: Set<string>) => void;
     tags?: Array<{ id: string; name: string }>;
     tagMutationError?: Error | null;
     tagAssignments?: ReadonlyMap<string, Array<{ name: string }>>;
+    onOpen?: (nodeId: string) => void;
     onSetTag?: (tagId: string, linked: boolean) => void;
   }) => (
     <div data-testid="library-content">
@@ -94,6 +122,17 @@ vi.mock("@/components/library/library-content", () => ({
       >
         Apply first tag
       </button>
+      {nodes.find((node) => node.kind !== "workspace") ? (
+        <button
+          type="button"
+          onClick={() => {
+            const firstNode = nodes.find((node) => node.kind !== "workspace");
+            if (firstNode) onOpen(firstNode.id);
+          }}
+        >
+          Open first node
+        </button>
+      ) : null}
       {tagMutationError ? <p role="alert">{tagMutationError.message}</p> : null}
       <span data-testid="tag-assignments">
         {[...tagAssignments.entries()]
@@ -180,6 +219,17 @@ function renderWorkspace(
 describe("LibraryWorkspace node routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("announces the initial library loading state", () => {
+    apiMocks.fetchLibrarySnapshot.mockReturnValue(new Promise(() => undefined));
+
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("status", { name: "Loading library" }),
+    ).toBeInTheDocument();
   });
 
   it("opens a blocking workspace dialog at root when no workspaces exist", async () => {
@@ -210,6 +260,81 @@ describe("LibraryWorkspace node routes", () => {
     await waitFor(() =>
       expect(routerMocks.push).toHaveBeenCalledWith("/biology-abcd1234"),
     );
+  });
+
+  it("shows immediate feedback while creating a workspace", async () => {
+    let resolveCreate: ((created: LibraryNode) => void) | undefined;
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+    });
+    apiMocks.createWorkspace.mockReturnValue(
+      new Promise<LibraryNode>((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+
+    renderWorkspace();
+
+    const createActions = await screen.findAllByRole("button", {
+      name: "New workspace",
+    });
+    fireEvent.click(createActions[0] as HTMLElement);
+    fireEvent.change(screen.getByLabelText("Workspace name"), {
+      target: { value: "Chemistry" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create workspace" }));
+
+    expect(
+      await screen.findByRole("status", { name: "Creating workspace" }),
+    ).toBeInTheDocument();
+
+    resolveCreate?.(
+      node("workspace-2", "workspace", {
+        title: "Chemistry",
+        slug: "chemistry-abcd1234",
+      }),
+    );
+    await waitFor(() =>
+      expect(routerMocks.push).toHaveBeenCalledWith("/chemistry-abcd1234"),
+    );
+  });
+
+  it("adds a created tag without refetching the full library snapshot", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+    apiMocks.createTag.mockResolvedValue({
+      id: "tag-focus",
+      user_id: "user-1",
+      name: "Focus",
+      color: "#22c55e",
+    });
+
+    renderWorkspace();
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Tag name" }), {
+      target: { value: "Focus" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create tag" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Filter by Focus" }),
+    ).toBeVisible();
+    expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledOnce();
   });
 
   it("resolves route slugs and renders breadcrumbs from parent links", async () => {
@@ -386,7 +511,96 @@ describe("LibraryWorkspace node routes", () => {
     );
   });
 
-  it("persists a tag for selected nodes without clearing selection", async () => {
+  it("shows immediate feedback while opening a note", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("alpha", "page", { title: "Alpha" }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open first node" }),
+    );
+
+    expect(routerMocks.push).toHaveBeenCalledWith("/library/notes/alpha");
+    expect(
+      screen.getByRole("status", { name: "Opening Alpha" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not activate feedback or push when opening the current folder", async () => {
+    window.history.replaceState({}, "", "/biology-abcd1234/unit-one-11111111");
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("unit-1", "page", {
+          title: "Unit one",
+          slug: "unit-one-11111111",
+        }),
+        node("lesson-1", "page", {
+          title: "Lesson",
+          slug: "lesson-22222222",
+          parent_id: "unit-1",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace({
+      workspaceSlug: "biology-abcd1234",
+      nodeSlug: "unit-one-11111111",
+    });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open first node" }),
+    );
+
+    expect(routerMocks.push).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("status", { name: "Opening Unit one" }),
+    ).toBeNull();
+  });
+
+  it("does not activate feedback for the current sidebar destination", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(await screen.findByRole("link", { name: "Library" }));
+
+    expect(
+      screen.queryByRole("status", { name: "Opening Library" }),
+    ).toBeNull();
+  });
+
+  it("applies a selected tag optimistically while the request is pending", async () => {
     apiMocks.fetchLibrarySnapshot.mockResolvedValue({
       nodes: [
         node("workspace-1", "workspace", {
@@ -408,7 +622,48 @@ describe("LibraryWorkspace node routes", () => {
       recordings: [],
       transcripts: [],
     });
-    apiMocks.setTagForNodes.mockResolvedValue([]);
+    apiMocks.setTagForNodes.mockReturnValue(new Promise(() => undefined));
+
+    renderWorkspace({ workspaceSlug: "biology-abcd1234" });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select alpha and beta" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Apply first tag" }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("tag-assignments")).toHaveTextContent(
+        "alpha:Exam;beta:Exam",
+      ),
+    );
+  });
+
+  it("persists a tag for selected nodes without clearing selection or refetching", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+        node("alpha", "page", { title: "Alpha" }),
+        node("beta", "file", { title: "Beta" }),
+      ],
+      tags: [
+        {
+          id: "tag-1",
+          user_id: "user-1",
+          name: "Exam",
+          color: "#22c55e",
+        },
+      ],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+    apiMocks.setTagForNodes.mockResolvedValue([
+      { id: "link-alpha", tag_id: "tag-1", node_id: "alpha" },
+      { id: "link-beta", tag_id: "tag-1", node_id: "beta" },
+    ]);
 
     renderWorkspace({ workspaceSlug: "biology-abcd1234" });
 
@@ -428,9 +683,15 @@ describe("LibraryWorkspace node routes", () => {
       ),
     );
     expect(screen.getByText("2 selected")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByTestId("tag-assignments")).toHaveTextContent(
+        "alpha:Exam;beta:Exam",
+      ),
+    );
+    expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledOnce();
   });
 
-  it("retains selection and surfaces an error when tag persistence fails", async () => {
+  it("rolls back an optimistic tag assignment when persistence fails", async () => {
     apiMocks.fetchLibrarySnapshot.mockResolvedValue({
       nodes: [
         node("workspace-1", "workspace", {
@@ -452,8 +713,11 @@ describe("LibraryWorkspace node routes", () => {
       recordings: [],
       transcripts: [],
     });
-    apiMocks.setTagForNodes.mockRejectedValue(
-      new Error("Could not update tags."),
+    let rejectTagUpdate: ((reason: Error) => void) | undefined;
+    apiMocks.setTagForNodes.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectTagUpdate = reject;
+      }),
     );
 
     renderWorkspace({ workspaceSlug: "biology-abcd1234" });
@@ -463,13 +727,21 @@ describe("LibraryWorkspace node routes", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Apply first tag" }));
 
+    await waitFor(() =>
+      expect(screen.getByTestId("tag-assignments")).toHaveTextContent(
+        "alpha:Exam;beta:Exam",
+      ),
+    );
+    rejectTagUpdate?.(new Error("Could not update tags."));
+
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not update tags.",
     );
     expect(screen.getByText("2 selected")).toBeVisible();
     await waitFor(() =>
-      expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledTimes(2),
+      expect(screen.getByTestId("tag-assignments")).toHaveTextContent(""),
     );
+    expect(apiMocks.fetchLibrarySnapshot).toHaveBeenCalledOnce();
   });
 
   it("derives node tag assignments in snapshot tag order", async () => {

@@ -34,13 +34,14 @@ describe("ItemRow selection", () => {
           node={page}
           isSelected={false}
           selectionIndex={3}
+          onClearSelection={vi.fn()}
           onSelect={onSelect}
           onOpen={onOpen}
         />
       </ul>,
     );
 
-    const rowButton = screen.getByRole("button", { name: /Lecture notes/ });
+    const rowButton = screen.getByRole("button", { name: /^Lecture notes/ });
     fireEvent.click(rowButton);
     fireEvent.click(rowButton, { metaKey: true });
     fireEvent.click(rowButton, { ctrlKey: true });
@@ -58,21 +59,32 @@ describe("ItemRow selection", () => {
   });
 
   it("exposes a visible selected state", () => {
+    const onClearSelection = vi.fn();
+    const onSelect = vi.fn();
     render(
       <ul>
         <ItemRow
           node={page}
           isSelected
           selectionIndex={0}
-          onSelect={vi.fn()}
+          onClearSelection={onClearSelection}
+          onSelect={onSelect}
           onOpen={vi.fn()}
         />
       </ul>,
     );
 
     expect(
-      screen.getByRole("button", { name: /Lecture notes/ }),
+      screen.getByRole("button", { name: /^Lecture notes/ }),
     ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Clear selection (Lecture notes)",
+      }),
+    );
+    expect(onClearSelection).toHaveBeenCalledOnce();
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
 
@@ -93,6 +105,7 @@ function renderRow(
         assignedTags={assignedTags}
         isSelected={false}
         selectionIndex={0}
+        onClearSelection={vi.fn()}
         onSelect={vi.fn()}
         onOpen={vi.fn()}
       />
