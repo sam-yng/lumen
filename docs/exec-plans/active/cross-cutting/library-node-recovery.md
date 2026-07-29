@@ -62,8 +62,8 @@
 ### Task 3: Restore Recents
 
 **Files:**
-- Restore/create: `apps/web/src/components/library/library-recents-content.tsx`
-- Modify: `apps/web/src/components/library/library-workspace.tsx`
+- Modify: `apps/web/src/components/library/library-workspace.tsx` and reuse
+  `apps/web/src/components/library/library-content.tsx` for the recents list
 - Modify: `apps/web/src/components/library/library-sidebar.tsx`
 - Modify tests under `apps/web/src/components/library/__tests__/`
 

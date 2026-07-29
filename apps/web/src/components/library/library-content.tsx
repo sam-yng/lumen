@@ -113,6 +113,11 @@ export function LibraryContent({
     onSelectedIdsChange(new Set([nodeId]));
   }
 
+  function clearSelection() {
+    anchorIndex.current = null;
+    onSelectedIdsChange(new Set());
+  }
+
   const error = moveMutation.error ?? deleteMutation.error;
 
   return (
@@ -132,10 +137,7 @@ export function LibraryContent({
           if (selectedIds.size > 0) setDeleteOpen(true);
         }}
         onSetTag={onSetTag}
-        onClear={() => {
-          anchorIndex.current = null;
-          onSelectedIdsChange(new Set());
-        }}
+        onClear={clearSelection}
       />
       {visibleNodes.length > 0 ? (
         <ul
@@ -151,6 +153,7 @@ export function LibraryContent({
               isSelected={selectedIds.has(node.id)}
               selectionIndex={index}
               disabled={isDeleting}
+              onClearSelection={clearSelection}
               onSelect={handleSelect}
               onOpen={(nodeId) => {
                 if (!isDeleting) onOpen(nodeId);

@@ -45,7 +45,9 @@ test("live session records, streams a transcript, and finalizes", async ({
   await expect(page.getByLabel("Search notes and transcripts")).toBeVisible();
 
   const nodes = page.getByRole("list", { name: "Library nodes" });
-  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
+  await nodes
+    .getByRole("button", { name: "Course notes", exact: true })
+    .dblclick();
   await expect(page).toHaveURL(/\/course-notes/);
   await page.getByRole("button", { name: "Live session" }).click();
   await expect(page).toHaveURL(

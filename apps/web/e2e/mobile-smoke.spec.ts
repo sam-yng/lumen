@@ -39,7 +39,9 @@ test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   const nodes = page.getByRole("list", { name: "Library nodes" });
 
   // Open the seeded "Course notes" workspace (double-tap opens a node).
-  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
+  await nodes
+    .getByRole("button", { name: "Course notes", exact: true })
+    .dblclick();
   await expect(page).toHaveURL(/\/course-notes/);
 
   // Drawer: create a note from the sidebar action. Notes open in the
@@ -59,15 +61,21 @@ test("mobile drawer + node lifecycle happy path", async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole("link", { name: "Back to library" }).click();
-  await nodes.getByRole("button", { name: "Course notes" }).dblclick();
-  await expect(nodes.getByRole("button", { name: noteName })).toBeVisible();
+  await nodes
+    .getByRole("button", { name: "Course notes", exact: true })
+    .dblclick();
+  await expect(
+    nodes.getByRole("button", { name: noteName, exact: true }),
+  ).toBeVisible();
 
   // The node tree has no per-row menu: select the row, then delete through the
   // bulk action bar + confirmation dialog.
-  await nodes.getByRole("button", { name: noteName }).click();
+  await nodes.getByRole("button", { name: noteName, exact: true }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("button", { name: "Delete selected" }).click();
-  await expect(nodes.getByRole("button", { name: noteName })).toHaveCount(0);
+  await expect(
+    nodes.getByRole("button", { name: noteName, exact: true }),
+  ).toHaveCount(0);
 });
 
 test("tag rename from the drawer survives the drawer close-on-click handler", async ({

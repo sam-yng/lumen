@@ -292,8 +292,9 @@ validation on the email field and an optimistic success state.
 - `styles.css` — `@import` manifest (link this one file).
 - `tokens/` — `fonts.css`, `colors.css`, `typography.css`, `spacing.css`,
   `base.css` (resets + `.l-*` helpers), `components.css` (`.lui-*` classes).
-- `web-app/` — the interactive app prototype: `index.html` (orchestrator),
-  `app-data.jsx`, `app-screens.jsx`, `app-detail-screens.jsx`.
+- [`web-app/`](web-app/README.md) — the interactive app prototype:
+  `index.html` (orchestrator), `app-data.jsx`, `app-screens.jsx`,
+  `app-detail-screens.jsx`.
 - `marketing/index.html` — the landing-page prototype (incl. "Coming soon" cards).
 - `DESIGN_SYSTEM_README.md` — the full design guide (content voice, visual
   foundations, iconography, and the component API summary).

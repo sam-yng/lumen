@@ -1,6 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LibraryFilterChips } from "@/components/library/library-filter-chips";
 import { LibrarySidebar } from "@/components/library/library-sidebar";
 import { filterNodesBySelectedTags } from "@/components/library/library-tags";
@@ -17,6 +23,28 @@ vi.mock("@/components/library/library-api", async (importOriginal) => ({
   createTag: apiMocks.createTag,
   deleteTag: apiMocks.deleteTag,
   updateTag: apiMocks.updateTag,
+}));
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+    onNavigate,
+    ...props
+  }: React.ComponentProps<"a"> & {
+    href: string;
+    onNavigate?: () => void;
+  }) => (
+    <a
+      {...props}
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        onNavigate?.();
+      }}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 function node(
@@ -60,6 +88,116 @@ describe("LibrarySidebar", () => {
       view?: "library" | "recents";
     }
   >;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("labels the primary action for its creation context and omits Settings", () => {
+    const onCreatePage = vi.fn();
+    const commonProps = {
+      view: "library" as const,
+      nodes: [],
+      tags: [],
+      tagLinks: [],
+      selectedTagIds: new Set<string>(),
+      selectedNodeId: null,
+      userEmail: "demo@lumen.test",
+      signOutAction: vi.fn(),
+      onCreatePage,
+      onFocusSearch: vi.fn(),
+      onToggleTag: vi.fn(),
+    };
+    const { unmount } = renderSidebar(
+      <Sidebar {...commonProps} atRoot={true} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "New workspace" }));
+    expect(onCreatePage).toHaveBeenCalledOnce();
+    expect(screen.queryByTitle("Settings")).toBeNull();
+
+    unmount();
+    renderSidebar(<Sidebar {...commonProps} atRoot={false} />);
+    expect(screen.getByRole("button", { name: "New note" })).toBeVisible();
+  });
+
+  it("reports client-side link navigation immediately", () => {
+    const onNavigate = vi.fn();
+    renderSidebar(
+      <Sidebar
+        view="library"
+        nodes={[]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onNavigate={onNavigate}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "Recents" }));
+    expect(onNavigate).toHaveBeenCalledWith("/library/recents", "Recents");
+  });
+
+  it("shows tag-creation feedback and preserves the name while pending", async () => {
+    apiMocks.createTag.mockReturnValue(new Promise(() => undefined));
+    renderSidebar(
+      <Sidebar
+        nodes={[]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Tag name" });
+    fireEvent.change(input, { target: { value: "Exam" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create tag" }));
+
+    expect(
+      await screen.findByRole("status", { name: "Creating Exam" }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Creating tag" })).toBeDisabled();
+    expect(input).toHaveValue("Exam");
+  });
+
+  it("preserves the tag name and surfaces creation errors", async () => {
+    apiMocks.createTag.mockRejectedValue(new Error("Could not create tag."));
+    renderSidebar(
+      <Sidebar
+        nodes={[]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Tag name" });
+    fireEvent.change(input, { target: { value: "Exam" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create tag" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not create tag.",
+    );
+    await waitFor(() => expect(input).toHaveValue("Exam"));
+  });
 
   it("renders pinned containers above the nested Library tree", () => {
     const nodes = [

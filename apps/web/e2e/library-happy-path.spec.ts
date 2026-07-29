@@ -61,12 +61,12 @@ test("demo user manages the library through routes", async ({ page }) => {
   // Cleanup: delete the created workspace (cascades the note).
   await page.getByRole("link", { name: "Back to library" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await nodes.getByRole("button", { name: workspaceName }).click();
+  await nodes.getByRole("button", { name: workspaceName, exact: true }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("button", { name: "Delete selected" }).click();
-  await expect(nodes.getByRole("button", { name: workspaceName })).toHaveCount(
-    0,
-  );
+  await expect(
+    nodes.getByRole("button", { name: workspaceName, exact: true }),
+  ).toHaveCount(0);
 
   expect(
     consoleWarnings.filter((warning) =>

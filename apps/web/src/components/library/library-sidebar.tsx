@@ -7,7 +7,6 @@ import {
   LogOut,
   Plus,
   Search,
-  Settings,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,12 +21,14 @@ import { TagPanel } from "./tag-panel";
 
 type SignOutAction = () => Promise<void>;
 type ChildrenByParent = Map<string | null, LibraryNode[]>;
+type NavigationIntent = (href: string, label: string) => void;
 
 function NodeTreeBranch({
   nodes,
   childrenByParent,
   selectedNodeId,
   parentId,
+  onNavigate,
   depth = 0,
   ancestors = new Set<string>(),
 }: {
@@ -35,16 +36,19 @@ function NodeTreeBranch({
   childrenByParent: ChildrenByParent;
   selectedNodeId: string | null;
   parentId: string | null;
+  onNavigate: NavigationIntent;
   depth?: number;
   ancestors?: Set<string>;
 }) {
   return (childrenByParent.get(parentId) ?? []).map((node) => {
     if (ancestors.has(node.id)) return null;
     const nextAncestors = new Set(ancestors).add(node.id);
+    const href = canonicalNodePath(nodes, node);
     return (
       <div key={node.id}>
         <Link
-          href={canonicalNodePath(nodes, node)}
+          href={href}
+          onNavigate={() => onNavigate(href, node.title)}
           aria-current={selectedNodeId === node.id ? "page" : undefined}
           className={`group relative flex h-(--row-h) items-center gap-2 rounded-md pr-2 text-[13px] text-text-2 transition hover:bg-surface-2 hover:text-foreground ${
             selectedNodeId === node.id
@@ -68,6 +72,7 @@ function NodeTreeBranch({
           childrenByParent={childrenByParent}
           selectedNodeId={selectedNodeId}
           parentId={node.id}
+          onNavigate={onNavigate}
           depth={depth + 1}
           ancestors={nextAncestors}
         />
@@ -79,9 +84,11 @@ function NodeTreeBranch({
 function NodeTree({
   nodes,
   selectedNodeId,
+  onNavigate,
 }: {
   nodes: LibraryNode[];
   selectedNodeId: string | null;
+  onNavigate: NavigationIntent;
 }) {
   const childrenByParent = useMemo(() => {
     const map: ChildrenByParent = new Map();
@@ -102,11 +109,13 @@ function NodeTree({
       childrenByParent={childrenByParent}
       selectedNodeId={selectedNodeId}
       parentId={null}
+      onNavigate={onNavigate}
     />
   );
 }
 
 export function LibrarySidebar({
+  atRoot = false,
   nodes,
   view = "library",
   tags,
@@ -117,8 +126,10 @@ export function LibrarySidebar({
   signOutAction,
   onCreatePage,
   onFocusSearch,
+  onNavigate = () => undefined,
   onToggleTag,
 }: {
+  atRoot?: boolean;
   nodes: LibraryNode[];
   view?: "library" | "recents";
   tags: Tables<"tags">[];
@@ -129,6 +140,7 @@ export function LibrarySidebar({
   signOutAction: SignOutAction;
   onCreatePage: () => void;
   onFocusSearch: () => void;
+  onNavigate?: NavigationIntent;
   onToggleTag: (tagId: string) => void;
 }) {
   const pinned = nodes
@@ -142,19 +154,16 @@ export function LibrarySidebar({
   return (
     <aside className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface lg:border-r lg:border-border-soft">
       <div className="border-b border-border-soft p-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <div className="inline-flex items-center gap-2">
             <span className="size-[11px] rounded-full bg-primary shadow-[0_0_24px_var(--accent-glow)]" />
             <h1 className="font-semibold">Lumen</h1>
           </div>
-          <Button type="button" variant="ghost" size="icon-sm" title="Settings">
-            <Settings className="size-4" />
-          </Button>
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <Button type="button" onClick={onCreatePage}>
             <Plus className="size-4" />
-            New note
+            {atRoot ? "New workspace" : "New note"}
           </Button>
           <Button
             type="button"
@@ -171,6 +180,7 @@ export function LibrarySidebar({
         <nav className="mb-4 space-y-1" aria-label="Primary">
           <Link
             href="/"
+            onNavigate={() => onNavigate("/", "Library")}
             aria-current={view === "library" ? "page" : undefined}
             className={`${navItem} ${view === "library" ? navActive : navIdle}`}
           >
@@ -179,6 +189,7 @@ export function LibrarySidebar({
           </Link>
           <Link
             href="/library/recents"
+            onNavigate={() => onNavigate("/library/recents", "Recents")}
             aria-current={view === "recents" ? "page" : undefined}
             className={`${navItem} ${view === "recents" ? navActive : navIdle}`}
           >
@@ -186,7 +197,11 @@ export function LibrarySidebar({
             Recents
           </Link>
           {ASSISTANT_ENABLED ? (
-            <Link href="/assistant" className={`${navItem} ${navIdle}`}>
+            <Link
+              href="/assistant"
+              onNavigate={() => onNavigate("/assistant", "Ask Lumen")}
+              className={`${navItem} ${navIdle}`}
+            >
               <Sparkles className="size-4 text-accent-text" />
               Ask Lumen
             </Link>
@@ -214,10 +229,12 @@ export function LibrarySidebar({
             <nav className="space-y-1" aria-label="Pinned">
               {pinned.map((node) => {
                 const Icon = libraryNodeIcon(node, nodes);
+                const href = canonicalNodePath(nodes, node);
                 return (
                   <Link
                     key={node.id}
-                    href={canonicalNodePath(nodes, node)}
+                    href={href}
+                    onNavigate={() => onNavigate(href, node.title)}
                     className={`${navItem} ${navIdle}`}
                   >
                     <Icon className="size-4" />
@@ -234,7 +251,11 @@ export function LibrarySidebar({
             Library
           </p>
           <nav className="space-y-1" aria-label="Library tree">
-            <NodeTree nodes={nodes} selectedNodeId={selectedNodeId} />
+            <NodeTree
+              nodes={nodes}
+              selectedNodeId={selectedNodeId}
+              onNavigate={onNavigate}
+            />
           </nav>
         </section>
 
