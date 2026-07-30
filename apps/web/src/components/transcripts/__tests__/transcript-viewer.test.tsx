@@ -172,4 +172,25 @@ describe("TranscriptViewer", () => {
 
     expect(audio.currentTime).toBe(42);
   });
+
+  it("seeks from a timestamp after text was selected elsewhere", async () => {
+    const { container } = renderViewer();
+    const firstSegmentText = await screen.findByText("segment seg-1 text");
+    const textNode = firstSegmentText.firstChild;
+    const selection = window.getSelection();
+    const audio = container.querySelector("audio");
+    if (!textNode || !selection || !audio) {
+      throw new Error("Expected rendered transcript text and audio.");
+    }
+
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 7);
+    selection.addRange(range);
+    audio.currentTime = 42;
+
+    fireEvent.click(screen.getByText("1:05"));
+
+    expect(audio.currentTime).toBe(65);
+  });
 });

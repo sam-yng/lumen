@@ -33,14 +33,7 @@ export function PdfViewerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[90dvh] flex-col overflow-hidden p-0 sm:h-[88vh] sm:w-[min(calc(100vw-32px),1100px)]">
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        {src ? (
-          <PDFViewer
-            src={src}
-            fileName={title}
-            showUpload={false}
-            className="h-full min-h-0 flex-1"
-          />
-        ) : null}
+        {src ? <PDFViewer src={src} className="h-full min-h-0 flex-1" /> : null}
       </DialogContent>
     </Dialog>
   );

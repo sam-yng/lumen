@@ -53,6 +53,19 @@ function activeSegmentIndex(segments: SegmentRow[], currentTime: number) {
   return active;
 }
 
+function selectionIntersectsTarget(
+  selection: Selection,
+  target: EventTarget | null,
+) {
+  if (selection.isCollapsed || !(target instanceof Node)) return false;
+
+  for (let index = 0; index < selection.rangeCount; index += 1) {
+    if (selection.getRangeAt(index).intersectsNode(target)) return true;
+  }
+
+  return false;
+}
+
 function StatusState({
   recording,
   onRetry,
@@ -401,9 +414,14 @@ export function TranscriptViewer({
                       ? "border-l-primary bg-(--accent-soft)"
                       : "border-l-transparent"
                   }`}
-                  onClick={() => {
+                  onClick={(event) => {
                     const selection = window.getSelection();
-                    if (selection && !selection.isCollapsed) return;
+                    if (
+                      selection &&
+                      selectionIntersectsTarget(selection, event.target)
+                    ) {
+                      return;
+                    }
                     seek(segment.start_ms / 1000);
                   }}
                 >

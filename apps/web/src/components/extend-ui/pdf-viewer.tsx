@@ -1,7 +1,7 @@
 "use client";
 
-import { createPluginRegistration, refreshPages } from "@embedpdf/core";
-import { EmbedPDF, useRegistry } from "@embedpdf/core/react";
+import { createPluginRegistration } from "@embedpdf/core";
+import { EmbedPDF } from "@embedpdf/core/react";
 import type {
   PdfDocumentObject,
   PdfEngine,
@@ -33,11 +33,6 @@ import {
   type VirtualItem,
 } from "@embedpdf/plugin-scroll/react";
 import {
-  SearchLayer,
-  SearchPluginPackage,
-  useSearch,
-} from "@embedpdf/plugin-search/react";
-import {
   CopyToClipboard,
   SelectionPluginPackage,
   useSelectionCapability,
@@ -64,20 +59,12 @@ import {
 } from "@embedpdf/plugin-viewport/react";
 import { useZoom, ZoomPluginPackage } from "@embedpdf/plugin-zoom/react";
 import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  Download01Icon,
   MinusSignCircleIcon,
-  MoreHorizontalIcon,
   PlusSignCircleIcon,
-  RotateClockwiseIcon,
-  Search01Icon,
   SidebarLeftIcon,
-  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import * as React from "react";
-import { flushSync } from "react-dom";
 import { Button } from "@/components/extend-ui/button";
 import {
   DocumentViewerSidebarSkeleton,
@@ -85,19 +72,8 @@ import {
   useElementWidth,
   useInlineThumbnailSidebar,
 } from "@/components/extend-ui/document-viewer-sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/extend-ui/dropdown-menu";
 import { Input } from "@/components/extend-ui/input";
 import { loadSharedPdfEngine } from "@/components/extend-ui/pdf-thumbnail-utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/extend-ui/popover";
 import { ScrollArea } from "@/components/extend-ui/scroll-area";
 import {
   Select,
@@ -106,7 +82,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/extend-ui/select";
-import { Separator } from "@/components/extend-ui/separator";
 import { Spinner } from "@/components/extend-ui/spinner";
 import {
   Tooltip,
@@ -137,18 +112,12 @@ export type PDFViewerHandle = {
 export type PDFViewerProps = {
   className?: string;
   defaultZoom?: number;
-  fileName?: string;
-  showDownload?: boolean;
   showToolbar?: boolean;
-  showRotateControls?: boolean;
-  showUpload?: boolean;
   src?: string;
-  toolbarActions?: React.ReactNode;
   pageClassName?: (pageNumber: number) => string | undefined;
   renderPageOverlay?: (props: PDFViewerPageOverlayProps) => React.ReactNode;
   onActivePageChange?: (pageNumber: number) => void;
   onDocumentLoadSuccess?: (numPages: number) => void;
-  onPdfUpload?: (file: File) => void;
   onPagePointerDown?: (
     event: React.PointerEvent<HTMLDivElement>,
     pageNumber: number,
@@ -180,7 +149,6 @@ const THUMBNAIL_SIDEBAR_WIDTH_CLASS = "w-40";
 const THUMBNAIL_SIDEBAR_CLOSED_CLASS = "-ml-40";
 const PAGE_BASE_RENDER_MAX_SCALE = 1;
 const PAGE_BASE_RENDER_DPR = 1;
-const PDF_SEARCH_DEBOUNCE_MS = 300;
 const TEXT_SELECTION_BACKGROUND = "rgba(59, 130, 246, 0.14)";
 const THUMBNAIL_FOCUS_RING_CLASS =
   "group-focus-visible/pdf-thumbnail-sidebar:ring-2 group-focus-visible/pdf-thumbnail-sidebar:ring-ring group-focus-visible/pdf-thumbnail-sidebar:ring-offset-1 group-focus-visible/pdf-thumbnail-sidebar:ring-offset-background";
@@ -240,94 +208,6 @@ function useSharedPdfEngine() {
 
 function rotationToDegrees(rotation: Rotation) {
   return (rotation as number) * 90;
-}
-
-function normalizeDegrees(rotation: number) {
-  return ((rotation % 360) + 360) % 360;
-}
-
-function ensurePdfExtension(fileName: string) {
-  return fileName.toLowerCase().endsWith(".pdf") ? fileName : `${fileName}.pdf`;
-}
-
-function getPdfDownloadFileName(fileName: string | undefined, src: string) {
-  if (fileName?.trim()) return ensurePdfExtension(fileName.trim());
-
-  const pathname = src.split(/[?#]/)[0] ?? "";
-  const rawName = pathname.split("/").pop() || "document.pdf";
-
-  try {
-    return ensurePdfExtension(decodeURIComponent(rawName));
-  } catch {
-    return ensurePdfExtension(rawName);
-  }
-}
-
-function getRotatedPdfDownloadFileName(fileName: string) {
-  return fileName.replace(/\.pdf$/i, "-rotated.pdf");
-}
-
-function downloadBlob(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.rel = "noopener";
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-async function downloadPdfWithPageRotations({
-  fileName,
-  pageRotationDeltas,
-  src,
-}: {
-  fileName: string;
-  pageRotationDeltas: PageRotationDeltas;
-  src: string;
-}) {
-  const response = await fetch(src);
-
-  if (!response.ok) {
-    throw new Error(`Failed to download PDF (${response.status})`);
-  }
-
-  if (pageRotationDeltas.size === 0) {
-    downloadBlob(await response.blob(), fileName);
-    return;
-  }
-
-  const [{ PDFDocument, degrees }, pdfBytes] = await Promise.all([
-    import("pdf-lib"),
-    response.arrayBuffer(),
-  ]);
-  const pdfDocument = await PDFDocument.load(pdfBytes);
-
-  pdfDocument.getPages().forEach((page, pageIndex) => {
-    const rotationDelta = pageRotationDeltas.get(pageIndex);
-
-    if (!rotationDelta) return;
-
-    page.setRotation(
-      degrees(
-        normalizeDegrees(
-          page.getRotation().angle + rotationToDegrees(rotationDelta),
-        ),
-      ),
-    );
-  });
-
-  const nextPdfBytes = await pdfDocument.save();
-  const nextPdfBuffer = new ArrayBuffer(nextPdfBytes.byteLength);
-  new Uint8Array(nextPdfBuffer).set(nextPdfBytes);
-
-  downloadBlob(
-    new Blob([nextPdfBuffer], { type: "application/pdf" }),
-    getRotatedPdfDownloadFileName(fileName),
-  );
 }
 
 function getThumbnailMetaForPage({
@@ -467,22 +347,17 @@ function PDFViewerLoadingSkeleton({
   );
 }
 
-// Rendered while the engine or document is not ready: same frame as the
-// full viewer, with only the upload control usable.
+// Rendered while the engine or document is not ready.
 function PDFViewerFallbackShell({
   className,
   showToolbar,
-  showUpload,
   sidebarOpen,
   state,
-  onUploadFile,
 }: {
   className?: string;
   showToolbar: boolean;
-  showUpload: boolean;
   sidebarOpen: boolean;
   state: "loading" | "error" | "empty";
-  onUploadFile?: (file: File) => void;
 }) {
   return (
     <div
@@ -492,13 +367,7 @@ function PDFViewerFallbackShell({
         className,
       )}
     >
-      {showToolbar ? (
-        <div className="flex min-h-12 flex-wrap items-center justify-end gap-2 border-b bg-background px-3 py-2">
-          {showUpload && onUploadFile ? (
-            <PDFViewerFileActionsMenu onUploadFile={onUploadFile} showUpload />
-          ) : null}
-        </div>
-      ) : null}
+      {showToolbar ? <div className="min-h-12 border-b bg-background" /> : null}
       <div className="relative flex min-h-0 flex-1 overflow-hidden bg-muted/30">
         {state === "loading" ? (
           <PDFViewerLoadingSkeleton sidebarInline sidebarOpen={sidebarOpen} />
@@ -515,8 +384,7 @@ function PDFViewerFallbackShell({
                 Upload a PDF to preview
               </div>
               <div>
-                Pass a PDF URL with the <code>src</code> prop or use the upload
-                control.
+                Pass a PDF URL with the <code>src</code> prop.
               </div>
             </div>
           </div>
@@ -540,78 +408,6 @@ function ToolbarTooltip({
       </TooltipTrigger>
       <TooltipContent side="bottom">{label}</TooltipContent>
     </Tooltip>
-  );
-}
-
-function PDFViewerFileActionsMenu({
-  downloadDisabled,
-  isPreparingDownload = false,
-  onDownload,
-  onUploadFile,
-  showDownload = false,
-  showUpload = false,
-}: {
-  downloadDisabled?: boolean;
-  isPreparingDownload?: boolean;
-  onDownload?: () => void;
-  onUploadFile?: (file: File) => void;
-  showDownload?: boolean;
-  showUpload?: boolean;
-}) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  if (!showDownload && !showUpload) return null;
-
-  return (
-    <>
-      {showUpload && onUploadFile ? (
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf,.pdf"
-          className="sr-only"
-          tabIndex={-1}
-          onChange={(event) => {
-            const nextFile = event.target.files?.[0];
-
-            if (nextFile) {
-              onUploadFile(nextFile);
-              event.currentTarget.value = "";
-            }
-          }}
-        />
-      ) : null}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Open PDF actions"
-          >
-            <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          {showDownload && onDownload ? (
-            <DropdownMenuItem disabled={downloadDisabled} onClick={onDownload}>
-              {isPreparingDownload ? (
-                <Spinner className="size-4" />
-              ) : (
-                <HugeiconsIcon icon={Download01Icon} className="size-4" />
-              )}
-              Download
-            </DropdownMenuItem>
-          ) : null}
-          {showUpload && onUploadFile ? (
-            <DropdownMenuItem onClick={() => inputRef.current?.click()}>
-              <HugeiconsIcon icon={Upload01Icon} className="size-4" />
-              Upload
-            </DropdownMenuItem>
-          ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
   );
 }
 
@@ -696,252 +492,6 @@ function PDFViewerPageNumberControl({
       )}
       <span>of {numPages || "–"}</span>
     </div>
-  );
-}
-
-function PDFViewerSearchControl({
-  documentId,
-  controlsDisabled,
-}: {
-  documentId: string;
-  controlsDisabled: boolean;
-}) {
-  const { state, provides } = useSearch(documentId);
-  const { provides: scroll } = useScroll(documentId);
-  const [searchDraft, setSearchDraft] = React.useState("");
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [isSearching, setIsSearching] = React.useState(false);
-  const providesRef = React.useRef(provides);
-  const scrollRef = React.useRef(scroll);
-  const searchRequestIdRef = React.useRef(0);
-  const hasActiveQuery = Boolean(searchQuery.trim());
-  const resultLabel = isSearching
-    ? "Searching"
-    : !hasActiveQuery
-      ? "No search"
-      : state.total
-        ? `${state.activeResultIndex + 1} / ${state.total}`
-        : "No results";
-
-  const scrollToResult = React.useCallback(
-    (index: number) => {
-      const result = state.results[index];
-
-      if (!result || !scroll) return;
-
-      const firstRect = result.rects[0];
-
-      scroll.scrollToPage({
-        pageNumber: result.pageIndex + 1,
-        ...(firstRect
-          ? {
-              pageCoordinates: {
-                x: firstRect.origin.x,
-                y: firstRect.origin.y,
-              },
-              alignY: 30,
-            }
-          : {}),
-        behavior: "auto",
-      });
-    },
-    [scroll, state.results],
-  );
-
-  React.useEffect(() => {
-    providesRef.current = provides;
-    scrollRef.current = scroll;
-  }, [provides, scroll]);
-
-  const runSearch = React.useCallback((rawQuery: string) => {
-    const query = rawQuery.trim();
-    const requestId = searchRequestIdRef.current + 1;
-    searchRequestIdRef.current = requestId;
-    setSearchQuery(query);
-
-    const searchProvider = providesRef.current;
-    const scrollProvider = scrollRef.current;
-
-    if (!searchProvider) {
-      setIsSearching(false);
-      return;
-    }
-
-    if (!query) {
-      searchProvider.stopSearch();
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    searchProvider.startSearch();
-    searchProvider.searchAllPages(query).wait(
-      (result) => {
-        if (searchRequestIdRef.current !== requestId) return;
-
-        const firstResult = result.results[0];
-
-        if (firstResult && scrollProvider) {
-          searchProvider.goToResult(0);
-          const firstRect = firstResult.rects[0];
-
-          scrollProvider.scrollToPage({
-            pageNumber: firstResult.pageIndex + 1,
-            ...(firstRect
-              ? {
-                  pageCoordinates: {
-                    x: firstRect.origin.x,
-                    y: firstRect.origin.y,
-                  },
-                  alignY: 30,
-                }
-              : {}),
-            behavior: "auto",
-          });
-        }
-        setIsSearching(false);
-      },
-      () => {
-        if (searchRequestIdRef.current !== requestId) return;
-        setIsSearching(false);
-      },
-    );
-  }, []);
-
-  React.useEffect(() => {
-    if (!searchDraft.trim()) return;
-
-    const timeoutId = window.setTimeout(() => {
-      runSearch(searchDraft);
-    }, PDF_SEARCH_DEBOUNCE_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [runSearch, searchDraft]);
-
-  const handleSearchDraftChange = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const nextDraft = event.target.value;
-
-      setSearchDraft(nextDraft);
-
-      if (nextDraft.trim()) {
-        setIsSearching(true);
-        return;
-      }
-
-      searchRequestIdRef.current += 1;
-      setSearchQuery("");
-      setIsSearching(false);
-      provides?.stopSearch();
-    },
-    [provides],
-  );
-
-  const clearSearch = React.useCallback(() => {
-    searchRequestIdRef.current += 1;
-    setSearchDraft("");
-    setSearchQuery("");
-    setIsSearching(false);
-    provides?.stopSearch();
-  }, [provides]);
-
-  const navigate = React.useCallback(
-    (direction: 1 | -1) => {
-      if (!provides || state.total === 0) return;
-
-      const index =
-        direction === 1 ? provides.nextResult() : provides.previousResult();
-
-      scrollToResult(index);
-    },
-    [provides, scrollToResult, state.total],
-  );
-
-  return (
-    <Popover>
-      <ToolbarTooltip label="Search text">
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Search text"
-            disabled={controlsDisabled}
-          >
-            <HugeiconsIcon icon={Search01Icon} className="size-4" />
-          </Button>
-        </PopoverTrigger>
-      </ToolbarTooltip>
-      <PopoverContent align="end" className="w-72">
-        <div className="space-y-3">
-          <Input
-            placeholder="Search text"
-            value={searchDraft}
-            onChange={handleSearchDraftChange}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter") return;
-
-              event.preventDefault();
-              if (event.shiftKey && state.total) {
-                navigate(-1);
-              } else if (state.total) {
-                navigate(1);
-              } else if (searchDraft.trim()) {
-                runSearch(searchDraft);
-              }
-            }}
-          />
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 text-xs text-muted-foreground">
-              <div className="truncate">
-                {state.total ? (
-                  <>
-                    <span className="text-primary">
-                      {state.activeResultIndex + 1}
-                    </span>
-                    {` / ${state.total}`}
-                  </>
-                ) : (
-                  resultLabel
-                )}
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                aria-label="Previous result"
-                disabled={isSearching || state.total === 0}
-                onClick={() => navigate(-1)}
-              >
-                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                aria-label="Next result"
-                disabled={isSearching || state.total === 0}
-                onClick={() => navigate(1)}
-              >
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearSearch}
-            >
-              Clear
-            </Button>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -1773,60 +1323,43 @@ function PDFViewerScroller({
 
 type PDFViewerInnerProps = {
   viewerRef: React.ForwardedRef<PDFViewerHandle>;
-  pdfFile: string;
   documentId: string;
   document: PdfDocumentObject | null;
   defaultZoom: number;
   className?: string;
-  fileName?: string;
-  showDownload: boolean;
   showToolbar: boolean;
-  showRotateControls: boolean;
-  showUpload: boolean;
-  toolbarActions?: React.ReactNode;
   pageClassName?: (pageNumber: number) => string | undefined;
   renderPageOverlay?: (props: PDFViewerPageOverlayProps) => React.ReactNode;
   onActivePageChange?: (pageNumber: number) => void;
-  onPdfUpload?: (file: File) => void;
   onPagePointerDown?: PDFViewerProps["onPagePointerDown"];
   onPagePointerMove?: PDFViewerProps["onPagePointerMove"];
   onPagePointerUp?: PDFViewerProps["onPagePointerUp"];
   onPagePointerCancel?: PDFViewerProps["onPagePointerCancel"];
-  onUploadFile: (file: File) => void;
 };
 
 function PDFViewerInner({
   viewerRef,
-  pdfFile,
   documentId,
   document: pdfDocument,
   defaultZoom,
   className,
-  fileName,
-  showDownload,
   showToolbar,
-  showRotateControls,
-  showUpload,
-  toolbarActions,
   pageClassName,
   renderPageOverlay,
   onActivePageChange,
-  onPdfUpload,
   onPagePointerDown,
   onPagePointerMove,
   onPagePointerUp,
   onPagePointerCancel,
-  onUploadFile,
 }: PDFViewerInnerProps) {
-  const { registry } = useRegistry();
   const { state: scrollState, provides: scroll } = useScroll(documentId);
   const { state: zoomState, provides: zoom } = useZoom(documentId);
   const { provides: thumbnails } = useThumbnailCapability();
-  const { plugin: thumbnailPlugin } = useThumbnailPlugin();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [isPreparingDownload, setIsPreparingDownload] = React.useState(false);
-  const [pageRotationDeltas, setPageRotationDeltas] =
-    React.useState<PageRotationDeltas>(() => new Map());
+  const pageRotationDeltas = React.useMemo<PageRotationDeltas>(
+    () => new Map(),
+    [],
+  );
   const [selectedPageIndexes, setSelectedPageIndexes] = React.useState<
     Set<number>
   >(() => new Set());
@@ -1838,8 +1371,6 @@ function PDFViewerInner({
   const [viewerShellRef, viewerShellWidth] = useElementWidth<HTMLDivElement>();
   const sidebarInline = useInlineThumbnailSidebar(viewerShellWidth);
   const viewportElementRef = React.useRef<HTMLDivElement | null>(null);
-  const pageRotationDeltasRef = React.useRef(pageRotationDeltas);
-  const selectedPageIndexesRef = React.useRef(selectedPageIndexes);
   const selectionAnchorPageIndexRef = React.useRef<number | null>(null);
   const suppressActivePageSelectionSyncRef = React.useRef<number | null>(null);
   const initializedSelectionDocumentRef = React.useRef<string | null>(null);
@@ -1848,18 +1379,9 @@ function PDFViewerInner({
   const numPages = pdfDocument?.pageCount ?? 0;
   const isLoading = !pdfDocument;
   const controlsDisabled = !numPages;
-  const downloadDisabled = controlsDisabled || isPreparingDownload;
   const thumbnailSidebarVisible = sidebarOpen && !isLoading;
   const currentZoomLevel = zoomState.currentZoomLevel;
   const alignedThumbnailSidebarDocumentRef = React.useRef<string | null>(null);
-
-  React.useEffect(() => {
-    pageRotationDeltasRef.current = pageRotationDeltas;
-  }, [pageRotationDeltas]);
-
-  React.useEffect(() => {
-    selectedPageIndexesRef.current = selectedPageIndexes;
-  }, [selectedPageIndexes]);
 
   React.useEffect(() => {
     if (activePage > 0) onActivePageChange?.(activePage);
@@ -1878,7 +1400,6 @@ function PDFViewerInner({
     const nextSelection = new Set([activePageIndex]);
 
     selectionAnchorPageIndexRef.current = activePageIndex;
-    selectedPageIndexesRef.current = nextSelection;
     setSelectedPageIndexes((previousSelection) =>
       arePageIndexSetsEqual(previousSelection, nextSelection)
         ? previousSelection
@@ -1899,7 +1420,6 @@ function PDFViewerInner({
 
     initializedSelectionDocumentRef.current = documentId;
     selectionAnchorPageIndexRef.current = initialPageIndex;
-    selectedPageIndexesRef.current = initialSelection;
     setSelectedPageIndexes(initialSelection);
   }, [activePage, documentId, numPages]);
 
@@ -1979,7 +1499,6 @@ function PDFViewerInner({
           selectionAnchorPageIndexRef.current = pageIndex;
         }
 
-        selectedPageIndexesRef.current = nextSelection;
         return nextSelection;
       });
 
@@ -2012,131 +1531,6 @@ function PDFViewerInner({
       getViewportElement: () => viewportElementRef.current,
     }),
     [pdfDocument, scroll, scrollToPage],
-  );
-
-  const handleDownload = React.useCallback(async () => {
-    if (!pdfFile || isPreparingDownload) return;
-
-    setIsPreparingDownload(true);
-
-    try {
-      await downloadPdfWithPageRotations({
-        fileName: getPdfDownloadFileName(fileName, pdfFile),
-        pageRotationDeltas,
-        src: pdfFile,
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsPreparingDownload(false);
-    }
-  }, [fileName, isPreparingDownload, pageRotationDeltas, pdfFile]);
-
-  const rotateSelectedPages = React.useCallback(
-    (direction: -1 | 1) => {
-      if (!pdfDocument || !registry || activePage < 1) return;
-
-      const documentState = registry.getStore().getState().core.documents[
-        documentId
-      ];
-      const currentDocument = documentState?.document ?? pdfDocument;
-      const selectedTargetPageIndexes = Array.from(
-        selectedPageIndexesRef.current,
-      ).filter((pageIndex) => currentDocument.pages[pageIndex]);
-      const fallbackPageIndex = activePage - 1;
-      const targetPageIndexes = (
-        selectedTargetPageIndexes.length
-          ? selectedTargetPageIndexes
-          : [fallbackPageIndex]
-      )
-        .filter((pageIndex) => currentDocument.pages[pageIndex])
-        .sort((a, b) => a - b);
-
-      if (targetPageIndexes.length === 0) return;
-
-      const previousDeltas = pageRotationDeltasRef.current;
-      const nextDeltas = new Map(previousDeltas);
-      const referencePageIndex =
-        activePage > 0 && currentDocument.pages[activePage - 1]
-          ? activePage - 1
-          : targetPageIndexes[0];
-      let scrollDelta = 0;
-
-      for (const pageIndex of targetPageIndexes) {
-        const currentPage = currentDocument.pages[pageIndex];
-        if (!currentPage) continue;
-
-        const previousDelta = previousDeltas.get(pageIndex) ?? 0;
-        const nextDelta = normalizeRotation(previousDelta + direction);
-        const basePageRotation =
-          basePageRotations[pageIndex] ??
-          normalizeRotation(currentPage.rotation);
-        const previousPageRotation = normalizeRotation(
-          basePageRotation + previousDelta,
-        );
-        const nextPageRotation = normalizeRotation(
-          basePageRotation + nextDelta,
-        );
-        const previousRotatedSize = getRotatedDimensions({
-          height: currentPage.size.height * currentZoomLevel,
-          rotation: previousPageRotation,
-          width: currentPage.size.width * currentZoomLevel,
-        });
-        const nextRotatedSize = getRotatedDimensions({
-          height: currentPage.size.height * currentZoomLevel,
-          rotation: nextPageRotation,
-          width: currentPage.size.width * currentZoomLevel,
-        });
-        const heightDelta = nextRotatedSize.height - previousRotatedSize.height;
-
-        if (pageIndex < referencePageIndex) {
-          scrollDelta += heightDelta;
-        } else if (pageIndex === referencePageIndex) {
-          scrollDelta += heightDelta / 2;
-        }
-
-        if (nextDelta) {
-          nextDeltas.set(pageIndex, nextDelta);
-        } else {
-          nextDeltas.delete(pageIndex);
-        }
-      }
-
-      const store = registry.getStore();
-      const viewport = viewportElementRef.current;
-
-      pageRotationDeltasRef.current = nextDeltas;
-      flushSync(() => {
-        setPageRotationDeltas(nextDeltas);
-        store.dispatchToCore(refreshPages(documentId, targetPageIndexes));
-      });
-
-      if (viewport && scrollDelta !== 0) {
-        viewport.scrollTop += scrollDelta;
-      }
-      (
-        thumbnailPlugin as {
-          calculateWindowState?: (documentId: string) => void;
-        } | null
-      )?.calculateWindowState?.(documentId);
-    },
-    [
-      activePage,
-      basePageRotations,
-      currentZoomLevel,
-      documentId,
-      pdfDocument,
-      registry,
-      thumbnailPlugin,
-    ],
-  );
-
-  const handleUpload = React.useCallback(
-    (file: File) => {
-      onUploadFile(file);
-      onPdfUpload?.(file);
-    },
-    [onPdfUpload, onUploadFile],
   );
 
   const renderPage = React.useCallback(
@@ -2196,13 +1590,6 @@ function PDFViewerInner({
               pageIndex={page.pageIndex}
               key={`tiles-${page.pageIndex}-${pageRotation}`}
               className="pointer-events-none opacity-100 transition-none [&_img]:opacity-100 [&_img]:transition-none"
-            />
-            <SearchLayer
-              documentId={documentId}
-              pageIndex={page.pageIndex}
-              className="pointer-events-none"
-              highlightColor="rgba(253, 224, 71, 0.45)"
-              activeHighlightColor="rgba(249, 115, 22, 0.55)"
             />
             <PDFViewerTextSelectionLayer
               documentId={documentId}
@@ -2269,46 +1656,6 @@ function PDFViewerInner({
           </div>
           <TooltipProvider>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
-              {showRotateControls ? (
-                <>
-                  <div className="flex flex-none items-center gap-1">
-                    <ToolbarTooltip label="Rotate counterclockwise">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Rotate counterclockwise"
-                        disabled={controlsDisabled}
-                        onClick={() => rotateSelectedPages(-1)}
-                      >
-                        <HugeiconsIcon
-                          icon={RotateClockwiseIcon}
-                          className="size-4"
-                        />
-                      </Button>
-                    </ToolbarTooltip>
-                    <ToolbarTooltip label="Rotate clockwise">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Rotate clockwise"
-                        disabled={controlsDisabled}
-                        onClick={() => rotateSelectedPages(1)}
-                      >
-                        <HugeiconsIcon
-                          icon={RotateClockwiseIcon}
-                          className="size-4 -scale-x-100"
-                        />
-                      </Button>
-                    </ToolbarTooltip>
-                  </div>
-                  <Separator
-                    orientation="vertical"
-                    className="mx-1 h-4 self-center"
-                  />
-                </>
-              ) : null}
               <div className="flex flex-none items-center gap-1">
                 <ToolbarTooltip label="Zoom out">
                   <Button
@@ -2379,40 +1726,6 @@ function PDFViewerInner({
                   </Button>
                 </ToolbarTooltip>
               </div>
-              <Separator
-                orientation="vertical"
-                className="mx-1 h-4 self-center"
-              />
-              <PDFViewerSearchControl
-                key={documentId}
-                documentId={documentId}
-                controlsDisabled={controlsDisabled}
-              />
-              {toolbarActions ? (
-                <>
-                  <Separator
-                    orientation="vertical"
-                    className="mx-1 h-4 self-center"
-                  />
-                  {toolbarActions}
-                </>
-              ) : null}
-              {showDownload || showUpload ? (
-                <>
-                  <Separator
-                    orientation="vertical"
-                    className="mx-1 h-4 self-center"
-                  />
-                  <PDFViewerFileActionsMenu
-                    downloadDisabled={downloadDisabled}
-                    isPreparingDownload={isPreparingDownload}
-                    onDownload={handleDownload}
-                    onUploadFile={handleUpload}
-                    showDownload={showDownload}
-                    showUpload={showUpload}
-                  />
-                </>
-              ) : null}
             </div>
           </TooltipProvider>
         </div>
@@ -2477,7 +1790,7 @@ function PDFViewerDocumentLoader({
 }: {
   pdfFile: string;
   onDocumentLoadSuccess?: (numPages: number) => void;
-} & Omit<PDFViewerInnerProps, "pdfFile" | "documentId" | "document">) {
+} & Omit<PDFViewerInnerProps, "documentId" | "document">) {
   const { provides: documentManager } = useDocumentManagerCapability();
   const { activeDocumentId, activeDocument } = useActiveDocument();
   const [loadError, setLoadError] = React.useState(false);
@@ -2529,13 +1842,8 @@ function PDFViewerDocumentLoader({
       <PDFViewerFallbackShell
         className={innerProps.className}
         showToolbar={innerProps.showToolbar}
-        showUpload={innerProps.showUpload}
         sidebarOpen={false}
         state={!pdfFile ? "empty" : documentFailed ? "error" : "loading"}
-        onUploadFile={(file) => {
-          innerProps.onUploadFile(file);
-          innerProps.onPdfUpload?.(file);
-        }}
       />
     );
   }
@@ -2544,7 +1852,6 @@ function PDFViewerDocumentLoader({
     <PDFViewerInner
       key={activeDocumentId}
       {...innerProps}
-      pdfFile={pdfFile}
       documentId={activeDocumentId}
       document={document}
     />
@@ -2556,18 +1863,12 @@ export const PDFViewer = React.forwardRef<PDFViewerHandle, PDFViewerProps>(
     {
       className,
       defaultZoom = DEFAULT_ZOOM,
-      fileName,
-      showDownload = true,
-      showRotateControls = true,
       showToolbar = true,
-      showUpload = true,
       src,
-      toolbarActions,
       pageClassName,
       renderPageOverlay,
       onActivePageChange,
       onDocumentLoadSuccess,
-      onPdfUpload,
       onPagePointerDown,
       onPagePointerMove,
       onPagePointerUp,
@@ -2576,29 +1877,7 @@ export const PDFViewer = React.forwardRef<PDFViewerHandle, PDFViewerProps>(
     ref,
   ) {
     const { engine, error: engineError } = useSharedPdfEngine();
-    const [uploadedPdfFile, setUploadedPdfFile] = React.useState<{
-      src: string | undefined;
-      url: string | null;
-    }>(() => ({ src, url: null }));
-    const uploadedPdfUrl =
-      uploadedPdfFile.src === src ? uploadedPdfFile.url : null;
-    const pdfFile = uploadedPdfUrl ?? src ?? "";
-
-    React.useEffect(
-      () => () => {
-        if (uploadedPdfUrl) URL.revokeObjectURL(uploadedPdfUrl);
-      },
-      [uploadedPdfUrl],
-    );
-
-    const handleUploadFile = React.useCallback(
-      (nextFile: File) => {
-        const nextUrl = URL.createObjectURL(nextFile);
-
-        setUploadedPdfFile({ src, url: nextUrl });
-      },
-      [src],
-    );
+    const pdfFile = src ?? "";
 
     // Plugin registrations are created once per viewer instance.
     const [plugins] = React.useState(() => [
@@ -2619,9 +1898,6 @@ export const PDFViewer = React.forwardRef<PDFViewerHandle, PDFViewerProps>(
       createPluginRegistration(InteractionManagerPluginPackage),
       createPluginRegistration(SelectionPluginPackage, {
         marquee: { enabled: false },
-      }),
-      createPluginRegistration(SearchPluginPackage, {
-        showAllResults: true,
       }),
       createPluginRegistration(ThumbnailPluginPackage, {
         width: THUMBNAIL_WIDTH,
@@ -2681,22 +1957,15 @@ export const PDFViewer = React.forwardRef<PDFViewerHandle, PDFViewerProps>(
           pdfFile={pdfFile}
           defaultZoom={defaultZoom}
           className={className}
-          fileName={fileName}
-          showDownload={showDownload}
           showToolbar={showToolbar}
-          showRotateControls={showRotateControls}
-          showUpload={showUpload}
-          toolbarActions={toolbarActions}
           pageClassName={pageClassName}
           renderPageOverlay={renderPageOverlay}
           onActivePageChange={onActivePageChange}
           onDocumentLoadSuccess={onDocumentLoadSuccess}
-          onPdfUpload={onPdfUpload}
           onPagePointerDown={onPagePointerDown}
           onPagePointerMove={onPagePointerMove}
           onPagePointerUp={onPagePointerUp}
           onPagePointerCancel={onPagePointerCancel}
-          onUploadFile={handleUploadFile}
         />
       </EmbedPDF>
     );
