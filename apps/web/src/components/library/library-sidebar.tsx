@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ChevronRight,
   Clock,
   Library as LibraryIcon,
   LogOut,
@@ -60,7 +59,6 @@ function NodeTreeBranch({
           {selectedNodeId === node.id ? (
             <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary" />
           ) : null}
-          <ChevronRight className="size-3.5 shrink-0 text-text-4" />
           {(() => {
             const Icon = libraryNodeIcon(node, nodes);
             return <Icon className="size-4 shrink-0" />;

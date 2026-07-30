@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -78,6 +78,68 @@ export function TextInputDialog({
   );
 }
 
+function SelectDialogForm({
+  fieldId,
+  label,
+  options,
+  defaultValue,
+  submitLabel,
+  submitDisabledValues,
+  onOpenChange,
+  onSubmit,
+}: {
+  fieldId: string;
+  label: string;
+  options: { value: string; label: string }[];
+  defaultValue: string;
+  submitLabel: string;
+  submitDisabledValues: readonly string[];
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (value: string) => void;
+}) {
+  const [value, setValue] = useState(defaultValue);
+
+  return (
+    <form
+      className="mt-3 space-y-4"
+      action={(formData) => {
+        onSubmit(String(formData.get("value") ?? ""));
+        onOpenChange(false);
+      }}
+    >
+      <div className="space-y-1.5">
+        <Label htmlFor={fieldId}>{label}</Label>
+        <Select
+          id={fieldId}
+          name="value"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button type="button" variant="outline" size="sm">
+            Cancel
+          </Button>
+        </DialogClose>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={!value || submitDisabledValues.includes(value)}
+        >
+          {submitLabel}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 export function SelectDialog({
   open,
   onOpenChange,
@@ -86,6 +148,7 @@ export function SelectDialog({
   options,
   defaultValue = "",
   submitLabel,
+  submitDisabledValues = [],
   onSubmit,
 }: {
   open: boolean;
@@ -95,44 +158,25 @@ export function SelectDialog({
   options: { value: string; label: string }[];
   defaultValue?: string;
   submitLabel: string;
+  submitDisabledValues?: readonly string[];
   onSubmit: (value: string) => void;
 }) {
   const fieldId = useId();
 
-  // Uncontrolled on purpose: the dialog content unmounts when closed, so each
-  // open remounts the select fresh with the current defaultValue.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined}>
         <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
-        <form
-          className="mt-3 space-y-4"
-          action={(formData) => {
-            onSubmit(String(formData.get("value") ?? ""));
-            onOpenChange(false);
-          }}
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor={fieldId}>{label}</Label>
-            <Select id={fieldId} name="value" defaultValue={defaultValue}>
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline" size="sm">
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button type="submit" size="sm">
-              {submitLabel}
-            </Button>
-          </DialogFooter>
-        </form>
+        <SelectDialogForm
+          fieldId={fieldId}
+          label={label}
+          options={options}
+          defaultValue={defaultValue}
+          submitLabel={submitLabel}
+          submitDisabledValues={submitDisabledValues}
+          onOpenChange={onOpenChange}
+          onSubmit={onSubmit}
+        />
       </DialogContent>
     </Dialog>
   );

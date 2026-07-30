@@ -156,7 +156,20 @@ vi.mock("@/components/library/transcript-route", () => ({
   ),
 }));
 vi.mock("@/components/search/search-panel", () => ({
-  SearchPanel: () => <div data-testid="search-panel" />,
+  SearchPanel: ({
+    onOpenTranscript,
+  }: {
+    onOpenTranscript: (recordingId: string) => void;
+  }) => (
+    <div data-testid="search-panel">
+      <button
+        type="button"
+        onClick={() => onOpenTranscript("recording-search-result")}
+      >
+        Open transcript search result
+      </button>
+    </div>
+  ),
 }));
 vi.mock("@/components/transcripts/record-audio-form", () => ({
   RecordAudioForm: ({ onSave }: { onSave: (file: File) => void }) => (
@@ -536,6 +549,33 @@ describe("LibraryWorkspace node routes", () => {
     expect(
       screen.getByRole("status", { name: "Opening Alpha" }),
     ).toBeInTheDocument();
+  });
+
+  it("routes transcript search results to the transcript viewer", async () => {
+    apiMocks.fetchLibrarySnapshot.mockResolvedValue({
+      nodes: [
+        node("workspace-1", "workspace", {
+          title: "Biology",
+          slug: "biology-abcd1234",
+        }),
+      ],
+      tags: [],
+      tagLinks: [],
+      recordings: [],
+      transcripts: [],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Open transcript search result",
+      }),
+    );
+
+    expect(routerMocks.push).toHaveBeenCalledWith(
+      "/library/transcripts/recording-search-result",
+    );
   });
 
   it("does not activate feedback or push when opening the current folder", async () => {

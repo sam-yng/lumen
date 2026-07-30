@@ -10,6 +10,7 @@ import { bulkDeleteNodes, bulkMoveNodes, libraryQueryKey } from "./library-api";
 import { ConfirmDialog, SelectDialog } from "./library-dialogs";
 import { LibraryItemActions } from "./library-item-actions";
 import { ItemRow } from "./library-item-row";
+import { isFolderNode } from "./library-node-ui";
 
 export function LibraryContent({
   nodes,
@@ -65,11 +66,19 @@ export function LibraryContent({
   const destinationNodes = nodes
     .filter(
       (node) =>
-        (node.kind === "workspace" || node.kind === "page") &&
+        (node.kind === "workspace" || isFolderNode(node, nodes)) &&
         !selectedIds.has(node.id),
     )
     .toSorted((a, b) => a.title.localeCompare(b.title));
   const selected = [...selectedIds];
+  const selectedNodes = nodes.filter((node) => selectedIds.has(node.id));
+  const currentParentId =
+    selectedNodes.length > 0 &&
+    selectedNodes.every(
+      (node) => node.parent_id === selectedNodes[0]?.parent_id,
+    )
+      ? selectedNodes[0]?.parent_id
+      : undefined;
 
   const moveMutation = useMutation({
     mutationFn: bulkMoveNodes,
@@ -206,6 +215,7 @@ export function LibraryContent({
         }))}
         defaultValue={destinationNodes[0]?.id ?? ""}
         submitLabel="Move selected"
+        submitDisabledValues={currentParentId ? [currentParentId] : undefined}
         onSubmit={(parentId) => {
           if (parentId) moveMutation.mutate({ ids: selected, parentId });
         }}

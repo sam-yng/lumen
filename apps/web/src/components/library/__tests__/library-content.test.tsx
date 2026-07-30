@@ -17,7 +17,11 @@ vi.mock("@/components/library/library-api", () => ({
   bulkMoveNodes: apiMocks.bulkMoveNodes,
 }));
 
-function node(id: string, title: string): LibraryNode {
+function node(
+  id: string,
+  title: string,
+  overrides: Partial<LibraryNode> = {},
+): LibraryNode {
   return {
     id,
     user_id: "user-1",
@@ -35,6 +39,7 @@ function node(id: string, title: string): LibraryNode {
     is_pinned: false,
     created_at: "2026-06-18T00:00:00.000Z",
     updated_at: "2026-06-18T00:00:00.000Z",
+    ...overrides,
   };
 }
 
@@ -46,7 +51,7 @@ const nodes = [
     parent_id: null,
   },
   node("alpha", "Alpha"),
-  node("beta", "Beta"),
+  node("beta", "Beta", { content_json: { type: "lumen-folder" } }),
   node("gamma", "Gamma"),
 ];
 
@@ -183,6 +188,38 @@ describe("LibraryContent desktop selection", () => {
       "aria-pressed",
       "false",
     );
+  });
+
+  it("offers only workspaces and folders as move destinations", async () => {
+    renderContent();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Alpha/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Move" }));
+
+    expect(
+      await screen.findByRole("option", { name: "Workspace" }),
+    ).toBeVisible();
+    expect(screen.getByRole("option", { name: "Beta" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "Alpha" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Gamma" })).toBeNull();
+  });
+
+  it("disables moving when the destination is the current parent", async () => {
+    renderContent();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Alpha/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Move" }));
+
+    const destination = await screen.findByRole("combobox", {
+      name: "Destination",
+    });
+    const submit = screen.getByRole("button", { name: "Move selected" });
+
+    fireEvent.change(destination, { target: { value: "workspace-1" } });
+    expect(submit).toBeDisabled();
+
+    fireEvent.change(destination, { target: { value: "beta" } });
+    expect(submit).toBeEnabled();
   });
 
   it("shows a blocking busy overlay while bulk delete is pending", async () => {

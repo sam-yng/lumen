@@ -253,6 +253,31 @@ describe("LibrarySidebar", () => {
     ).toBeTruthy();
   });
 
+  it("omits decorative chevrons from Library tree nodes", () => {
+    renderSidebar(
+      <Sidebar
+        view="library"
+        nodes={[
+          node("workspace-1", "workspace", { title: "Biology" }),
+          node("unit-1", "page", { title: "Unit one" }),
+        ]}
+        tags={[]}
+        tagLinks={[]}
+        selectedTagIds={new Set()}
+        selectedNodeId={null}
+        userEmail="demo@lumen.test"
+        signOutAction={vi.fn()}
+        onCreatePage={vi.fn()}
+        onFocusSearch={vi.fn()}
+        onToggleTag={vi.fn()}
+      />,
+    );
+
+    const library = screen.getByRole("navigation", { name: "Library tree" });
+
+    expect(library.querySelector(".lucide-chevron-right")).toBeNull();
+  });
+
   it("renders compact tag rows with counts and a delete action in the count slot", () => {
     renderSidebar(
       <Sidebar

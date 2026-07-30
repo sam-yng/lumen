@@ -401,7 +401,11 @@ export function TranscriptViewer({
                       ? "border-l-primary bg-(--accent-soft)"
                       : "border-l-transparent"
                   }`}
-                  onClick={() => seek(segment.start_ms / 1000)}
+                  onClick={() => {
+                    const selection = window.getSelection();
+                    if (selection && !selection.isCollapsed) return;
+                    seek(segment.start_ms / 1000);
+                  }}
                 >
                   <span
                     className={`font-mono text-[11.5px] ${index === activeIndex ? "text-accent-text" : "text-text-3"}`}

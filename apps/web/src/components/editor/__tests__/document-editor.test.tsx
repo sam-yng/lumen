@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DocumentEditor } from "@/components/editor/document-editor";
 import type { Tables } from "@/server/db/database.types";
@@ -97,4 +97,25 @@ describe("DocumentEditor citation block links", () => {
     expect(scroller).toHaveClass("flex-1");
     expect(scroller).toHaveClass("overflow-y-auto");
   });
+
+  it("renders the updated date with a stable locale and timezone", async () => {
+    renderEditor(null);
+
+    expect(
+      await screen.findByText(/Updated Jan 1, 2026 ·/),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("DocumentEditor toolbar", () => {
+  it.each(["Heading", "Bullet list", "Task list"])(
+    "preserves the editor selection when pressing %s",
+    async (label) => {
+      renderEditor(null);
+
+      const button = await screen.findByRole("button", { name: label });
+
+      expect(fireEvent.mouseDown(button)).toBe(false);
+    },
+  );
 });

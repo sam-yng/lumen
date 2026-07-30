@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   resolveDeepLinkMs,
@@ -90,7 +90,7 @@ function renderViewer(deepLink?: TranscriptDeepLink) {
   return { client, ...render(viewerTree(client, deepLink)) };
 }
 
-describe("TranscriptViewer deep links", () => {
+describe("TranscriptViewer", () => {
   beforeEach(() => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(detail)),
@@ -99,7 +99,10 @@ describe("TranscriptViewer deep links", () => {
     Element.prototype.scrollTo = vi.fn();
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    window.getSelection()?.removeAllRanges();
+    vi.restoreAllMocks();
+  });
 
   it("highlights and scrolls to the cited segment via ?segment", async () => {
     renderViewer({ segmentId: "seg-2", tMs: null });
@@ -144,5 +147,29 @@ describe("TranscriptViewer deep links", () => {
     });
     expect(first.className).toContain("border-l-primary");
     expect(screen.getByText("0:00 / 2:00")).toBeInTheDocument();
+  });
+
+  it("does not seek when transcript text is selected", async () => {
+    const { container } = renderViewer();
+    const first = await screen.findByRole("button", {
+      name: /segment seg-1 text/,
+    });
+    const segmentText = screen.getByText("segment seg-1 text");
+    const textNode = segmentText.firstChild;
+    const selection = window.getSelection();
+    const audio = container.querySelector("audio");
+    if (!textNode || !selection || !audio) {
+      throw new Error("Expected rendered transcript text and audio.");
+    }
+
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 7);
+    selection.addRange(range);
+    audio.currentTime = 42;
+
+    fireEvent.click(first);
+
+    expect(audio.currentTime).toBe(42);
   });
 });

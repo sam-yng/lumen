@@ -84,6 +84,7 @@ function ToolbarButton({
       type="button"
       variant={active ? "default" : "ghost"}
       size="icon-sm"
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       title={label}
     >
@@ -477,7 +478,10 @@ function useDocumentEditorState({
   const linkDialog = useEditorLinkDialog(editor);
   const anchorScopeId = `note-anchor-${linkDialog.fieldId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const updated = page.updated_at
-    ? new Date(page.updated_at).toLocaleDateString()
+    ? new Date(page.updated_at).toLocaleDateString("en-US", {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      })
     : "Not saved";
   const wordCount =
     editor?.getText().trim().split(/\s+/).filter(Boolean).length ?? 0;
