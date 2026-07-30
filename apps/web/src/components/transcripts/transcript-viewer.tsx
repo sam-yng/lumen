@@ -125,7 +125,7 @@ function StatusState({
             {processing ? "Transcribing locally" : "Queued for transcription"}
           </p>
           <p className="mt-1 font-mono text-[11.5px] text-text-3">
-            base.en · local CPU · no data leaves your machine
+            base.en · local CPU · private by default
           </p>
         </div>
         {processing ? (

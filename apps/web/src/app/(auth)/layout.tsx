@@ -44,7 +44,7 @@ export default function AuthLayout({
           </div>
         </div>
         <p className="relative font-mono text-[11.5px] leading-5 text-text-3">
-          Private by default · your recordings never leave your machine
+          Private by default
         </p>
       </section>
       <section className="flex min-h-dvh flex-col p-4 py-8 sm:p-6">
