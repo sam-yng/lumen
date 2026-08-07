@@ -82,7 +82,7 @@ export async function connectMcpBridge(
   };
 }
 
-export const ASSISTANT_MODEL = "claude-opus-4-8";
+const ASSISTANT_MODEL = "claude-opus-4-8";
 const DEFAULT_MAX_ITERATIONS = 8;
 
 export const SYSTEM_PROMPT = [

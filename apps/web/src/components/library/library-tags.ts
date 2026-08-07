@@ -1,11 +1,6 @@
 import type { Tables } from "@/server/db/database.types";
 import type { LibraryNode } from "@/server/services/library-nodes";
 
-type TagData = {
-  tags: Tables<"tags">[];
-  tagLinks: Tables<"tag_links">[];
-};
-
 export function tagSelectionState(
   tagId: string,
   selectedNodeIds: ReadonlySet<string>,
@@ -22,15 +17,6 @@ export function tagSelectionState(
   if (linkedNodeIds.size === 0) return false;
   if (linkedNodeIds.size === selectedNodeIds.size) return true;
   return "indeterminate";
-}
-
-export function tagsForNode(snapshot: TagData, nodeId: string) {
-  const tagIds = new Set(
-    snapshot.tagLinks
-      .filter((link) => link.node_id === nodeId)
-      .map((link) => link.tag_id),
-  );
-  return snapshot.tags.filter((tag) => tagIds.has(tag.id));
 }
 
 export function tagsByNodeId(
@@ -50,16 +36,6 @@ export function tagsByNodeId(
     if (assigned.length > 0) grouped.set(nodeId, assigned);
   }
   return grouped;
-}
-
-export function tagLinkForNode(
-  snapshot: TagData,
-  nodeId: string,
-  tagId: string,
-) {
-  return snapshot.tagLinks.find(
-    (link) => link.node_id === nodeId && link.tag_id === tagId,
-  );
 }
 
 export function filterNodesBySelectedTags(

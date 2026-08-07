@@ -68,20 +68,6 @@ export function createPage(input: {
   });
 }
 
-export function createNote(input: { title: string; parentId: string }) {
-  return requestJson<LibraryNode>("/api/library/nodes", {
-    method: "POST",
-    body: JSON.stringify({ kind: "page", role: "note", ...input }),
-  });
-}
-
-export function createFolder(input: { title: string; parentId: string }) {
-  return requestJson<LibraryNode>("/api/library/nodes", {
-    method: "POST",
-    body: JSON.stringify({ kind: "page", role: "folder", ...input }),
-  });
-}
-
 export function updateNode(input: {
   id: string;
   title?: string;
@@ -215,19 +201,6 @@ export function updateTag(input: {
 
 export function deleteTag(id: string) {
   return requestJson<Tables<"tags">>(`/api/library/tags/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export function linkTag(input: { tagId: string; nodeId: string }) {
-  return requestJson<Tables<"tag_links">>("/api/library/tag-links", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-export function unlinkTag(linkId: string) {
-  return requestJson<Tables<"tag_links">>(`/api/library/tag-links/${linkId}`, {
     method: "DELETE",
   });
 }

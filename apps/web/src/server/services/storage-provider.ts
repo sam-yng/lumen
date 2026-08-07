@@ -92,7 +92,7 @@ export class SupabaseStorageProvider implements StorageProvider {
   }
 }
 
-export function slugFileName(name: string) {
+function slugFileName(name: string) {
   const slug = name
     .trim()
     .toLowerCase()
